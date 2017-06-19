@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if	[ ! "${snap_old_target}" == "unset" ]
+	then
+
+		if	[ "${mode_snapshot}" == "zfs" ]
+			then	if	[ -n "${config_server_target}" ]
+						then	command1="ssh ${config_server_target}${config_port_target} \"zfs diff ${snap_old_target}\""
+						else	command1="zfs diff ${snap_old_target}"
+					fi
+
+			elif	[ "${mode_snapshot}" == "btrfs" ]
+					then	if	[ -n "${config_server_target}" ]
+								then	command1="ssh ${config_server_target}${config_port_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"
+								else	command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
+							fi
+		fi
+
+		if	[ -n "${log_server}" ]
+			then
+
+				if	[ "${show_commands}" == "set" ]
+						then	echo "${command1} | ssh ${log_server}${log_server_port} \"cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt\""
+								echo "ssh ${log_server}${log_server_port} \"chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt\""
+
+						else	eval ${command1} | ssh ${log_server}${log_server_port} "cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+								ssh ${log_server}${log_server_port} "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+				fi
+
+			else
+
+				if	[ "${show_commands}" == "set" ]
+						then	echo "${command1} | cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+								echo "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+
+						else	eval ${command1} | cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt
+								chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt
+				fi
+		fi
+fi

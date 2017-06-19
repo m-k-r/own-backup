@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [ "${mode_snapshot}" == "file" ]
+	then
+
+		if [ "${check_current}" == "source" ]
+			then	snap_root_current=${dir_root_current}${dir_offset_current}/${sync_name_current}
+			elif [ "${check_current}" == "target" ]
+				then	snap_root_current=unset
+		fi
+
+		# check if directory exists
+		if [ -n "${config_server_current}" ]
+			then	probe=$(ssh ${config_server_current}${config_port_current} "find ${dir_snap_current} -maxdepth 0 2> /dev/null")
+			else	probe=$(find "${dir_snap_current} -maxdepth 0 2> /dev/null")
+		fi
+
+		if [ -n "${probe}" ]
+			then	if [ "${check_current}" == "source" ]
+						then	snap_set_current=${dir_snap_current}/$(echo ${snap_root_current} | rev | cut -d "/" -f 1 | rev)
+						elif [ "${check_current}" == "target" ]
+							then	snap_set_current=${dir_snap_current}${dir_offset_current}
+					fi
+
+			else	exit 87
+		fi
+fi
+
+##### exports of variables which are created here #####
+echo "${snap_root_current} ${snap_set_current}"
+
+config_fields="snap_set_current snap_root_current"

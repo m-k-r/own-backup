@@ -1,0 +1,499 @@
+#!/bin/bash
+#
+# -----------------------------------------------------------------------------
+#
+# Marcel Keller
+# Usage: uses config files to backup btrfs, zfs, file, directory, mysql and kvm to other disk or server
+# License:	GPLv3 http://www.gnu.org/licenses/gpl-3.0
+#
+# ----------------------------- Global Variables ------------------------------
+
+version=1.0.0
+usage="usage: own-backup [parameter]
+
+ -c	name of the config file without ".conf" at the end
+ -d	debug level: commands, datasets, snapshots, snapvars, full
+ -m	copies multiple snapshots instead of the last. valid: all or a restriction like "daily" for all snapshots containing daily
+ -n	overrides limit for snapshots to keep. has to be integer and source and target are separated by ":" like "5:5"
+ -o	show output
+ -r	rollback. Source and target are swapped. No new snapshots are created
+ -s	overrides "snapshotformat (name)" in config
+ -t	overrides the frequency in config for source and target
+ -v	show version of this script
+ -h	this page"
+dir_root=/usr/local/own-backup
+conf=/etc/own-backup/${config}.conf
+
+# --------------------------------- Parameter ----------------------------------
+
+if [ "$#" == "0" ]
+	then	echo "${usage}" && exit 0
+fi
+
+while getopts ":c:d:m:n:ors:t:h" opt; do
+		case ${opt} in
+		c)		config=$OPTARG
+				;;
+		d)		debug=$OPTARG
+				;;
+		m)		snap_multi=$OPTARG
+				;;
+		n)		snap_limit_override=$OPTARG
+				;;
+		o)		show_output="set"
+				;;
+		r)		snap_rollback=set
+				;;
+		s)		snap_name=$OPTARG
+				;;
+		t)		snap_list_frequency_override=$OPTARG
+				;;
+		h)		echo "Under construction" && exit 0
+				;;
+		?)		echo "Invalid option: -$OPTARG" >&2 && exit 1
+				;;
+		esac
+done
+
+######################### CONFIG #########################
+
+dir_modules=${dir_root}/modules
+probe=$(find ${conf} 2>&1)
+
+# check if config file exists
+if [ ! "${probe}" == "${conf}" ]
+	then	echo "the config-file does not exist" && exit 1
+fi
+
+if [ -n "${snap_limit_override}" ]
+	then	snap_limit_source=$(echo "${snap_limit_override}" | cut -d "#" -f 1)
+			snap_limit_target=$(echo "${snap_limit_override}" | cut -d "#" -f 2)
+fi
+
+export snap_multi snap_rollback snap_name_override snap_list_frequency_override snap_limit_source snap_limit_target
+
+##### define functions #####
+
+# if exit returns a non-zero value, show the apropriate error message and exit
+function check-exit {
+	exit_code=${?}
+	if [ ! "${exit_code}" == "0" ]
+		then	export exit_code && ${dir_modules}/do-exit
+				if [ ! "${?}" == "0" ]
+					then	exit 1
+				fi
+	fi
+}
+
+# hook for other configurations instead of a conf-file like a mysql database
+if	[ -n "${conf}" ]
+	then	. ${dir_modules}/get-config
+			check-exit
+fi
+
+
+######################### VALIDITY CHECKS AND CREATING META-VARIABLES #########################
+
+. ${dir_modules}/check-config
+check-exit
+. ${dir_modules}/set-config
+check-exit
+
+# Backup the ifs
+IFSBAK=${IFS}
+
+# get-synclist can return spaces. so the ifs has to be by newline
+IFS=$'\n'
+
+# with synclist a list for syncnames can dynamically be created. At the moment this only works for absolute paths and not zfs with zfs list...
+if	[ -n "${sync_list}" ]
+	then	sync_name=($(${dir_modules}/get-synclist))
+			check-exit
+fi
+
+IFS=${IFSBAK}
+
+# sync_name_number has n-elements but the script starts with element 0. So the script has to count to n-1
+if	[ -n "${sync_name}" ] && [ ! -z "${sync_name}" ]
+	then	sync_name_number=$((${#sync_name[@]} -1))
+	else	echo "no sync_name is set. nothing to do" && exit 0
+fi
+
+
+######################### FIRST LOOP: SET SYNC-VARIABLES #########################
+
+
+# set the control-variable for the first loop. This has to be -1 because arrays start at 0 and at the beginning of the loop aa is aa + 1
+aa="-1"
+
+while [ "${sync_name_number}" -gt "${aa}" ]
+do	# control variable. will be used for the arrays
+	aa_old=${aa}
+	aa=$((${aa} + 1))
+
+	# The script can use multiple vmids and newsyncnames, pre- and suffixes. These are synchronous to syncname. If the pre-/suffixes are empty it takes the last one set, an empty newsyncname will be replaced by syncname
+	if	[ -z "${sync_name_new[aa]}" ]
+		then	sync_name_new[aa]=${sync_name[aa]}
+	fi
+
+	if	[ ! -z "${sync_name_new_prefix[@]}" ]
+		then	if	[ -z "${sync_name_new_prefix[aa]}" ]
+					then	sync_name_new_prefix[aa]=${sync_name_new_prefix[aa_old]}
+				fi
+	fi
+
+	if	[ ! -z "${sync_name_new_suffix[@]}" ]
+		then	if	[ -z "${sync_name_new_suffix[aa]}" ]
+					then	sync_name_new_suffix[aa]=${sync_name_new_suffix[aa_old]}
+				fi
+	fi
+
+	if [ "${mode_create}" == "kvm" ]
+		then	if	[ -z "${sync_vmid[aa]}" ]
+					then	sync_vmid[aa]=${sync_vmid[aa_old]}
+				fi
+	fi
+
+	##### define sync_name_source and sync_name_target #####
+
+	# Define sync_name_source and sync_name_target
+	if [ "${snap_rollback}" == "set" ] && [ "${mode_transfer}" == "zfs" ]
+		then	sync_name_source[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
+				sync_name_target[aa]=${sync_name[aa]}
+		else	sync_name_source[aa]=${sync_name[aa]}
+				sync_name_target[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
+	fi
+done
+
+
+######################### SECOND LOOP: SET SNAP VARIABLES #########################
+
+# set back the control-variable for the next loop
+aa="-1"
+
+# The previous checks looked for syntax erros. This verifies if the directories actually exist.
+while [ "${sync_name_number}" -gt "${aa}" ]
+do	aa=$((${aa} + 1))
+
+	##### set global current variables #####
+	sync_name_source_current=${sync_name_source[aa]}
+	sync_name_target_current=${sync_name_target[aa]}
+	export sync_name_source_current sync_name_target_current
+
+	##### check the prerequisits on source side #####
+	check_current=source
+	config_server_current=${config_server_source}
+	config_port_current=${config_port_source}
+	dir_snap_current=${dir_snap_source}
+	dir_root_current=${dir_root_source}
+	dir_offset_current=${dir_offset_source}
+	snap_list_current=${snap_list_source}
+	snap_limit_current=${snap_limit_source}
+	sync_name_current=${sync_name_source[aa]}
+	sync_vmid_current=${sync_vmid[aa]}
+	export check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
+
+	##### checks on source side #####
+
+	# check all ${mode_create}. atm this is only kvm
+	if	[ "${mode_create}" == "kvm" ] || [ "${mode_create}" == "mysql" ]
+		then	${dir_modules}/check-create
+				check-exit
+
+				if	[ "${mode_create}" == "mysql" ]
+					then	config_mysql_credentials[aa]=$(echo ${config_options_mysql} | cut -d " " -f 1)
+							config_mysql_certificate[aa]=$(echo ${config_options_mysql} | cut -d " " -f 2)
+				fi
+	fi
+
+	# check all ${mode_transfer}. atm this is only rsync. if mode_file is file then rsync is assumed for mode_transfer and don't have to be checked extra
+	if	[ "${mode_transfer}" == "rsync" ] && [ ! "${mode_snapshot}" == "file" ]
+		then	snap_rsync_source[aa]=$(${dir_modules}/check-copy)
+				check-exit
+	fi
+
+	# check all ${mode_snapshot}
+	if	[ -n "${mode_snapshot}" ]
+		then	snap_set_current=$(${dir_modules}/check-${mode_snapshot})
+				check-exit
+				snap_root_source[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
+				snap_set_current=$(echo ${snap_set_current} | cut -d " " -f 2)
+				snap_set_source[aa]=${snap_set_current}
+	fi
+
+	##### check the prerequisits on target side #####
+	check_current=target
+	config_server_current=${config_server_target}
+	config_port_current=${config_port_target}
+	dir_snap_current=${dir_snap_target}
+	dir_root_current=${dir_root_target}
+	dir_offset_current=${dir_offset_target}
+	snap_list_current=${snap_list_target}
+	snap_limit_current=${snap_limit_target}
+	sync_name_current=${sync_name_target[aa]}
+	export snap_set_current check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+
+	# basically not necessary on target side but left as a hook for future additions
+	#if	[ "${mode_create}" == "kvm" ] || [ "${mode_create}" == "mysql" ]
+	#	then	${dir_modules}/check-create
+	#			check-exit
+	#fi
+
+	if	[ "${mode_transfer}" == "rsync" ] && [ ! "${mode_snapshot}" == "file" ]
+		then	snap_rsync_target[aa]=$(${dir_modules}/check-copy)
+				check-exit
+	fi
+
+	if	[ -n "${mode_snapshot}" ]
+		then	snap_set_current=$(${dir_modules}/check-${mode_snapshot})
+				check-exit
+				snap_root_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
+				snap_set_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 2)
+				unset snap_set_current
+	fi
+
+	########## debug-output ##########
+	if	[ "${show_datasets}" == "set" ]
+		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+				echo "Sourcedataset is ${snap_set_source[aa]}"
+				echo "Targetdataset is ${snap_set_target[aa]}"
+				echo "Sourceroot is ${snap_root_source[aa]}"
+				echo "Targetroot is ${snap_root_target[aa]}"
+				echo "Sourcersync is ${snap_rsync_source[aa]}"
+				echo "Targetrsync is ${snap_rsync_target[aa]}"
+				echo "sync_name_source is ${sync_name_source[aa]}"
+				echo "sync_name_target is ${sync_name_target[aa]}"
+	fi
+
+	unset snap_set_current check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+done
+
+# if debug = datasets the script ends here
+if [ "${show_datasets}" == "set" ] && [ ! "${show_commands}" == "set" ]
+	then exit 0
+fi
+
+
+######################### THIRD LOOP: SOURCE SNAPSHOTS #########################
+
+if [ "${show_commands}" == "set" ]
+	then	printf -- "\n\n--------------- Snapshots ---------------\n\n"
+fi
+
+if [ -n "${snap_list_source}" ]
+	then	source ${dir_modules}/arg-osss
+			if	[ "${snap_list_location_source}" == "ssh" ]
+				then	ssh ${config_server_source}${config_port_source} "ownsnapshot ${arg_oss_source}"
+				else	ownsnapshot ${arg_oss_source}
+						check-exit
+			fi
+fi
+
+# set back the control-variable for the next loop
+aa="-1"
+
+# Loop snapshots
+while [ "${sync_name_number}" -gt "${aa}" ]
+do	aa=$((${aa} + 1))
+
+	##### source #####
+	get_current=source
+	config_server_current=${config_server_source}
+	config_port_current=${config_port_source}
+	snap_set_current=${snap_set_source[aa]}
+	snap_root_current=${snap_root_source[aa]}
+	export get_current config_server_current config_port_current snap_set_current snap_root_current
+
+	if	[ "${snap_limit_source}"  -ge 1 ]
+		then	source ${dir_modules}/arg-osss
+				ownsnapshot ${arg_oss_source}
+				check-exit
+	fi
+
+	if	[ -n "${mode_snapshot}" ]
+		then	snap_shots_source[aa]=$(${dir_modules}/get-snapshots)
+				check-exit
+				snap_number_source[aa]=$(echo ${snap_shots_source[aa]} | awk -F ' ' '{print NF}')
+				snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
+				snap_number_strict_source[aa]=$(echo ${snap_shots_strict_source[aa]} | awk -F ' ' '{print NF}')
+	fi
+
+	##### target #####
+	get_current=target
+	config_server_current=${config_server_target}
+	config_port_current=${config_port_target}
+	snap_set_current=${snap_set_target[aa]}
+	snap_root_current=${snap_root_target[aa]}
+	export get_current config_server_current config_port_current snap_set_current snap_root_current
+
+	if	[ -n "${mode_snapshot}" ]
+		then	snap_shots_target[aa]=$(${dir_modules}/get-snapshots)
+				check-exit
+				snap_number_target[aa]=$(echo ${snap_shots_target[aa]} | awk -F ' ' '{print NF}')
+				snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
+				snap_number_strict_target[aa]=$(echo ${snap_shots_strict_target[aa]} | awk -F ' ' '{print NF}')
+	fi
+
+	if	[ "${show_snapshots}" == "set" ]
+		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+				echo "-------------------------"
+				printf "The Snapshotnumber for source is ${snap_number_source[aa]}:\n${snap_shots_source[aa]}\nThe Snapshotnumber for source with the name ${snap_name} is ${snap_number_strict_source[aa]}:\n${snap_shots_strict_source[aa]}\n"
+				printf "The Snapshotnumber for for target is ${snap_number_target[aa]}:\n${snap_shots_target[aa]}\nThe Snapshotnumber for target with the name ${snap_name} is ${snap_number_strict_target[aa]}:\n${snap_shots_strict_target[aa]}\n"
+				echo "-------------------------"
+	fi
+
+	unset get_current config_server_current config_port_current snap_set_current snap_root_current
+done
+
+# if debug = datasets the script ends here
+if [ "${show_snapshots}" == "set" ] && [ ! "${show_commands}" == "set" ]
+	then exit 0
+fi
+
+
+######################### FOURTH LOOP: SYNC SOURCE AND TARGET #########################
+
+if [ "${show_commands}" == "set" ]
+	then	printf -- "\n\n--------------- Copy ---------------\n\n"
+fi
+
+# set back the control-variable for the next loop
+aa="-1"
+
+# Loop for actual copy, snapshots and log
+while [ "${sync_name_number}" -gt "${aa}" ]
+do	aa=$((${aa} + 1))
+
+	if [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "zfs" ] || [ -n "${log_dir}" ]
+		then
+
+			# variables on source side
+			snap_shots_source_current=${snap_shots_source[aa]}
+			snap_number_source_current=${snap_number_source[aa]}
+			export snap_shots_source_current snap_number_source_current
+
+			# variables on target side
+			snap_shots_target_current=${snap_shots_target[aa]}
+			snap_number_target_current=${snap_number_target[aa]}
+			snap_set_target_current=${snap_set_target[aa]}
+			export snap_shots_target_current snap_number_target_current snap_set_target_current
+
+			snap_new_source=$(${dir_modules}/set-snapvars)
+			check-exit
+			snap_common_source=$(echo ${snap_new_source} | cut -d " " -f 2)
+			snap_old_target=$(echo ${snap_new_source} | cut -d " " -f 3)
+			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 4)
+			snap_new_source=$(echo ${snap_new_source} | cut -d " " -f 1)
+			export snap_new_source snap_common_source snap_old_target snap_exist_offset
+
+			# when the snapshots are read, the snapshot on target wasn't created yet.
+			#so a dummy has to be created in order to delete the right amount of snapshots and diff
+			snap_shots_strict_target[aa]=$(echo -e "${snap_shots_strict_target[aa]}\n${snap_set_target_current}${snap_string_separator}${snap_string}")
+			snap_number_strict_target[aa]=$((${snap_number_strict_target[aa]} + 1))
+	fi
+
+	if [ "${mode_transfer}" == "rsync" ]
+		then	snap_rsync_source_current=${snap_rsync_source[aa]}
+				snap_rsync_target_current=${snap_rsync_target[aa]}
+				export snap_rsync_source_current snap_rsync_target_current
+	fi
+
+	if [ "${show_commands}" == "set" ] || [ "${show_snapvars}" == "set" ]
+		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\nsourcesnapsnew is:\n${snap_new_source}\nsourcesnapsold is:\n${snap_common_source}\ntargetsnapsold is:\n${snap_old_target}\n"
+	fi
+
+	if	[ ! "${snap_common_source}" == "newest" ] && [ ! "${show_snapvars}" == "set" ]
+		then
+
+			if	[ -n "${snap_multi}" ]
+				then	${dir_modules}/set-multisnap && exit_code=${?}
+
+				elif	[ "${mode_transfer}" == "zfs" ]
+					then	${dir_modules}/copy-zfs && exit_code=${?}
+
+				elif	[ "${mode_transfer}" == "btrfs" ]
+					then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
+										${dir_modules}/copy-btrfs && exit_code=${?}
+			fi
+	fi
+
+	if	[ "${mode_transfer}" == "rsync" ] && [ ! -n "${snap_multi}" ]
+		then	${dir_modules}/copy-rsync
+				check-exit
+
+				if	[ "${snap_limit_target}" -gt 0 ]
+					then	source ${dir_modules}/arg-osst
+							ownsnapshot ${arg_oss_target} && exit_code=${?}
+				fi
+	fi
+
+	check-exit
+
+	if	[ -n "${log_dir}" ]
+		then	sync_name_source_current=${sync_name_source[aa]}
+				snap_new_target=$(echo ${snap_shots_strict_target[aa]} | awk '{print $(NF)}')
+				export sync_name_source_current snap_new_target
+				${dir_modules}/do-log
+				check-exit
+				unset sync_name_source_current snap_new_target
+	fi
+
+	unset snap_shots_source_current snap_number_source_current snap_shots_target_current snap_number_target_current snap_rsync_source_current snap_rsync_target_current snap_new_source snap_common_source snap_old_target snap_exist_offset
+done
+
+if [ -n "${snap_list_target}" ]
+	then	source ${dir_modules}/arg-osst
+			if [ "${snap_list_location_target}" == "ssh" ]
+				then	ssh ${config_server_target}${config_port_target} "ownsnapshot ${arg_oss_target}"
+				else	ownsnapshot ${arg_oss_target}
+						check-exit
+			fi
+fi
+
+if [ "${show_snapvars}" == "set" ] && [ ! "${show_commands}" == "set" ]
+	then	exit 0
+fi
+
+
+######################### FIFTH LOOP: CLEANUP SOURCE AND TARGET #########################
+
+if [ "${snap_limit_source}"  -ge 1 ] || [ "${snap_limit_target}"  -ge 1 ]
+	then
+
+		if [ "${show_commands}" == "set" ]
+			then	printf -- "\n--------------- Delete Snapshots ---------------\n\n"
+		fi
+
+		aa="-1"
+
+		while [ "${sync_name_number}" -gt "${aa}" ]
+		do	aa=$((${aa} + 1))
+
+			if [ "${snap_limit_source}" -gt 0 ]
+				then	# variables on source side
+						snap_shots_current=${snap_shots_strict_source[aa]}
+						snap_number_current=${snap_number_strict_source[aa]}
+						snap_limit_current=${snap_limit_source}
+						sync_vmid_current=${sync_vmid[aa]}
+						export snap_shots_current snap_number_current snap_limit_current sync_vmid_current
+
+						${dir_modules}/do-snapdel
+						check-exit
+						unset snap_shots_current snap_number_current snap_limit_current sync_vmid_current
+			fi
+
+			if [ "${snap_limit_target}" -gt 0 ]
+				then	# variables on target side
+						do_current=target
+						# when the snapshots are read, the snapshot on target wasn't created yet. so a dummy has to be created in order to delete the right amount of snapshots
+						snap_shots_current=${snap_shots_strict_target[aa]}
+						snap_number_current=${snap_number_strict_target[aa]}
+						snap_limit_current=${snap_limit_target}
+						export snap_shots_current snap_number_current snap_limit_current
+
+						${dir_modules}/do-snapdel
+						check-exit
+						unset snap_shots_current snap_number_current snap_limit_current
+			fi
+		done
+fi

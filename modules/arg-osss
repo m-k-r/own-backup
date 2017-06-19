@@ -1,0 +1,32 @@
+unset arg_oss_source
+
+if	[ -n "${debug}" ]
+	then	arg_oss_source+=" -d ${debug}"
+	else	arg_oss_source+=" -d previous"
+fi
+
+if	[ -n "${config_server_source}" ] && [ ! "${snap_list_location_source}" == "ssh" ]
+	then	arg_oss_source+=" -s ${config_server_source}"
+fi
+
+if	[ -n "${snap_list_source}" ]
+	then	arg_oss_source+=" -c ${snap_list_source}"
+			arg_oss_source+=" -f ${snap_list_frequency_source}"
+			arg_oss_source+=" -l ${snap_date}"
+
+	else	arg_oss_source+=" -m ${mode_create}"
+			arg_oss_source+=" -l ${snap_string}"
+			arg_oss_source+=" -o ${snap_set_source[aa]}"
+
+			if	[ -n "${sync_vmid[aa]}" ]
+				then	arg_oss_source+=" -r ${sync_vmid[aa]}"
+				else	arg_oss_source+=" -r ${snap_root_source[aa]}"
+			fi
+
+			if	[ "${mode_create}" == "mysql" ]
+				then	arg_oss_source+=" -p ${config_mysql_credentials[aa]}"
+						if	[ ! -z "${config_mysql_certificate[aa]}" ]
+							then	arg_oss_source+=" -z ${config_mysql_certificate[aa]}"
+						fi
+			fi
+fi

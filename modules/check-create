@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if	[ "${mode_create}" == "kvm" ]
+	then
+
+		if	[ -n "${config_server_current}" ]
+			then	probe=$(ssh ${config_server_current}${config_port_current} "qm list | grep ${sync_vmid_current}")
+			else	probe=$(qm list | grep ${sync_vmid_current})
+		fi
+
+		if	[ ! -n "${probe}" ]
+			then	exit 80
+		fi
+
+	elif [ "${mode_create}" == "mysql" ]
+		then	config_mysql_credentials=$(echo ${config_options_mysql} | cut -d " " -f 1)
+				config_mysql_certificate=$(echo ${config_options_mysql} | cut -d " " -f 2)
+
+				if	[ -n "${config_server_current}" ]
+					then	probe=$(ssh ${config_server_current}${config_port_current} "find ${config_mysql_credentials} -maxdepth 0 2> /dev/null")
+					else	probe=$(find ${config_mysql_credentials} -maxdepth 0 2> /dev/null)
+				fi
+
+				if	[ ! -n "${probe}" ]
+					then	exit 91
+				fi
+
+				if	[ -n "${config_mysql_certificate}" ]
+					then	if	[ -n "${config_server_current}" ]
+								then	probe=$(ssh ${config_server_current}${config_port_current} "find ${config_mysql_certificate} -maxdepth 0 2> /dev/null")
+								else	probe=$(find ${config_mysql_certificate} -maxdepth 0 2> /dev/null)
+							fi
+
+							if	[ ! -n "${probe}" ]
+								then	exit 92
+							fi
+				fi
+
+				if	[ -n "${config_server_current}" ]
+					then	probe=$(ssh ${config_server_current}${config_port_current} "mysqlshow --defaults-extra-file=${config_mysql_credentials} | grep ${sync_name_source_current}")
+					else	probe=$(mysqlshow --defaults-extra-file=${config_mysql_credentials} | grep ${sync_name_source_current})
+				fi
+
+				if	[ ! -n "${probe}" ]
+					then	exit 93
+				fi
+	else	:
+fi

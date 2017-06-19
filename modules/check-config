@@ -1,0 +1,216 @@
+#!/bin/bash
+
+##### checks with exit 1 #####
+
+# checks if a valid debuglevel is set
+if [ -n "${debug}" ]
+	then
+
+		if  [ "${debug}" == "commands" ]
+			then	show_commands="set"
+						export show_commands
+
+			elif [ "${debug}" == "datasets" ]
+				then	show_datasets="set"
+						export show_datasets
+
+			elif [ "${debug}" == "snapshots" ]
+				then	show_snapshots="set"
+						export show_snapshots
+
+			elif [ "${debug}" == "snapvars" ]
+				then	show_snapvars="set"
+						export show_snapvars
+
+			elif [ "${debug}" == "full" ]
+				then	show_commands="set"
+						show_datasets="set"
+						show_snapshots="set"
+						show_snapvars="set"
+						export show_commands show_datasets show_snapshots show_snapvars
+
+			else	echo "no supported debug-level found: ${debug}" && exit 1
+		fi
+fi
+
+# checks if mode and filesystem is, if set, correct.
+if [ -n "${config_mode}" ]
+	then	if [ ! "${config_mode}" == "rsync" ] && [ ! "${config_mode}" == "kvm" ]
+				then	echo "${config_mode} is not a viable mode" && exit 1
+			fi
+
+	else	if [ ! -n "${config_fs}" ]
+				then	echo "neither mode nor filesystem is set" && exit 1
+			fi
+fi
+
+if [ -n "${config_fs}" ]
+		then	if [ ! "${config_fs}" == "zfs" ] && [ ! "${config_fs}" == "btrfs" ]
+					then	echo "${config_fs} is not a viable filesystem" && exit 1
+				fi
+fi
+
+# either ${dir_snap_source} or ${dir_root_source} has to be specified
+if [ ! -n "${dir_snap_source}" ]
+	then	if [ -n "${dir_root_source}" ]
+				then	dir_snap_source=${dir_root_source}
+				else	echo "no sourcedirectory is specified" && exit 1
+			fi
+
+	elif [ ! -n "${dir_root_source}" ]
+		then	dir_root_source=${dir_snap_source}
+fi
+export dir_root_source dir_snap_source
+
+# either ${dir_snap_target} or ${dir_root_target} has to be specified
+if [ ! -n "${dir_snap_target}" ]
+	then	if [ -n "${dir_root_target}" ]
+				then	dir_snap_target=${dir_root_target}
+				else	echo "no targetdir is specified" && exit 1
+			fi
+
+	elif [ ! -n "${dir_root_target}" ]
+		then	dir_root_target=${dir_snap_target}
+fi
+export dir_root_target dir_snap_target
+
+# if set, dir_offset needs to start with a /
+if [ -n "${dir_offset_source}" ]
+	then	probe=$(echo ${dir_offset_source} | cut -c 1)
+			if [ ! "${probe}" == "/" ]
+				then	echo "dir_offset needs to start with a /" && exit 1
+			fi
+fi
+
+# if set, dir_offset needs to start with a /
+if [ -n "${dir_offset_target}" ]
+	then	probe=$(echo ${dir_offset_target} | cut -c 1)
+			if [ ! "${probe}" == "/" ]
+				then	echo "dir_offset needs to start with a /" && exit 1
+			fi
+fi
+
+# the script expects an integer here
+if [ ! -n "${snap_limit_source}" ]
+	then	snap_limit_source=0
+fi
+
+if [ ! -n "${snap_limit_target}" ]
+	then	snap_limit_target=0
+fi
+
+if [ -n "${snap_list_source}" ] && [ "${snap_limit_source}" -gt "0" ]
+	then	echo "snap_list_source and snap_limit_source can't be set the same time" && exit 1
+fi
+
+if [ -n "${snap_list_target}" ] && [ "${snap_limit_target}" -gt "0" ]
+	then	echo "snap_list_target and snap_limit_target can't be set the same time" && exit 1
+fi
+
+# if snap_list is set but no frequency to it the script will fail
+if [ -n "${snap_list_source}" ] && [ ! -n "${snap_list_frequency_source}" ]
+	then	echo "snap_list is set but no frequency to it" && exit 1
+fi
+
+if [ -n "${snap_list_target}" ] && [ ! -n "${snap_list_frequency_target}" ]
+	then	echo "snap_list is set but no frequency to it" && exit 1
+fi
+
+
+##### translate mode and fs to the internal modi
+
+# translation matrix for mode and fs from frontend to mode{create, snapshot, transfer}
+# internally the script destinguishes between create (the snapshot), (handle the) snapshot and transfer (the data)
+if [ "${config_mode}" == "kvm" ]
+	then	mode_create=${config_mode}
+	else	mode_create=${config_fs}
+fi
+
+mode_snapshot=${config_fs}
+
+if [ "${config_mode}" == "rsync" ]
+	then	mode_transfer=${config_mode}
+	else	mode_transfer=${config_fs}
+fi
+
+##### ports for rsync and ssh #####
+
+if [ -n "${config_port_source}" ] && [ "${mode_transfer}" == "rsync" ]
+	then	config_port_rsync_source=" -e \"ssh -p ${config_port_source}\""
+			export config_port_rsync_source
+fi
+
+if [ -n "${config_port_target}" ] && [ "${mode_transfer}" == "rsync" ]
+	then	config_port_rsync_target=" -e \"ssh -p ${config_port_target}\""
+			export config_port_rsync_target
+fi
+
+if [ -n "${config_port_source}" ]
+	then	config_port_source=" -p ${config_port_source}"
+			export config_port_source
+fi
+
+if [ -n "${config_port_target}" ]
+	then	config_port_target=" -p ${config_port_target}"
+			export config_port_target
+fi
+
+##### snapshot limits #####
+
+# in these cases no snapshots should be created. so snap_limit has to be 0
+if [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ "${snap_rollback}" == "set" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_source=0
+			unset snap_list_source
+fi
+
+if [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ "${snap_rollback}" == "set" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_target=0
+			unset snap_list_target
+fi
+
+export snap_limit_source snap_limit_target
+
+
+##### define strings for snapname #####
+
+# Get the actual date and time in format and its stringlength
+snap_date=$(date +${snap_date})
+snap_date_offset=$((${#snap_date}))
+# Defines the offset for the snapshot-comparison
+snap_string="${snap_name}_${snap_date}"
+snap_string_offset=$((${#snap_string}))
+
+if [ "${mode_snapshot}" == "btrfs" ] || [ "${mode_snapshot}" == "file" ]|| [ "${mode_snapshot}" == "mysql" ]
+	then	snap_string_separator="_"
+	elif [ "${mode_snapshot}" == "zfs" ] || [ "${mode_snapshot}" == "kvm" ]
+		then	snap_string_separator="@"
+fi
+
+##### rollback handling #####
+
+# if rollback is set the source- and targetvariables have to be exchanged
+if [ "${snap_rollback}" == "set" ]
+	then
+
+		dir_trans_var=${dir_snap_source}
+		dir_snap_source=${dir_snap_target}
+		dir_snap_target=${dir_trans_var}
+
+		dir_trans_var=${dir_root_source}
+		dir_root_source=${dir_root_target}
+		dir_root_target=${dir_trans_var}
+
+		if [ -n "${dir_offset_source}" ] || [ -n "${dir_offset_target}" ]
+			then	dir_trans_var=${dir_offset_source}
+					dir_offset_source=${dir_offset_target}
+					dir_offset_target=${dir_trans_var}
+					export dir_offset_source dir_offset_target
+		fi
+
+		export dir_snap_source dir_snap_target dir_root_source dir_root_target
+fi
+
+##### exports of variables which are created here #####
+export show_output show_commands show_datasets show_snapshots mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
+
+config_fields="show_output show_commands show_datasets show_snapshots mode_create mode_snapshot mode_transfer config_port_rsync_source config_port_rsync_target config_port_source config_port_target snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator"

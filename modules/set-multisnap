@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# if multiple snapshots should be copied some additional steps are necessary
+# use the snapshotlist of source as base for snap_new_list_source
+snap_new_list_source=${snap_shots_source_current}
+
+# through snap_exist_offset is checked if snapshots on target exist. If so all snapshots up to sourcesnapold are cut off
+if	[ -n "${snap_exist_offset}" ]
+	then	# snap_common_source is the ${snap_exist_offset}-th snapshot which already exists on target. to cut it out of the list too, ${cc} has to be incremented by 1
+			snap_exist_offset=$((${snap_exist_offset} + 1))
+			snap_new_list_source=$(echo "${snap_new_list_source}" | cut -d$ '\n' -f ${snap_exist_offset}- 2> /dev/null)
+fi
+
+# here the wanted snapshots are filtered out through the given pattern
+if	[ ! "${snap_multi}" == "all" ]
+	then	snap_new_list_source=$(echo "${snap_new_list_source}" | grep ${snap_multi} 2> /dev/null)
+fi
+
+# if snap_shots_target are empty, snap_new_list_source is also empty and the the rest will be omitted
+if	[ -n "${snap_new_list_source}" ] && [ ! -z "${snap_new_list_source}" ]
+	then
+
+		# if snap_old_target is set, all elements of snap_new_list_source which are older then snap_old_target have to be omitted
+		if	[ ! "${snap_old_target}" == "unset" ]
+			then
+
+				ee="0"
+				snap_old_date_target=$(echo ${snap_old_target: -$snap_date_offset} | grep -o '[0-9]*' | tr -d '[[:space:]]')
+
+				for snap_new_list_element_source in ${snap_new_list_source}
+				do	snap_new_list_element_date_source=$(echo ${snap_new_list_element_source: -$snap_date_offset} | grep -o '[0-9]*' | tr -d '[[:space:]]')
+
+					# if the datestring is greater than the one of snap_old_list_target we have the number of snapshots which have to be cut off
+					if	[ "${snap_new_list_element_date_source}" -gt "${snap_old_date_target}" ]
+						then	break
+						else	ee=$((${ee} + 1))
+					fi
+				done
+
+				if [ "${ee}"  -ge 1 ]
+					then	snap_new_list_source=$(echo "${snap_new_list_source}" | cut -d$ '\n' -f ${ee}-)
+				fi
+		fi
+
+		snap_names_new=${snap_new_list_source}
+		snap_common_list_source=${snap_common_source}$'\n'${snap_names_new}
+		snap_old_list_target=${snap_old_target}
+
+		for snap_name_new in ${snap_names_new}
+		do	snap_name_new=${snap_name_new: -$snap_string_offset}
+			snap_old_list_target+=$'\n'${snap_set_target_current}${snap_string_separator}${snap_name_new}
+		done
+fi
+
+if	[ "${mode_transfer}" == "btrfs" ]
+	then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
+fi
+
+for snap_new_source in ${snap_new_list_source}
+do	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }')
+	snap_old_target=$(echo ${snap_old_list_target} | awk '{ print $1 }')
+	export snap_new_source snap_common_source snap_old_target
+
+	if	[ ! "${snap_old_target}" == "unset" ] && [ ! "${show_commands}" == "set" ]
+		then
+
+			if	[ "${mode_transfer}" == "zfs" ]
+				then	if [ -n "${config_server_current}" ]
+							then	probe=$(ssh ${config_server_target}${config_port_target} "zfs list ${snap_old_target} 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
+							else	probe=$(zfs list ${snap_old_target} 2> /dev/null | tail -n +2 | awk '{ print $1 }')
+						fi
+
+				elif	[ "${mode_transfer}" == "btrfs" ]
+					then	if [ -n "${config_server_current}" ]
+								then	probe=$(ssh ${config_server_target}${config_port_target} "btrfs subvolume show ${snap_old_target} 2> /dev/null" | head -1 | awk '{ print $1 }')
+								else	probe=$(btrfs subvolume show ${snap_old_target} 2> /dev/null | head -1 | awk '{ print $1 }')
+							fi
+			fi
+	fi
+
+	if	[ "${probe}" == "${snap_old_target}" ] || [ "${snap_old_target}" == "unset" ] || [ "${mode_transfer}" == "file" ] || [ "${show_commands}" == "set" ] 
+		then	if	[ "${mode_transfer}" == "zfs" ]
+					then	${dir_modules}/copy-zfs
+
+					elif	[ "${mode_transfer}" == "btrfs" ]
+						then	${dir_modules}/copy-btrfs
+
+					elif	[ "${mode_transfer}" == "file" ]
+						then	${dir_modules}/copy-rsync
+				fi
+
+		else	echo "The Target ${snap_old_target} didn't exist and was ommited"
+	fi
+
+	snap_common_list_source=$(echo ${snap_common_list_source} | cut -d " " -f 2-)
+	snap_old_list_target=$(echo ${snap_old_list_target} | cut -d " " -f 2-)
+done

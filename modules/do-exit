@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# start with 80 to 113 to be compliant with c
+if [ "${exit_code}" == "80" ]
+	then	echo "check-create: The VM ${sync_vmid_current} does not exist" && exit 1
+
+	elif [ "${exit_code}" == "81" ]
+		then	echo "check-copy: ${dir_root_current}${dir_offset_current}/${sync_name_current} does not exist" && exit 1
+
+	elif [ "${exit_code}" == "82" ]
+		then	echo "check-btrfs: btrfs send does not work if the source ${dir_root_current}/${sync_name_current} does not exist or is no subvolume" && exit 1
+
+	elif [ "${exit_code}" == "83" ]
+		then	echo "check-btrfs: btrfs should be used for snapshots but neither ${dir_root_current} nor ${dir_root_current}/${sync_name_current} is a btrfs subvolume" && exit 1
+
+	elif [ "${exit_code}" == "84" ]
+		then	echo "check-btrfs: no subvolume has been found under snapshot-directory ${snap_set_current}" && exit 1
+
+	elif [ "${exit_code}" == "85" ]
+		then	echo "check-zfs: zfs send does not work if the source ${dir_snap_current}/${sync_name_current} does not exist" && exit 1
+
+	elif [ "${exit_code}" == "86" ]
+		then	echo "check-zfs: zfs should be used for snapshots but neither ${dir_snap_current} nor ${dir_snap_current}/${sync_name_current} is a zfs dataset" && exit 1
+
+	elif [ "${exit_code}" == "87" ]
+		then	echo "check-file: snap_set_current does not exist" && exit 1
+
+	elif [ "${exit_code}" == "88" ]
+		then	echo "For source are no snapshots available" && exit 1
+
+	elif [ "${exit_code}" == "89" ]
+		then	echo "no common snapshot on source and target was found" && exit 1
+
+	elif [ "${exit_code}" == "90" ]
+		then	echo "Spaces are not allowed in filenames for btrfs subvolumes" && exit 1
+
+	elif [ "${exit_code}" == "91" ]
+		then	echo "Mysql: The credential-file ${config_mysql_credentials} does not exist" && exit 1
+
+	elif [ "${exit_code}" == "92" ]
+		then	echo "A certificate is set: ${config_mysql_certificate} but it does not exist" && exit 1
+
+	elif [ "${exit_code}" == "93" ]
+		then	echo "The database ${sync_name_source_current} does not exist" && exit 1
+
+	else	echo "an undefined error has occured: ${?}" && exit 1
+fi

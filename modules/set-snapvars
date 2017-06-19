@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# 3 Snapshots are needed:
+# snap_new_source - this is always the newest snapshot
+# snap_common_source - this is the last common snapshot on source and target
+# snap_old_target - this is the newest snapshot on target. It is only needed with zfs for rollback
+
+if	[ "${mode_snapshot}" == "zfs" ] || [ "${mode_snapshot}" == "btrfs" ]
+	then	# Check if sourcesnaps exist. Without it all zfs and btrfs send will fail
+			if	[ ! -n "${snap_shots_source_current}" ]
+				then	exit 88
+			fi
+fi
+
+# if snapshots exist on target the newest common snapshot between source and target, snap_common_source, needs to be be determined
+if	[ "${snap_number_target_current}" -ge 1 ] && [ "${snap_number_source_current}" -ge 2 ]
+	then
+
+		bb=${snap_number_target_current}
+		probe_snap_shots_target=${snap_shots_target_current}
+
+		# snap_old_target needs to be the newest actually existing snapshot (the last one is virtual) on target which is not necessarily snap_common_source
+		snap_old_target=$(echo ${probe_snap_shots_target} | awk '{print $(NF)}')
+
+		# 2 loops are used:
+		# the outer loop goes from the newest to the oldest through the targertsnapshots
+		# the inner loop checks from the newest to the oldest the date of the sourcesnapshot against a targetsnapshot
+		while [ "${bb}" -ge 1 ]
+		do	probe_snap_shots_source=${snap_shots_source_current}
+			cc=${snap_number_source_current}
+
+			probe_snap_shot_target=$(echo ${probe_snap_shots_target} | awk '{print $(NF)}')
+			probe_snap_name_target=${probe_snap_shot_target: -$snap_string_offset}
+
+			while [ "${cc}" -ge 1 ]
+			do	probe_snap_shot_source=$(echo ${probe_snap_shots_source} | awk '{print $(NF)}')
+				probe_snap_name_source=${probe_snap_shot_source: -$snap_string_offset}
+
+				if [ "${probe_snap_name_source}" == "${probe_snap_name_target}" ]
+					then	snap_common_source=${probe_snap_shot_source}
+							break
+					else	probe_snap_shots_source=$(echo ${probe_snap_shots_source} | rev | cut -d " " -f 2- | rev)
+							cc=$((${cc} - 1))
+				fi
+			done
+
+			if	[ -n "${snap_common_source}" ]
+				then	break
+				else	probe_snap_shots_target=$(echo ${probe_snap_shots_target} | rev | cut -d " " -f 2- | rev)
+						bb=$((${bb} - 1))
+			fi
+		done
+
+	if	[ "${snap_number_source_current}" -eq "${cc}" ]
+		then	# if this is true the common snapshot is the newest on source and send would fail
+				snap_common_source=newest
+		else	snapvars_loops=passed
+	fi
+fi
+
+# snap_new_source is always the last snapshot
+snap_new_source=$(echo ${snap_shots_source_current} | awk '{print $(NF)}')
+
+# if no snaphots on target are found snap_common_source is "unset". If no common snapshot is found the script exits with an error
+if	[ ! -n "${snap_common_source}" ]
+	then	if	[ "${snapvars_loops}" == "passed" ]
+				then	exit 89
+				else	snap_common_source=unset
+						snap_old_target=unset
+			fi
+	# snap_old_target will be omitted by the main script
+	elif	[ "${snap_common_source}" == "newest" ]
+			then	snap_old_target=newest
+fi
+
+echo "${snap_new_source} ${snap_common_source} ${snap_old_target} ${cc}"

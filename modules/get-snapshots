@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# get snapshots for source  and target
+if	[ "${mode_snapshot}" == "zfs" ]
+	then
+
+		if	[ ! "${snap_root_current}" == "unset" ]
+			then
+
+				if	[ -n "${config_server_current}" ]
+					then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
+					else	snap_shots_raw=$(find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
+				fi
+
+				for snap_shot_raw in ${snap_shots_raw}
+				do	snap_shots_raw=$(echo "${snap_shots_raw}" | sed "s;${snap_shot_raw};${snap_set_current}@${snap_shot_raw};g" 2> /dev/null)
+				done
+
+			else
+
+				# get snapshots for the dataset
+				if	[ -n "${config_server_current}" ]
+					then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "zfs list -t snapshot" | grep ${snap_set_current}@ | awk '{ print $1 }')
+					else	snap_shots_raw=$(zfs list -t snapshot | grep ${snap_set_current}@ | awk '{ print $1 }')
+				fi
+			fi
+
+	elif	[ "${mode_snapshot}" == "btrfs" ]
+		then
+
+			# get snapshots for the subvolume
+			if	[ -n "${config_server_current}" ]
+				then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "find ${snap_set_current}_* -maxdepth 0 2> /dev/null")
+				else	snap_shots_raw=$(find ${snap_set_current}_* -maxdepth 0 2> /dev/null)
+			fi
+fi
+
+snap_dates=$(echo "${snap_shots_raw}" | rev | cut -c -${snap_date_offset} | rev | sort)
+
+# if snap_shots_current is set it has to been unset, otherwise the snapshots will cumulate
+unset snap_shots_current
+
+for snap_date in ${snap_dates}
+do	snap_shots_current+=$(echo "${snap_shots_raw}" | grep "${snap_date}")$'\n'
+done
+
+snap_shots_current=$(echo "${snap_shots_current}" | grep -v '^$')
+
+# if debug is set, there is no current snapshot, for that a virtual snapshot has to be created
+if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
+	then	if [ ! -n "${snap_multi}" ] && [ "${get_current}" == "source" ]
+				then	snap_shots_current=$(echo -e "${snap_shots_current}\n${snap_set_current}${snap_string_separator}${snap_string}")
+			fi
+fi
+
+echo "${snap_shots_current}"

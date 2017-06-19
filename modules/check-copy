@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# check if all prerequisits for rsync are met
+if [ "${mode_transfer}" == "rsync" ]
+	then
+
+		# not yet implemented
+		#if [ "${snap_limit_current}" -gt "0" ] || [ -n "${snap_list_current}" ]
+		#	then	probe_snap_rsync_current=${dir_snap_current}${dir_offset_current}
+		#	else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
+		#fi
+
+		if [ "${check_current}" == "source" ]
+			then	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
+			else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
+		fi
+
+		# check if directory exists
+		if [ -n "${config_server_current}" ]
+			then	probe=$(ssh ${config_server_current}${config_port_current} "find ${probe_snap_rsync_current} -maxdepth 0 2> /dev/null")
+			else	probe=$(find ${probe_snap_rsync_current} -maxdepth 0 2> /dev/null)
+		fi
+
+		if [ -n "${probe}" ]
+			then	snap_rsync_current=$(echo "${probe}" | sed 's/ /\\ /g')
+			else	exit 81
+		fi
+
+	else	:
+fi
+
+##### exports of variables which are created here #####
+echo "${snap_rsync_current}"
+
+config_fields="snap_rsync_current"
