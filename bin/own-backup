@@ -22,7 +22,6 @@ usage="usage: own-backup [parameter]
  -v	show version of this script
  -h	this page"
 dir_root=/usr/local/own-backup
-conf=/etc/own-backup/${config}.conf
 
 # --------------------------------- Parameter ----------------------------------
 
@@ -62,6 +61,7 @@ done
 ######################### CONFIG #########################
 
 dir_modules=${dir_root}/modules
+conf=/etc/own-backup/${config}.conf
 probe=$(find ${conf} 2>&1)
 
 # check if config file exists
