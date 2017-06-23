@@ -285,8 +285,8 @@ fi
 if [ -n "${snap_list_source}" ]
 	then	source ${dir_modules}/arg-osss
 			if	[ "${snap_list_location_source}" == "ssh" ]
-				then	ssh ${config_server_source}${config_port_source} "ownsnapshot ${arg_oss_source}"
-				else	ownsnapshot ${arg_oss_source}
+				then	ssh ${config_server_source}${config_port_source} "own-snapshot ${arg_oss_source}"
+				else	own-snapshot ${arg_oss_source}
 						check-exit
 			fi
 fi
@@ -308,7 +308,7 @@ do	aa=$((${aa} + 1))
 
 	if	[ "${snap_limit_source}"  -ge 1 ]
 		then	source ${dir_modules}/arg-osss
-				ownsnapshot ${arg_oss_source}
+				own-snapshot ${arg_oss_source}
 				check-exit
 	fi
 
@@ -425,7 +425,7 @@ do	aa=$((${aa} + 1))
 
 				if	[ "${snap_limit_target}" -gt 0 ]
 					then	source ${dir_modules}/arg-osst
-							ownsnapshot ${arg_oss_target} && exit_code=${?}
+							own-snapshot ${arg_oss_target} && exit_code=${?}
 				fi
 	fi
 
@@ -446,8 +446,8 @@ done
 if [ -n "${snap_list_target}" ]
 	then	source ${dir_modules}/arg-osst
 			if [ "${snap_list_location_target}" == "ssh" ]
-				then	ssh ${config_server_target}${config_port_target} "ownsnapshot ${arg_oss_target}"
-				else	ownsnapshot ${arg_oss_target}
+				then	ssh ${config_server_target}${config_port_target} "own-snapshot ${arg_oss_target}"
+				else	own-snapshot ${arg_oss_target}
 						check-exit
 			fi
 fi
