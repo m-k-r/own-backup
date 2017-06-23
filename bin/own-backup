@@ -2,8 +2,8 @@
 #
 # -----------------------------------------------------------------------------
 #
-# Marcel Keller
-# Usage: uses config files to backup btrfs, zfs, file, directory, mysql and kvm to other disk or server
+# Author:	Marcel Keller
+# Usage:	uses config files to backup btrfs, zfs, file, directory, mysql and kvm to other disk or server
 # License:	GPLv3 http://www.gnu.org/licenses/gpl-3.0
 #
 # ----------------------------- Global Variables ------------------------------
@@ -11,13 +11,13 @@
 version=1.0.0
 usage="usage: own-backup [parameter]
 
- -c	name of the config file without ".conf" at the end
+ -c	name of the config file without '.conf' at the end
  -d	debug level: commands, datasets, snapshots, snapvars, full
- -m	copies multiple snapshots instead of the last. valid: all or a restriction like "daily" for all snapshots containing daily
- -n	overrides limit for snapshots to keep. has to be integer and source and target are separated by ":" like "5:5"
+ -m	copies multiple snapshots instead of the last. valid: all or a restriction like 'daily' for all snapshots containing daily
+ -n	overrides limit for snapshots to keep. has to be integer and source and target are separated by ':' like '5:5'
  -o	show output
  -r	rollback. Source and target are swapped. No new snapshots are created
- -s	overrides "snapshotformat (name)" in config
+ -s	overrides 'snapshotformat (name)' in config
  -t	overrides the frequency in config for source and target
  -v	show version of this script
  -h	this page"
@@ -30,7 +30,7 @@ if [ "$#" == "0" ]
 	then	echo "${usage}" && exit 0
 fi
 
-while getopts ":c:d:m:n:ors:t:h" opt; do
+while getopts ":c:d:m:n:ors:t:vh" opt; do
 		case ${opt} in
 		c)		config=$OPTARG
 				;;
@@ -48,8 +48,12 @@ while getopts ":c:d:m:n:ors:t:h" opt; do
 				;;
 		t)		snap_list_frequency_override=$OPTARG
 				;;
-		h)		echo "Under construction" && exit 0
-				;;
+		v)	echo "${version}"
+			exit 0
+			;;
+		h)	echo "${usage}"
+			exit 0
+			;;
 		?)		echo "Invalid option: -$OPTARG" >&2 && exit 1
 				;;
 		esac
