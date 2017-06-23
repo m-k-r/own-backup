@@ -100,8 +100,6 @@ fi
 
 . ${dir_modules}/check-config
 check-exit
-. ${dir_modules}/set-config
-check-exit
 
 # Backup the ifs
 IFSBAK=${IFS}
