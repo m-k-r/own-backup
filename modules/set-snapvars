@@ -19,9 +19,6 @@ if	[ "${snap_number_target_current}" -ge 1 ] && [ "${snap_number_source_current}
 		bb=${snap_number_target_current}
 		probe_snap_shots_target=${snap_shots_target_current}
 
-		# snap_old_target needs to be the newest actually existing snapshot (the last one is virtual) on target which is not necessarily snap_common_source
-		snap_old_target=$(echo ${probe_snap_shots_target} | awk '{print $(NF)}')
-
 		# 2 loops are used:
 		# the outer loop goes from the newest to the oldest through the targertsnapshots
 		# the inner loop checks from the newest to the oldest the date of the sourcesnapshot against a targetsnapshot
@@ -58,19 +55,12 @@ if	[ "${snap_number_target_current}" -ge 1 ] && [ "${snap_number_source_current}
 	fi
 fi
 
-# snap_new_source is always the last snapshot
-snap_new_source=$(echo ${snap_shots_source_current} | awk '{print $(NF)}')
-
 # if no snaphots on target are found snap_common_source is "unset". If no common snapshot is found the script exits with an error
 if	[ ! -n "${snap_common_source}" ]
 	then	if	[ "${snapvars_loops}" == "passed" ]
 				then	exit 89
 				else	snap_common_source=unset
-						snap_old_target=unset
 			fi
-	# snap_old_target will be omitted by the main script
-	elif	[ "${snap_common_source}" == "newest" ]
-			then	snap_old_target=newest
 fi
 
-echo "${snap_new_source} ${snap_common_source} ${snap_old_target} ${cc}"
+echo "${snap_common_source} ${cc}"

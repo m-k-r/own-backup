@@ -382,10 +382,10 @@ do	aa=$((${aa} + 1))
 
 			snap_new_source=$(${dir_modules}/set-snapvars)
 			check-exit
-			snap_common_source=$(echo ${snap_new_source} | cut -d " " -f 2)
-			snap_old_target=$(echo ${snap_new_source} | cut -d " " -f 3)
-			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 4)
-			snap_new_source=$(echo ${snap_new_source} | cut -d " " -f 1)
+			snap_common_source=$(echo ${snap_new_source} | cut -d " " -f 1)
+			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 2)
+			snap_new_source=$(echo ${snap_shots_strict_source[aa]} | awk '{print $(NF)}')
+			snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}')
 			export snap_new_source snap_common_source snap_old_target snap_exist_offset
 
 			# when the snapshots are read, the snapshot on target wasn't created yet.
