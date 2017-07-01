@@ -1,0 +1,99 @@
+#!/bin/bash
+
+##### translate mode and fs to the internal modi
+
+# translation matrix for mode and fs from frontend to mode{create|snapshot|transfer}
+# internally the script destinguishes between create (the snapshot), (handle the) snapshot and transfer (the data)
+if [ "${config_mode}" == "kvm" ] || [ "${config_mode}" == "mysql" ]
+	then	mode_create=${config_mode}
+	else	mode_create=${config_fs}
+fi
+
+mode_snapshot=${config_fs}
+
+if [ "${config_mode}" == "rsync" ]
+	then	mode_transfer=${config_mode}
+	else	mode_transfer=${config_fs}
+fi
+
+
+##### ports for rsync and ssh #####
+
+if [ -n "${config_port_source}" ]
+	then	if [ "${mode_transfer}" == "rsync" ]
+				then	config_port_rsync_source=" -e \"ssh -p ${config_port_source}\""
+						export config_port_rsync_source
+			fi
+			config_port_source=" -p ${config_port_source}"
+			export config_port_source
+fi
+
+if [ -n "${config_port_target}" ]
+	then	if [ "${mode_transfer}" == "rsync" ]
+				then	config_port_rsync_target=" -e \"ssh -p ${config_port_target}\""
+						export config_port_rsync_target
+			fi
+			config_port_target=" -p ${config_port_target}"
+			export config_port_target
+fi
+
+
+##### snapshot limits #####
+
+# in these cases no snapshots should be created. so snap_limit has to be 0
+if [ ! -n "${snap_limit_source}" ] || [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_source=0
+			unset snap_list_source
+			export snap_limit_source
+fi
+
+if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_target=0
+			unset snap_list_target
+			export snap_limit_target
+fi
+
+
+##### define strings for snapname #####
+
+# Get the actual date and time in format and its stringlength
+snap_date=$(date +${snap_date})
+snap_date_offset=$((${#snap_date}))
+# Defines the offset for the snapshot-comparison
+snap_string="${snap_name}_${snap_date}"
+snap_string_offset=$((${#snap_string}))
+
+if [ "${mode_snapshot}" == "btrfs" ] || [ "${mode_snapshot}" == "file" ]|| [ "${mode_snapshot}" == "mysql" ]
+	then	snap_string_separator="_"
+	elif [ "${mode_snapshot}" == "zfs" ] || [ "${mode_snapshot}" == "kvm" ]
+		then	snap_string_separator="@"
+fi
+
+##### rollback handling #####
+
+# if rollback is set the source- and targetvariables have to be exchanged
+if [ "${snap_rollback}" == "set" ]
+	then
+
+		dir_trans_var=${dir_snap_source}
+		dir_snap_source=${dir_snap_target}
+		dir_snap_target=${dir_trans_var}
+
+		dir_trans_var=${dir_root_source}
+		dir_root_source=${dir_root_target}
+		dir_root_target=${dir_trans_var}
+
+		if [ -n "${dir_offset_source}" ] || [ -n "${dir_offset_target}" ]
+			then	dir_trans_var=${dir_offset_source}
+					dir_offset_source=${dir_offset_target}
+					dir_offset_target=${dir_trans_var}
+					export dir_offset_source dir_offset_target
+		fi
+
+		export dir_snap_source dir_snap_target dir_root_source dir_root_target
+fi
+
+##### exports of variables which are created here #####
+export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
+
+config_fields="mode_create mode_snapshot mode_transfer config_port_rsync_source config_port_rsync_target config_port_source config_port_target snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator"
