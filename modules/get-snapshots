@@ -23,7 +23,10 @@ if	[ "${mode_snapshot}" == "zfs" ]
 		fi
 
 			for snap_shot in ${snap_shots}
-			do	snap_shot_timestamp=$(LC_TIME="C" zfs get creation ${snap_set_local}${snap_shot} | tail -n +2 | cut -d " " -f 5-10)
+			do	if	[ -n "${config_server_current}" ]
+					then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "LC_TIME="C" zfs get creation ${snap_set_local}${snap_shot}" | tail -n +2 | cut -d " " -f 5-10)
+					else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation ${snap_set_local}${snap_shot} | tail -n +2 | cut -d " " -f 5-10)
+				fi
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
 				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_set_local}${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
 			done
@@ -38,7 +41,10 @@ if	[ "${mode_snapshot}" == "zfs" ]
 			fi
 
 			for snap_shot in ${snap_shots}
-			do	snap_shot_timestamp=$(btrfs subvolume show ${snap_shot} | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+			do	if	[ -n "${config_server_current}" ]
+					then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show ${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+					else	snap_shot_timestamp=$(btrfs subvolume show ${snap_shot} | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+				fi
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
 				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
 			done
