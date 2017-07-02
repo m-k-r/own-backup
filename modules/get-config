@@ -25,7 +25,7 @@ dir_root_target=$(awk -v condition1="root-directory" -v condition2="(target)" '$
 dir_offset_source=$(awk -v condition1="offset-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 dir_offset_target=$(awk -v condition1="offset-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 
-# Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won´t work if snapshots are not handled by another script
+# Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive wonÂ´t work if snapshots are not handled by another script
 if	[ ! -n "${snap_name}" ]
 	then	snap_name=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 fi

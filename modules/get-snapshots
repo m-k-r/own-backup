@@ -8,49 +8,49 @@ if	[ "${mode_snapshot}" == "zfs" ]
 			then
 
 				if	[ -n "${config_server_current}" ]
-					then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
-					else	snap_shots_raw=$(find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
+					then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
+					else	snap_shots=$(find ${snap_root_current}/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 				fi
-
-				for snap_shot_raw in ${snap_shots_raw}
-				do	snap_shots_raw=$(echo "${snap_shots_raw}" | sed "s;${snap_shot_raw};${snap_set_current}@${snap_shot_raw};g" 2> /dev/null)
-				done
+				snap_set_local="${snap_set_current}@"
 
 			else
 
 				# get snapshots for the dataset
 				if	[ -n "${config_server_current}" ]
-					then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "zfs list -t snapshot" | grep ${snap_set_current}@ | awk '{ print $1 }')
-					else	snap_shots_raw=$(zfs list -t snapshot | grep ${snap_set_current}@ | awk '{ print $1 }')
+					then	snap_shots=$(ssh ${config_server_current}${config_port_current} "zfs list -t snapshot" | grep ${snap_set_current}@ | awk '{ print $1 }')
+					else	snap_shots=$(zfs list -t snapshot | grep ${snap_set_current}@ | awk '{ print $1 }')
 				fi
-			fi
+		fi
+
+			for snap_shot in ${snap_shots}
+			do	snap_shot_timestamp=$(LC_TIME="C" zfs get creation ${snap_set_local}${snap_shot} | tail -n +2 | cut -d " " -f 5-10)
+				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
+				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_set_local}${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
+			done
 
 	elif	[ "${mode_snapshot}" == "btrfs" ]
 		then
 
 			# get snapshots for the subvolume
 			if	[ -n "${config_server_current}" ]
-				then	snap_shots_raw=$(ssh ${config_server_current}${config_port_current} "find ${snap_set_current}_* -maxdepth 0 2> /dev/null")
-				else	snap_shots_raw=$(find ${snap_set_current}_* -maxdepth 0 2> /dev/null)
+				then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find ${snap_set_current}_* -maxdepth 0 2> /dev/null")
+				else	snap_shots=$(find ${snap_set_current}_* -maxdepth 0 2> /dev/null)
 			fi
+
+			for snap_shot in ${snap_shots}
+			do	snap_shot_timestamp=$(btrfs subvolume show ${snap_shot} | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
+				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
+			done
 fi
 
-snap_dates=$(echo "${snap_shots_raw}" | rev | cut -c -${snap_date_offset} | rev | sort)
-
-# if snap_shots_current is set it has to been unset, otherwise the snapshots will cumulate
-unset snap_shots_current
-
-for snap_date in ${snap_dates}
-do	snap_shots_current+=$(echo "${snap_shots_raw}" | grep "${snap_date}")$'\n'
-done
-
-snap_shots_current=$(echo "${snap_shots_current}" | grep -v '^$')
+snap_shots=$(echo "${snap_shots}" | sort -k2)
 
 # if debug is set, there is no current snapshot, for that a virtual snapshot has to be created
 if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
-	then	if [ ! -n "${snap_multi}" ] && [ "${get_current}" == "source" ]
-				then	snap_shots_current=$(echo -e "${snap_shots_current}\n${snap_set_current}${snap_string_separator}${snap_string}")
+	then	if [ "${get_current}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]
+				then	snap_shots=$(echo -e "${snap_shots}\n${snap_set_current}${snap_string_separator}${snap_string} $(date +'%s')")
 			fi
 fi
 
-echo "${snap_shots_current}"
+echo "${snap_shots}"

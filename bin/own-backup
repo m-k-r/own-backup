@@ -317,22 +317,26 @@ do	aa=$((${aa} + 1))
 	if	[ -n "${mode_snapshot}" ]
 		then	snap_shots_source[aa]=$(${dir_modules}/get-snapshots)
 				check-exit
+				snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk ' { print $2 } ')
+				snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk ' { print $1 } ')
 				snap_number_source[aa]=$(echo ${snap_shots_source[aa]} | awk -F ' ' '{print NF}')
 				snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
 				snap_number_strict_source[aa]=$(echo ${snap_shots_strict_source[aa]} | awk -F ' ' '{print NF}')
 	fi
 
 	##### target #####
-	get_current=target
-	config_server_current=${config_server_target}
-	config_port_current=${config_port_target}
-	snap_set_current=${snap_set_target[aa]}
-	snap_root_current=${snap_root_target[aa]}
-	export get_current config_server_current config_port_current snap_set_current snap_root_current
-
 	if	[ -n "${mode_snapshot}" ]
-		then	snap_shots_target[aa]=$(${dir_modules}/get-snapshots)
+		then	get_current=target
+				config_server_current=${config_server_target}
+				config_port_current=${config_port_target}
+				snap_set_current=${snap_set_target[aa]}
+				snap_root_current=${snap_root_target[aa]}
+				export get_current config_server_current config_port_current snap_set_current snap_root_current
+
+				snap_shots_target[aa]=$(${dir_modules}/get-snapshots)
 				check-exit
+				snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk ' { print $2 } ')
+				snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk ' { print $1 } ')
 				snap_number_target[aa]=$(echo ${snap_shots_target[aa]} | awk -F ' ' '{print NF}')
 				snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
 				snap_number_strict_target[aa]=$(echo ${snap_shots_strict_target[aa]} | awk -F ' ' '{print NF}')
@@ -410,7 +414,11 @@ do	aa=$((${aa} + 1))
 		then
 
 			if	[ -n "${snap_multi}" ]
-				then	${dir_modules}/set-multisnap && exit_code=${?}
+				then	snap_shots_source_ts_current=$(snap_shots_source_ts[aa])
+						snap_shots_target_ts_current=${snap_shots_target_ts[aa]}
+						export snap_exist_offset snap_shots_source_ts_current snap_shots_target_ts_current
+
+						${dir_modules}/set-multisnap && exit_code=${?}
 
 				elif	[ "${mode_transfer}" == "zfs" ]
 					then	${dir_modules}/copy-zfs && exit_code=${?}

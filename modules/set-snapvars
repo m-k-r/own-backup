@@ -16,43 +16,28 @@ fi
 if	[ "${snap_number_target_current}" -ge 1 ] && [ "${snap_number_source_current}" -ge 2 ]
 	then
 
-		bb=${snap_number_target_current}
-		probe_snap_shots_target=${snap_shots_target_current}
+		probe_snap_shots_source=${snap_shots_source_current}
+		bb=${snap_number_source_current}
 
-		# 2 loops are used:
-		# the outer loop goes from the newest to the oldest through the targertsnapshots
-		# the inner loop checks from the newest to the oldest the date of the sourcesnapshot against a targetsnapshot
 		while [ "${bb}" -ge 1 ]
-		do	probe_snap_shots_source=${snap_shots_source_current}
-			cc=${snap_number_source_current}
+		do	# For God's sake, do not ever quote ${probe_snap_shots_source} again. NEVER!!!
+			probe_snap_shot_source=$(echo ${probe_snap_shots_source} | awk '{print $(NF)}')
+			probe_snap_name_source=${probe_snap_shot_source: -$snap_string_offset}
+			probe=$(echo "${snap_shots_target_current}" | grep "${probe_snap_name_source}")
 
-			probe_snap_shot_target=$(echo ${probe_snap_shots_target} | awk '{print $(NF)}')
-			probe_snap_name_target=${probe_snap_shot_target: -$snap_string_offset}
-
-			while [ "${cc}" -ge 1 ]
-			do	probe_snap_shot_source=$(echo ${probe_snap_shots_source} | awk '{print $(NF)}')
-				probe_snap_name_source=${probe_snap_shot_source: -$snap_string_offset}
-
-				if [ "${probe_snap_name_source}" == "${probe_snap_name_target}" ]
-					then	snap_common_source=${probe_snap_shot_source}
-							break
-					else	probe_snap_shots_source=$(echo ${probe_snap_shots_source} | rev | cut -d " " -f 2- | rev)
-							cc=$((${cc} - 1))
-				fi
-			done
-
-			if	[ -n "${snap_common_source}" ]
-				then	break
-				else	probe_snap_shots_target=$(echo ${probe_snap_shots_target} | rev | cut -d " " -f 2- | rev)
+			if [ -n "${probe}" ]
+				then	snap_common_source=${probe_snap_shot_source}
+						break
+				else	probe_snap_shots_source=$(echo ${probe_snap_shots_source} | rev | cut -d " " -f 2- | rev)
 						bb=$((${bb} - 1))
 			fi
 		done
 
-	if	[ "${snap_number_source_current}" -eq "${cc}" ]
-		then	# if this is true the common snapshot is the newest on source and send would fail
-				snap_common_source=newest
-		else	snapvars_loops=passed
-	fi
+		if	[ "${snap_number_source_current}" -eq "${bb}" ]
+			then	# if this is true the common snapshot is the newest on source and send would fail
+					snap_common_source=newest
+			else	snapvars_loops=passed
+		fi
 fi
 
 # if no snaphots on target are found snap_common_source is "unset". If no common snapshot is found the script exits with an error
@@ -63,4 +48,4 @@ if	[ ! -n "${snap_common_source}" ]
 			fi
 fi
 
-echo "${snap_common_source} ${cc}"
+echo "${snap_common_source} ${bb}"
