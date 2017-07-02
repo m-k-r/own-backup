@@ -6,13 +6,9 @@
 if [ -n "${debug}" ]
 	then
 
-		if [ "${debug}" == "output" ]
-			then	show_output="set"
-					export show_output
-
-			elif [ "${debug}" == "commands" ]
-				then	show_commands="set"
-						export show_commands
+		if [ "${debug}" == "commands" ]
+			then	show_commands="set"
+					export show_commands
 
 			elif [ "${debug}" == "datasets" ]
 				then	show_datasets="set"

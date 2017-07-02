@@ -8,7 +8,7 @@
 #
 # ----------------------------- Global Variables ------------------------------
 
-version=1.0.0
+version=1.0
 usage="usage: own-backup [parameter]
 
  -c	name of the config file without '.conf' at the end
@@ -70,11 +70,11 @@ if [ ! "${probe}" == "${conf}" ]
 fi
 
 if [ -n "${snap_limit_override}" ]
-	then	snap_limit_source=$(echo "${snap_limit_override}" | cut -d "#" -f 1)
-			snap_limit_target=$(echo "${snap_limit_override}" | cut -d "#" -f 2)
+	then	snap_limit_source=$(echo "${snap_limit_override}" | cut -d ":" -f 1)
+			snap_limit_target=$(echo "${snap_limit_override}" | cut -d ":" -f 2)
 fi
 
-export snap_multi snap_rollback snap_name_override snap_list_frequency_override snap_limit_source snap_limit_target
+export snap_multi snap_rollback snap_name_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules
 
 ##### define functions #####
 
@@ -389,9 +389,9 @@ do	aa=$((${aa} + 1))
 			snap_new_source=$(${dir_modules}/set-snapvars)
 			check-exit
 			snap_common_source=$(echo ${snap_new_source} | cut -d " " -f 1)
-			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 2)
+			snap_old_target=$(echo ${snap_new_source} | cut -d " " -f 2)
+			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 3)
 			snap_new_source=$(echo ${snap_shots_strict_source[aa]} | awk '{print $(NF)}')
-			snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}')
 			export snap_new_source snap_common_source snap_old_target snap_exist_offset
 
 			# when the snapshots are read, the snapshot on target wasn't created yet.
@@ -407,14 +407,21 @@ do	aa=$((${aa} + 1))
 	fi
 
 	if [ "${show_commands}" == "set" ] || [ "${show_snapvars}" == "set" ]
-		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\nsourcesnapsnew is:\n${snap_new_source}\nsourcesnapsold is:\n${snap_common_source}\ntargetsnapsold is:\n${snap_old_target}\n"
+		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+	fi
+
+	if  [ "${show_snapvars}" == "set" ]
+		then	printf "sourcesnapsnew is:\n${snap_new_source}\nsourcesnapsold is:\n${snap_common_source}\ntargetsnapsold is:\n${snap_old_target}\n"
+				if	[ ! "${show_commands}" == "set" ]
+					then	continue
+				fi
 	fi
 
 	if	[ ! "${snap_common_source}" == "newest" ] && [ ! "${show_snapvars}" == "set" ]
 		then
 
 			if	[ -n "${snap_multi}" ]
-				then	snap_shots_source_ts_current=$(snap_shots_source_ts[aa])
+				then	snap_shots_source_ts_current=${snap_shots_source_ts[aa]}
 						snap_shots_target_ts_current=${snap_shots_target_ts[aa]}
 						export snap_exist_offset snap_shots_source_ts_current snap_shots_target_ts_current
 

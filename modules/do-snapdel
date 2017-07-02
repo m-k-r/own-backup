@@ -11,9 +11,9 @@ do	snap_del_current=$(echo ${snap_del} | awk '{ print $1 }')
 
 			snap_del_kvm=${snap_del_current: -$snap_string_offset}
 			if [ -n "${config_server_current}" ]
-				then	command1="ssh ${config_server_current}${config_port_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current}"
+				then	command1="ssh ${config_server_current}${config_port_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current} | awk ' { print $1 } '"
 						command2="ssh ${config_server_current}${config_port_current} \"qm delsnapshot ${sync_vmid_current} ${snap_del_kvm}\""
-				else	command1="zfs list ${snap_del_current} | grep ${snap_del_current}"
+				else	command1="zfs list ${snap_del_current} | grep ${snap_del_current} | awk ' { print $1 } '"
 						command2="qm delsnapshot ${sync_vmid_current} ${snap_del_kvm}"
 			fi
 
@@ -21,9 +21,9 @@ do	snap_del_current=$(echo ${snap_del} | awk '{ print $1 }')
 			then
 
 				if [ -n "${config_server_current}" ]
-					then	command1="ssh ${config_server_current}${config_port_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current}"
+					then	command1="ssh ${config_server_current}${config_port_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current} | awk ' { print $1 } '"
 							command2="ssh ${config_server_current}${config_port_current} \"zfs destroy ${snap_del_current}\""
-					else	command1="zfs list ${snap_del_current} | grep ${snap_del_current}"
+					else	command1="zfs list ${snap_del_current} | grep ${snap_del_current} | awk ' { print $1 } '"
 							command2="zfs destroy ${snap_del_current}"
 				fi
 

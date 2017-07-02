@@ -45,7 +45,9 @@ if	[ ! -n "${snap_common_source}" ]
 	then	if	[ "${snapvars_loops}" == "passed" ]
 				then	exit 89
 				else	snap_common_source=unset
+						snap_old_target=unset
 			fi
+	else	snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}')
 fi
 
-echo "${snap_common_source} ${bb}"
+echo "${snap_common_source} ${snap_old_target} ${bb}"
