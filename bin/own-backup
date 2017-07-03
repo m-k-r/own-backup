@@ -29,11 +29,13 @@ if [ "$#" == "0" ]
 	then	echo "${usage}" && exit 0
 fi
 
-while getopts ":c:d:m:n:ors:t:vh" opt; do
+while getopts ":c:d:f:m:n:ors:t:vh" opt; do
 		case ${opt} in
 		c)		config=$OPTARG
 				;;
 		d)		debug=$OPTARG
+				;;
+		f)		snap_list_frequency_override=$OPTARG
 				;;
 		m)		snap_multi=$OPTARG
 				;;
@@ -45,7 +47,7 @@ while getopts ":c:d:m:n:ors:t:vh" opt; do
 				;;
 		s)		snap_name=$OPTARG
 				;;
-		t)		snap_list_frequency_override=$OPTARG
+		t)		snap_date_override=$OPTARG
 				;;
 		v)	echo "${version}"
 			exit 0

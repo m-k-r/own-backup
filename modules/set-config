@@ -57,7 +57,10 @@ fi
 ##### define strings for snapname #####
 
 # Get the actual date and time in format and its stringlength
-snap_date=$(date +${snap_date})
+if	[ -n "${snap_date_override}" ]
+	then	snap_date=${snap_date_override}
+	else	snap_date=$(date +${snap_date})
+fi
 snap_date_offset=$((${#snap_date}))
 # Defines the offset for the snapshot-comparison
 snap_string="${snap_name}_${snap_date}"
