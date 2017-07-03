@@ -19,7 +19,7 @@ usage="usage: own-backup [parameter]
  -o	show output
  -r	rollback. Source and target are swapped. No new snapshots are created
  -s	overrides 'snapshotformat (name)' in config
- -f	overrides the frequency in config for source and target
+ -t	overrides the date
  -v	show version of this script
  -h	this page"
 dir_root=/usr/local/own-backup
