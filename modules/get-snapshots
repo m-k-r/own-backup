@@ -54,7 +54,7 @@ snap_shots=$(echo "${snap_shots}" | sort -k2)
 
 # if debug is set, there is no current snapshot, for that a virtual snapshot has to be created
 if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
-	then	if [ "${get_current}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]
+	then	if ([ "${get_current}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]) || ([ "${get_current}" == "source" ] && [ -n "${snap_list_source}" ])
 				then	snap_shots=$(echo -e "${snap_shots}\n${snap_set_current}${snap_string_separator}${snap_string} $(date +'%s')")
 			fi
 fi
