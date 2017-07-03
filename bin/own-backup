@@ -13,6 +13,7 @@ usage="usage: own-backup [parameter]
 
  -c	name of the config file without '.conf' at the end
  -d	debug level: commands, datasets, snapshots, snapvars, full
+ -f	overrides the frequency in config for source and target
  -m	copies multiple snapshots instead of the last. valid: all or a restriction like 'daily' for all snapshots containing daily
  -n	overrides limit for snapshots to keep. has to be integer and source and target are separated by ':' like '5:5'
  -o	show output
