@@ -29,8 +29,9 @@ if [ -n "${debug}" ]
 						show_snapvars="set"
 						export show_commands show_datasets show_snapshots show_snapvars
 
-			else	echo "no supported debug-level found: ${debug}" && exit 1
+			else	exit 95
 		fi
+		unset debug
 fi
 
 # checks if mode and filesystem is, if set, correct.

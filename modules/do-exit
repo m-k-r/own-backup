@@ -46,5 +46,8 @@ if [ "${exit_code}" == "80" ]
 	elif [ "${exit_code}" == "94" ]
 		then	echo "There are no snapshots to copy matching your pattern ${snap_multi}" && exit 1
 
+	elif [ "${exit_code}" == "95" ]
+		then	echo "no supported debug-level found: ${debug}" && exit 1
+
 	else	echo "an undefined error has occured: ${?}" && exit 1
 fi

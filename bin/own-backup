@@ -74,7 +74,7 @@ if [ -n "${snap_limit_override}" ]
 			snap_limit_target=$(echo "${snap_limit_override}" | cut -d ":" -f 2)
 fi
 
-export snap_multi snap_rollback snap_name_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules
+export debug snap_multi snap_rollback snap_name_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules
 
 ##### define functions #####
 
