@@ -41,13 +41,13 @@ fi
 ##### snapshot limits #####
 
 # in these cases no snapshots should be created. so snap_limit has to be 0
-if [ ! -n "${snap_limit_source}" ] || [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+if [ ! -n "${snap_limit_source}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_source=0
 			unset snap_list_source
 			export snap_limit_source
 fi
 
-if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${show_snapvars}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_target=0
 			unset snap_list_target
 			export snap_limit_target
