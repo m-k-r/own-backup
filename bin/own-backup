@@ -100,10 +100,11 @@ fi
 
 ######################### VALIDITY CHECKS AND CREATING META-VARIABLES #########################
 
+# these modules are in the same shell so check-exit does not catch the exit codes
 . ${dir_modules}/check-config
-check-exit
+#check-exit
 . ${dir_modules}/set-config
-check-exit
+#check-exit
 
 # Backup the ifs
 IFSBAK=${IFS}

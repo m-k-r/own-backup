@@ -46,6 +46,7 @@ if [ "${exit_code}" == "80" ]
 	elif [ "${exit_code}" == "94" ]
 		then	echo "There are no snapshots to copy matching your pattern ${snap_multi}" && exit 1
 
+	# prepared but not used at the moment because check-config and the main script are in the same shell
 	elif [ "${exit_code}" == "95" ]
 		then	echo "no supported debug-level found: ${debug}" && exit 1
 
