@@ -10,58 +10,56 @@ if [ "${probe_snap_root_current}" == "${dir_root_current}/${sync_name_source_cur
 	then	snap_root_current=${dir_root_current}/${sync_name_source_current}
 			snap_set_current=${dir_snap_current}/${sync_name_target_current}
 	else	if [ -n "${snap_list_current}" ] || [ "${mode_transfer}" == "btrfs" ]
-				then	snap_root_current=unset
-						snap_set_current=${dir_snap_current}/${sync_name_target_current}
-				elif [ "${check_current}" == "source" ] && [ "${mode_transfer}" == "btrfs" ] && [ ! "${snap_rollback}" == "set" ] && [ -n "${snap_list_current}" ]
-					then	exit 82
+			then	snap_root_current=unset
+				snap_set_current=${dir_snap_current}/${sync_name_target_current}
+			elif [ "${check_current}" == "source" ] && [ "${mode_transfer}" == "btrfs" ] && [ ! "${snap_rollback}" == "set" ] && [ -n "${snap_list_current}" ]
+				then	exit 82
 
-				else
+			else	if [ -n "${config_server_current}" ]
+					then	probe_snap_root_current=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show ${dir_root_current} 2> /dev/null" | head -1 | awk '{ print $1 }')
+					else	probe_snap_root_current=$(btrfs subvolume show ${dir_root_current} 2> /dev/null | head -1 | awk '{ print $1 }')
+				fi
 
-					if [ -n "${config_server_current}" ]
-						then	probe_snap_root_current=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show ${dir_root_current} 2> /dev/null" | head -1 | awk '{ print $1 }')
-						else	probe_snap_root_current=$(btrfs subvolume show ${dir_root_current} 2> /dev/null | head -1 | awk '{ print $1 }')
-					fi
+				if [ "${probe_snap_root_current}" == "${dir_root_current}" ]
+					then	snap_root_current=${dir_root_current}
+						if [ "${dir_snap_current}" == "${snap_set_current}" ]
+							then	snap_set_current=${dir_snap_current}/$(echo "${dir_root_current}" | rev | cut -d "/" -f 1 | rev)
+							else	snap_set_current=${dir_snap_current}/${sync_name_target_current}
+						fi
 
-					if [ "${probe_snap_root_current}" == "${dir_root_current}" ]
-						then	snap_root_current=${dir_root_current}
-								if [ "${dir_snap_current}" == "${snap_set_current}" ]
-									then	snap_set_current=${dir_snap_current}/$(echo "${dir_root_current}" | rev | cut -d "/" -f 1 | rev)
-									else	snap_set_current=${dir_snap_current}/${sync_name_target_current}
-								fi
-
-						else	if [ "${snap_limit_current}" == "0" ]
-									then	snap_root_current=unset
-									else	exit 83
-								fi
-					fi
-			fi
+					else	if [ "${snap_limit_current}" == "0" ]
+							then	snap_root_current=unset
+							else	exit 83
+						fi
+				fi
+		fi
 fi
 
-if	[ ! "${dir_snap_current}" == "${dir_root_current}" ]
+if [ ! "${dir_snap_current}" == "${dir_root_current}" ]
 	then	probe_subvol=${dir_snap_current}
-			probe_layer=$(echo ${dir_snap_current} | awk -F "/" '{ print NF}')
-			bb="0"
+		probe_layer=$(echo ${dir_snap_current} | awk -F "/" '{ print NF}')
+		bb="0"
 
-			while [ "${bb}" -lt "${probe_layer}" ]
-			do	bb=$((${bb} + 1))
+		while [ "${bb}" -lt "${probe_layer}" ]
+		do	bb=$((${bb} + 1))
 
-				if [ -n "${config_server_current}" ]
-					then	probe=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show ${probe_subvol}/ 2> /dev/null" | head -1 | awk '{ print $1 }')
-					else	probe=$(btrfs subvolume show ${probe_subvol}/ 2> /dev/null | head -1 | awk '{ print $1 }')
-				fi
-
-				if [ -n "${probe}" ]
-					then	subvolume=found && break
-				fi
-
-				probe_subvol=$(echo ${probe_subvol} | rev | cut -d "/" -f 2- | rev)
-			done
-
-			if [ ! "${subvolume}" == "found" ]
-				then	exit 84
+			if [ -n "${config_server_current}" ]
+				then	probe=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show ${probe_subvol}/ 2> /dev/null" | head -1 | awk '{ print $1 }')
+				else	probe=$(btrfs subvolume show ${probe_subvol}/ 2> /dev/null | head -1 | awk '{ print $1 }')
 			fi
 
-			unset subvolume
+			if [ -n "${probe}" ]
+				then	subvolume=found && break
+			fi
+
+			probe_subvol=$(echo ${probe_subvol} | rev | cut -d "/" -f 2- | rev)
+		done
+
+		if [ ! "${subvolume}" == "found" ]
+			then	exit 84
+		fi
+
+		unset subvolume
 fi
 
 ##### exports of variables which are created here #####

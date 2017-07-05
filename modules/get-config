@@ -26,26 +26,26 @@ dir_offset_source=$(awk -v condition1="offset-directory" -v condition2="(source)
 dir_offset_target=$(awk -v condition1="offset-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 
 # Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won´t work if snapshots are not handled by another script
-if	[ ! -n "${snap_name}" ]
+if [ ! -n "${snap_name}" ]
 	then	snap_name=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 fi
 snap_date=$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 snap_list_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-if	[ ! -n "${snap_list_frequency_override}" ]
+if [ ! -n "${snap_list_frequency_override}" ]
 	then	snap_list_frequency_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $5 }' ${conf})
 	else	snap_list_frequency_source=${snap_list_frequency_override}
 fi
 snap_list_location_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $6 }' ${conf})
 snap_list_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-if	[ ! -n "${snap_list_frequency_override}" ]
+if [ ! -n "${snap_list_frequency_override}" ]
 	then	snap_list_frequency_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${conf})
 	else	snap_list_frequency_target=${snap_list_frequency_override}
 fi
 snap_list_location_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $6 }' ${conf})
-if	[ ! -n "${snap_limit_source}" ]
+if [ ! -n "${snap_limit_source}" ]
 	then	snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 fi
-if	[ ! -n "${snap_limit_target}" ]
+if [ ! -n "${snap_limit_target}" ]
 	then	snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 fi
 # Syncdataoptions like Synclist, Names, Su- and Prefixes and VMID

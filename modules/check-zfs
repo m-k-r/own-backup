@@ -10,42 +10,42 @@ probe=$(echo "${dataset}" | awk '{ print $1 }')
 
 if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 	then	snap_set_current=${dir_snap_current}/${sync_name_current}
-			probe=$(echo "${dataset}" | awk '{ print $5 }')
+		probe=$(echo "${dataset}" | awk '{ print $5 }')
 
-			if [ ! "${probe}" == "-" ]
-				then	snap_root_current=${probe}
-				else	snap_root_current=unset
-			fi
+		if [ ! "${probe}" == "-" ]
+			then	snap_root_current=${probe}
+			else	snap_root_current=unset
+		fi
 
 	else	if [ "${check_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
-				then	exit 85
-			fi
+			then	exit 85
+		fi
 
-			if [ -n "${config_server_current}" ]
-				then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list ${dir_snap_current}" | tail -n +2)
-				else	dataset=$(zfs list ${dir_snap_current} | tail -n +2)
-			fi
+		if [ -n "${config_server_current}" ]
+			then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list ${dir_snap_current}" | tail -n +2)
+			else	dataset=$(zfs list ${dir_snap_current} | tail -n +2)
+		fi
 
-			probe=$(echo "${dataset}" | awk '{ print $1 }')
+		probe=$(echo "${dataset}" | awk '{ print $1 }')
 
-			if [ "${probe}" == "${dir_snap_current}" ]
-				then	if [ "${dir_snap_source}" == "${snap_set_current}" ]
-							then	snap_set_current=${dir_snap_current}
-							else	snap_set_current=${dir_snap_current}/${sync_name_current}
-						fi
+		if [ "${probe}" == "${dir_snap_current}" ]
+			then	if [ "${dir_snap_source}" == "${snap_set_current}" ]
+					then	snap_set_current=${dir_snap_current}
+					else	snap_set_current=${dir_snap_current}/${sync_name_current}
+				fi
 
-						probe=$(echo "${dataset}" | awk '{ print $5 }')
+				probe=$(echo "${dataset}" | awk '{ print $5 }')
 
-						if [ ! "${probe}" == "-" ]
-							then	snap_root_current=${probe}
-							else	snap_root_current=unset
-						fi
+				if [ ! "${probe}" == "-" ]
+					then	snap_root_current=${probe}
+					else	snap_root_current=unset
+				fi
 
-				else	if [ "${snap_limit_current}" == "0" ]
-							then	snap_set_current=unset && snap_root_current=unset
-							else	exit 86
-						fi
-			fi
+			else	if [ "${snap_limit_current}" == "0" ]
+					then	snap_set_current=unset && snap_root_current=unset
+					else	exit 86
+				fi
+		fi
 fi
 
 echo "${snap_root_current} ${snap_set_current}"

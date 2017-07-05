@@ -2,9 +2,7 @@
 
 # check if all prerequisits for rsync are met
 if [ "${mode_transfer}" == "rsync" ]
-	then
-
-		# not yet implemented
+	then	# not yet implemented
 		#if [ "${snap_limit_current}" -gt "0" ] || [ -n "${snap_list_current}" ]
 		#	then	probe_snap_rsync_current=${dir_snap_current}${dir_offset_current}
 		#	else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}

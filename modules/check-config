@@ -4,30 +4,28 @@
 
 # checks if a valid debuglevel is set
 if [ -n "${debug}" ]
-	then
-
-		if [ "${debug}" == "commands" ]
+	then	if [ "${debug}" == "commands" ]
 			then	show_commands="set"
-					export show_commands
+				export show_commands
 
 			elif [ "${debug}" == "datasets" ]
 				then	show_datasets="set"
-						export show_datasets
+					export show_datasets
 
 			elif [ "${debug}" == "snapshots" ]
 				then	show_snapshots="set"
-						export show_snapshots
+					export show_snapshots
 
 			elif [ "${debug}" == "snapvars" ]
 				then	show_snapvars="set"
-						export show_snapvars
+					export show_snapvars
 
 			elif [ "${debug}" == "full" ]
 				then	show_commands="set"
-						show_datasets="set"
-						show_snapshots="set"
-						show_snapvars="set"
-						export show_commands show_datasets show_snapshots show_snapvars
+					show_datasets="set"
+					show_snapshots="set"
+					show_snapvars="set"
+					export show_commands show_datasets show_snapshots show_snapvars
 
 			else	echo "no supported debug-level found: ${debug}" && exit 1
 		fi
@@ -36,26 +34,26 @@ fi
 # checks if mode and filesystem is, if set, correct.
 if [ -n "${config_mode}" ]
 	then	if [ ! "${config_mode}" == "rsync" ] && [ ! "${config_mode}" == "kvm" ]
-				then	echo "${config_mode} is not a viable mode" && exit 1
-			fi
+			then	echo "${config_mode} is not a viable mode" && exit 1
+		fi
 
 	else	if [ ! -n "${config_fs}" ]
-				then	echo "neither mode nor filesystem is set" && exit 1
-			fi
+			then	echo "neither mode nor filesystem is set" && exit 1
+		fi
 fi
 
 if [ -n "${config_fs}" ]
-		then	if [ ! "${config_fs}" == "zfs" ] && [ ! "${config_fs}" == "btrfs" ]
-					then	echo "${config_fs} is not a viable filesystem" && exit 1
-				fi
+	then	if [ ! "${config_fs}" == "zfs" ] && [ ! "${config_fs}" == "btrfs" ]
+			then	echo "${config_fs} is not a viable filesystem" && exit 1
+		fi
 fi
 
 # either ${dir_snap_source} or ${dir_root_source} has to be specified
 if [ ! -n "${dir_snap_source}" ]
 	then	if [ -n "${dir_root_source}" ]
-				then	dir_snap_source=${dir_root_source}
-				else	echo "no sourcedirectory is specified" && exit 1
-			fi
+			then	dir_snap_source=${dir_root_source}
+			else	echo "no sourcedirectory is specified" && exit 1
+		fi
 
 	elif [ ! -n "${dir_root_source}" ]
 		then	dir_root_source=${dir_snap_source}
@@ -64,9 +62,9 @@ fi
 # either ${dir_snap_target} or ${dir_root_target} has to be specified
 if [ ! -n "${dir_snap_target}" ]
 	then	if [ -n "${dir_root_target}" ]
-				then	dir_snap_target=${dir_root_target}
-				else	echo "no targetdir is specified" && exit 1
-			fi
+			then	dir_snap_target=${dir_root_target}
+			else	echo "no targetdir is specified" && exit 1
+		fi
 
 	elif [ ! -n "${dir_root_target}" ]
 		then	dir_root_target=${dir_snap_target}
@@ -75,17 +73,17 @@ fi
 # if set, dir_offset needs to start with a /
 if [ -n "${dir_offset_source}" ]
 	then	probe=$(echo ${dir_offset_source} | cut -c 1)
-			if [ ! "${probe}" == "/" ]
-				then	echo "dir_offset needs to start with a /" && exit 1
-			fi
+		if [ ! "${probe}" == "/" ]
+			then	echo "dir_offset needs to start with a /" && exit 1
+		fi
 fi
 
 # if set, dir_offset needs to start with a /
 if [ -n "${dir_offset_target}" ]
 	then	probe=$(echo ${dir_offset_target} | cut -c 1)
-			if [ ! "${probe}" == "/" ]
-				then	echo "dir_offset needs to start with a /" && exit 1
-			fi
+		if [ ! "${probe}" == "/" ]
+			then	echo "dir_offset needs to start with a /" && exit 1
+		fi
 fi
 
 # the script expects an integer here

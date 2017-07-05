@@ -1,16 +1,16 @@
 #!/bin/bash
 
-if	[ -n "${config_server_source}" ]
+if [ -n "${config_server_source}" ]
 	then	command1="rsync ${config_options_rsync}${config_port_rsync_source} ${config_server_source}:${snap_rsync_source_current}"
 	else	command1="rsync ${config_options_rsync} ${snap_rsync_source_current}"
 fi
 
-if	[ -n "${config_server_target}" ]
+if [ -n "${config_server_target}" ]
 	then	command2="${config_port_rsync_target} ${config_server_target}:${snap_rsync_target_current}"
 	else	command2="${snap_rsync_target_current}/"
 fi
 
-if	[ -n "${show_commands}" ]
+if [ -n "${show_commands}" ]
 	then	echo "${command1} ${command2}"
 	else	eval ${command1} ${command2}
 fi

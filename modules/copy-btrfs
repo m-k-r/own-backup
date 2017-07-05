@@ -2,25 +2,25 @@
 
 # For output the script uses pv which has to be between send and receive
 if [ "${show_output}" == "set" ]
-		then	output=" | pv"
+	then	output=" | pv"
 fi
 
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
 if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
 	then	# incremental send/receive
-			if [ -n "${config_server_source}" ]
-				then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${output}\""
-				else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${output}"
-			fi
+		if [ -n "${config_server_source}" ]
+			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${output}\""
+			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${output}"
+		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
-			if [ -n "${config_server_source}" ]
-				then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send ${snap_new_source}${output}\""
-				else	command1="btrfs send ${snap_new_source}${output}"
-			fi
+		if [ -n "${config_server_source}" ]
+			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send ${snap_new_source}${output}\""
+			else	command1="btrfs send ${snap_new_source}${output}"
+		fi
 fi
 
-if	[ -n "${config_server_target}" ]
+if [ -n "${config_server_target}" ]
 	then	command2="ssh ${config_server_target}${config_port_target} \"btrfs receive ${snap_set_target_current}/\""
 	else	command2="btrfs receive ${snap_set_target_current}/"
 fi

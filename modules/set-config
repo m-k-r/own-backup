@@ -21,20 +21,20 @@ fi
 
 if [ -n "${config_port_source}" ]
 	then	if [ "${mode_transfer}" == "rsync" ]
-				then	config_port_rsync_source=" -e \"ssh -p ${config_port_source}\""
-						export config_port_rsync_source
-			fi
-			config_port_source=" -p ${config_port_source}"
-			export config_port_source
+			then	config_port_rsync_source=" -e \"ssh -p ${config_port_source}\""
+				export config_port_rsync_source
+		fi
+		config_port_source=" -p ${config_port_source}"
+		export config_port_source
 fi
 
 if [ -n "${config_port_target}" ]
 	then	if [ "${mode_transfer}" == "rsync" ]
-				then	config_port_rsync_target=" -e \"ssh -p ${config_port_target}\""
-						export config_port_rsync_target
-			fi
-			config_port_target=" -p ${config_port_target}"
-			export config_port_target
+			then	config_port_rsync_target=" -e \"ssh -p ${config_port_target}\""
+				export config_port_rsync_target
+		fi
+		config_port_target=" -p ${config_port_target}"
+		export config_port_target
 fi
 
 
@@ -43,21 +43,21 @@ fi
 # in these cases no snapshots should be created. so snap_limit has to be 0
 if [ ! -n "${snap_limit_source}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_source=0
-			unset snap_list_source
-			export snap_limit_source
+		unset snap_list_source
+		export snap_limit_source
 fi
 
 if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_target=0
-			unset snap_list_target
-			export snap_limit_target
+		unset snap_list_target
+		export snap_limit_target
 fi
 
 
 ##### define strings for snapname #####
 
 # Get the actual date and time in format and its stringlength
-if	[ -n "${snap_date_override}" ]
+if [ -n "${snap_date_override}" ]
 	then	snap_date=${snap_date_override}
 	else	snap_date=$(date +${snap_date})
 fi
@@ -76,9 +76,7 @@ fi
 
 # if rollback is set the source- and targetvariables have to be exchanged
 if [ "${snap_rollback}" == "set" ]
-	then
-
-		dir_trans_var=${dir_snap_source}
+	then	dir_trans_var=${dir_snap_source}
 		dir_snap_source=${dir_snap_target}
 		dir_snap_target=${dir_trans_var}
 
@@ -88,9 +86,9 @@ if [ "${snap_rollback}" == "set" ]
 
 		if [ -n "${dir_offset_source}" ] || [ -n "${dir_offset_target}" ]
 			then	dir_trans_var=${dir_offset_source}
-					dir_offset_source=${dir_offset_target}
-					dir_offset_target=${dir_trans_var}
-					export dir_offset_source dir_offset_target
+				dir_offset_source=${dir_offset_target}
+				dir_offset_target=${dir_trans_var}
+				export dir_offset_source dir_offset_target
 		fi
 
 		export dir_snap_source dir_snap_target dir_root_source dir_root_target

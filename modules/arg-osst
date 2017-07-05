@@ -1,21 +1,21 @@
 unset arg_oss_target
 
-if	[ -n "${debug}" ]
+if [ -n "${debug}" ]
 	then	arg_oss_target+=" -d ${debug}"
 	else	arg_oss_target+=" -d previous"
 fi
 
-if	[ -n "${config_server_target}" ] && [ ! "${snap_list_location_target}" == "ssh" ]
+if [ -n "${config_server_target}" ] && [ ! "${snap_list_location_target}" == "ssh" ]
 	then	arg_oss_target+=" -s ${config_server_target}"
 fi
 
-if	[ -n "${snap_list_target}" ]
+if [ -n "${snap_list_target}" ]
 	then	arg_oss_target+=" -c ${snap_list_target}"
-			arg_oss_target+=" -f ${snap_list_frequency_target}"
-			arg_oss_target+=" -l ${snap_date}"
+		arg_oss_target+=" -f ${snap_list_frequency_target}"
+		arg_oss_target+=" -l ${snap_date}"
 
 	else	arg_oss_target+=" -m ${mode_snapshot}"
-			arg_oss_target+=" -l ${snap_string}"
-			arg_oss_target+=" -o ${snap_set_target[aa]}"
-			arg_oss_target+=" -r ${snap_root_target[aa]}"
+		arg_oss_target+=" -l ${snap_string}"
+		arg_oss_target+=" -o ${snap_set_target[aa]}"
+		arg_oss_target+=" -r ${snap_root_target[aa]}"
 fi
