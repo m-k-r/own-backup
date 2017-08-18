@@ -415,7 +415,8 @@ do	aa=$((${aa} + 1))
 	if  [ "${show_snapvars}" == "set" ]
 		then	printf "sourcesnapsnew is:\n${snap_new_source}\nsourcesnapsold is:\n${snap_common_source}\ntargetsnapsold is:\n${snap_old_target}\n"
 			if [ ! "${show_commands}" == "set" ]
-				then	continue
+				then	# if only snapvars should be shown this loop ends here
+					continue
 			fi
 	fi
 
