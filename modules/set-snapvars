@@ -12,8 +12,9 @@ if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ]
 		fi
 
 		# if snapshots on source are <2 or on target <1 the loop would fail
-		if [ ! "${snap_number_target_current}" -ge 1 ] && [ ! "${snap_number_source_current}" -ge 2 ]
-			then	snap_common_source=unset
+		if [ "${snap_number_target_current}" -ge 1 ] && [ "${snap_number_source_current}" -ge 2 ]
+			then	:
+			else	snap_common_source=unset
 		fi
 
 		# if mode_snapshot is zfs/btrfs and mode_transfer differs a snap_common_source wouldn't necessarily exist
