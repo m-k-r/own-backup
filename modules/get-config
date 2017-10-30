@@ -19,7 +19,10 @@ config_options_mysql=$(awk -v condition1="mysql-options" '$1 == condition1 { pri
 
 # Source- and Targetdirectories/datastets and specific options for modes and filesystems
 dir_snap_source=$(awk -v condition1="snapshot-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-dir_snap_target=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+if [ ! -n "${dir_snap_target_override}" ]
+	then	dir_snap_target=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+	else	dir_snap_target=${dir_snap_target_override}
+fi
 dir_root_source=$(awk -v condition1="root-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 dir_root_target=$(awk -v condition1="root-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 dir_offset_source=$(awk -v condition1="offset-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
