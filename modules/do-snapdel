@@ -30,6 +30,14 @@ do	snap_del_current=$(echo ${snap_del} | awk '{ print $1 }')
 					else	command1="btrfs subvolume show ${snap_del_current} 2> /dev/null | grep ${snap_del_current}"
 						command2="btrfs subvolume delete ${snap_del_current}"
 				fi
+
+		elif [ "${mode_snapshot}" == "file" ]
+			then	if [ -n "${config_server_current}" ]
+					then	command1="ssh ${config_server_current}${config_port_current} \"find ${snap_del_current} -maxdepth 0 2> /dev/null\""
+						command2="ssh ${config_server_current}${config_port_current} \"rm -rf ${snap_del_current}\""
+					else	command1="find ${snap_del_current} -maxdepth 0 2> /dev/null"
+						command2="rm -rf ${snap_del_current}"
+				fi
 	fi
 
 	probe=$(eval ${command1} | awk '{ print $1 }')

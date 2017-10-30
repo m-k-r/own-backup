@@ -40,6 +40,21 @@ if [ "${mode_snapshot}" == "zfs" ]
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
 				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
 			done
+
+	elif [ "${mode_snapshot}" == "file" ]
+		then	# get snapshots for the subvolume
+			if [ -n "${config_server_current}" ]
+				then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find ${snap_set_current}_* -maxdepth 0 2> /dev/null")
+				else	snap_shots=$(find ${snap_set_current}_* -maxdepth 0 2> /dev/null)
+			fi
+
+			for snap_shot in ${snap_shots}
+			do	if [ -n "${config_server_current}" ]
+					then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "stat -c %Z ${snap_shot}")
+					else	snap_shot_timestamp=$(stat -c %Z ${snap_shot})
+				fi
+				snap_shots=$(echo "${snap_shots}" | sed "s;${snap_shot};${snap_shot} ${snap_shot_timestamp};g" 2> /dev/null)
+			done
 fi
 
 snap_shots=$(echo "${snap_shots}" | sort -k2)

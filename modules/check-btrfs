@@ -8,7 +8,7 @@ fi
 
 if [ "${probe_snap_root_current}" == "${dir_root_current}/${sync_name_source_current}" ]
 	then	snap_root_current=${dir_root_current}/${sync_name_source_current}
-			snap_set_current=${dir_snap_current}/${sync_name_target_current}
+		snap_set_current=${dir_snap_current}/${sync_name_target_current}
 	else	if [ -n "${snap_list_current}" ] || [ "${mode_transfer}" == "btrfs" ]
 			then	snap_root_current=unset
 				snap_set_current=${dir_snap_current}/${sync_name_target_current}
