@@ -214,8 +214,8 @@ do	aa=$((${aa} + 1))
 			check-exit
 
 			if [ "${mode_create}" == "mysql" ]
-				then	config_mysql_credentials[aa]=$(echo ${config_options_mysql} | cut -d " " -f 1)
-					config_mysql_certificate[aa]=$(echo ${config_options_mysql} | cut -d " " -f 2)
+				then	config_sql_credentials[aa]=$(echo ${config_options_sql} | cut -d " " -f 1)
+					config_sql_certificate[aa]=$(echo ${config_options_sql} | cut -d " " -f 2)
 			fi
 	fi
 

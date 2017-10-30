@@ -35,7 +35,7 @@ if [ "${exit_code}" == "80" ]
 		then	echo "Spaces are not allowed in filenames for btrfs subvolumes" && exit 1
 
 	elif [ "${exit_code}" == "91" ]
-		then	echo "Mysql: The credential-file ${config_mysql_credentials} does not exist" && exit 1
+		then	echo "SQL: The credential-file ${config_mysql_credentials} does not exist" && exit 1
 
 	elif [ "${exit_code}" == "92" ]
 		then	echo "A certificate is set: ${config_mysql_certificate} but it does not exist" && exit 1

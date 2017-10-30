@@ -24,9 +24,9 @@ if [ -n "${snap_list_source}" ]
 		fi
 
 		if [ "${mode_create}" == "mysql" ]
-			then	arg_oss_source+=" -p ${config_mysql_credentials[aa]}"
-				if [ ! -z "${config_mysql_certificate[aa]}" ]
-					then	arg_oss_source+=" -z ${config_mysql_certificate[aa]}"
+			then	arg_oss_source+=" -p ${config_sql_credentials[aa]}"
+				if [ ! -z "${config_sql_certificate[aa]}" ]
+					then	arg_oss_source+=" -z ${config_sql_certificate[aa]}"
 				fi
 		fi
 fi
