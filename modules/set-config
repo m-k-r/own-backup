@@ -4,7 +4,7 @@
 
 # translation matrix for mode and fs from frontend to mode{create|snapshot|transfer}
 # internally the script destinguishes between create (the snapshot), (handle the) snapshot and transfer (the data)
-if [ "${config_mode}" == "kvm" ] || [ "${config_mode}" == "mysql" ]
+if [ -n "${config_mode}" && [ ! "${config_mode}" == "rsync" ]
 	then	mode_create=${config_mode}
 	else	mode_create=${config_fs}
 fi
@@ -15,6 +15,7 @@ if [ "${config_mode}" == "rsync" ]
 	then	mode_transfer=${config_mode}
 	else	mode_transfer=${config_fs}
 fi
+unset config_mode config_fields
 
 
 ##### ports for rsync and ssh #####

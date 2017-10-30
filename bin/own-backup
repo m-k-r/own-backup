@@ -24,7 +24,7 @@ usage="usage: own-backup [parameter]
  -v	show version of this script
  -h	this page"
 dir_root=/usr/local/own-backup
-mode_supported="directory file kvm mysql pgsql"
+mode_supported="directory file kvm mysql pgsql rsync"
 fs_supported="btrfs zfs file"
 
 # --------------------------------- Parameter ----------------------------------
