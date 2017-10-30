@@ -33,7 +33,9 @@ fi
 
 # checks if mode and filesystem is, if set, correct.
 if [ -n "${config_mode}" ]
-	then	if [ ! "${config_mode}" == "rsync" ] && [ ! "${config_mode}" == "kvm" ]
+	# only grep whole words"
+	then	check_mode=$(echo ${mode_supported} | grep "\b${config_mode}\b")
+		if [ ! -n "${check_mode}" ]
 			then	echo "${config_mode} is not a viable mode" && exit 1
 		fi
 
@@ -43,10 +45,12 @@ if [ -n "${config_mode}" ]
 fi
 
 if [ -n "${config_fs}" ]
-	then	if [ ! "${config_fs}" == "zfs" ] && [ ! "${config_fs}" == "btrfs" ]
+	then	check_fs=$(echo ${fs_supported} | grep "\b${config_fs}\b")
+		if [ ! -n "${check_fs}" ]
 			then	echo "${config_fs} is not a viable filesystem" && exit 1
 		fi
 fi
+unset check_mode check_fs
 
 # either ${dir_snap_source} or ${dir_root_source} has to be specified
 if [ ! -n "${dir_snap_source}" ]
