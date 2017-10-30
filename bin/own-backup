@@ -209,11 +209,11 @@ do	aa=$((${aa} + 1))
 	##### checks on source side #####
 
 	# check all ${mode_create}. atm this is only kvm
-	if [ "${mode_create}" == "kvm" ] || [ "${mode_create}" == "mysql" ]
+	if [ ! "${mode_create}" == "mode_snapshot" ]
 		then	${dir_modules}/check-create
 			check-exit
 
-			if [ "${mode_create}" == "mysql" ]
+			if [ "${mode_create}" == "mysql" ] ||  "${mode_create}" == "pgsql" ]
 				then	config_sql_credentials[aa]=$(echo ${config_options_sql} | cut -d " " -f 1)
 					config_sql_certificate[aa]=$(echo ${config_options_sql} | cut -d " " -f 2)
 			fi
@@ -247,7 +247,7 @@ do	aa=$((${aa} + 1))
 	export snap_set_current check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
 
 	# basically not necessary on target side but left as a hook for future additions
-	#if [ "${mode_create}" == "kvm" ] || [ "${mode_create}" == "mysql" ]
+	#if [ ! "${mode_create}" == "mode_snapshot" ]
 	#	then	${dir_modules}/check-create
 	#			check-exit
 	#fi
