@@ -209,7 +209,7 @@ do	aa=$((${aa} + 1))
 	##### checks on source side #####
 
 	# check all ${mode_create}. atm this is only kvm
-	if [ ! "${mode_create}" == "mode_snapshot" ]
+	if [ ! "${mode_create}" == "${mode_snapshot}" ]
 		then	${dir_modules}/check-create
 			check-exit
 
