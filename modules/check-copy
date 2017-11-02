@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # check if all prerequisits for rsync are met
-if [ "${mode_transfer}" == "rsync" ]
+if [ ! "${mode_snapshot}" == "file" ]
 	then	# not yet implemented
 		#if [ "${snap_limit_current}" -gt "0" ] || [ -n "${snap_list_current}" ]
 		#	then	probe_snap_rsync_current=${dir_snap_current}${dir_offset_current}
@@ -24,6 +24,12 @@ if [ "${mode_transfer}" == "rsync" ]
 			else	exit 81
 		fi
 
+	elif	[ "${mode_snapshot}" == "file" ]
+		then	if [ "${check_current}" == "source" ] && [ "${snap_limit_current}" == "0" ]
+				then	snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
+				elif [ "${check_current}" == "target" ]
+					then	snap_rsync_current=${dir_root_current}${dir_offset_current}
+			fi
 	else	:
 fi
 

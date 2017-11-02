@@ -219,12 +219,6 @@ do	aa=$((${aa} + 1))
 			fi
 	fi
 
-	# check all ${mode_transfer}. atm this is only rsync. if mode_file is file then rsync is assumed for mode_transfer and don't have to be checked extra
-	if [ "${mode_transfer}" == "rsync" ] && [ ! "${mode_snapshot}" == "file" ]
-		then	snap_rsync_source[aa]=$(${dir_modules}/check-copy)
-			check-exit
-	fi
-
 	# check all ${mode_snapshot}
 	if [ -n "${mode_snapshot}" ]
 		then	snap_set_current=$(${dir_modules}/check-${mode_snapshot})
@@ -232,6 +226,12 @@ do	aa=$((${aa} + 1))
 			snap_root_source[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
 			snap_set_current=$(echo ${snap_set_current} | cut -d " " -f 2)
 			snap_set_source[aa]=${snap_set_current}
+	fi
+
+	# check all ${mode_transfer}. atm this is only rsync. if mode_file is file then rsync is assumed for mode_transfer and don't have to be checked extra
+	if [ "${mode_transfer}" == "rsync" ]
+		then	snap_rsync_source[aa]=$(${dir_modules}/check-copy)
+			check-exit
 	fi
 
 	##### check the prerequisits on target side #####
@@ -252,17 +252,17 @@ do	aa=$((${aa} + 1))
 	#			check-exit
 	#fi
 
-	if [ "${mode_transfer}" == "rsync" ] && [ ! "${mode_snapshot}" == "file" ]
-		then	snap_rsync_target[aa]=$(${dir_modules}/check-copy)
-			check-exit
-	fi
-
 	if [ -n "${mode_snapshot}" ]
 		then	snap_set_current=$(${dir_modules}/check-${mode_snapshot})
 			check-exit
 			snap_root_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
 			snap_set_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 2)
 			unset snap_set_current
+	fi
+
+	if [ "${mode_transfer}" == "rsync" ]
+		then	snap_rsync_target[aa]=$(${dir_modules}/check-copy)
+			check-exit
 	fi
 
 	########## debug-output ##########
@@ -381,7 +381,7 @@ aa="-1"
 while [ "${sync_name_number}" -gt "${aa}" ]
 do	aa=$((${aa} + 1))
 
-	if [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "zfs" ] || [ -n "${log_dir}" ]
+	if [ "${mode_transfer}" == "${mode_snapshot}" ] || [ "${mode_snapshot}" == "file" ] && [ "${snap_number_strict_source[aa]}" -ge "1" ] || [ -n "${log_dir}" ]
 		then	# variables on source side
 			snap_shots_source_current=${snap_shots_source[aa]}
 			snap_number_source_current=${snap_number_source[aa]}
@@ -440,22 +440,15 @@ do	aa=$((${aa} + 1))
 					then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
 						${dir_modules}/copy-btrfs && exit_code=${?}
 
-				elif [ "${mode_transfer}" == "file" ]
-					then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
-						${dir_modules}/copy-rsync && exit_code=${?}
+				elif [ "${mode_transfer}" == "rsync" ]
+					then	${dir_modules}/copy-rsync && exit_code=${?}
+
+						if [ "${snap_limit_target}" -gt 0 ] && [ ! "${mode_snapshot}" == "file" ]
+							then	source ${dir_modules}/arg-osst
+								own-snapshot ${arg_oss_target} && exit_code=${?}
+						fi
 			fi
 	fi
-
-	if [ "${mode_transfer}" == "rsync" ] && [ ! -n "${snap_multi}" ]
-		then	${dir_modules}/copy-rsync
-			check-exit
-
-			if [ "${snap_limit_target}" -gt 0 ]
-				then	source ${dir_modules}/arg-osst
-					own-snapshot ${arg_oss_target} && exit_code=${?}
-			fi
-	fi
-
 	check-exit
 
 	if [ -n "${log_dir}" ]

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ "${mode_snapshot}" == "file" ] && [ -n "{snap_new_source}" ]
+	then	snap_rsync_source_current=${snap_new_source}
+fi
+
 if [ -n "${config_server_source}" ]
 	then	command1="rsync ${config_options_rsync}${config_port_rsync_source} ${config_server_source}:${snap_rsync_source_current}"
 	else	command1="rsync ${config_options_rsync} ${snap_rsync_source_current}"

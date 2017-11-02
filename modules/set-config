@@ -11,11 +11,16 @@ fi
 
 mode_snapshot=${config_fs}
 
-if [ "${config_mode}" == "rsync" ]
-	then	mode_transfer=${config_mode}
-	else	mode_transfer=${config_fs}
+if [ ! -n "${config_mode}" ] && [ ! "${config_fs}" == "file" ] || [ "${config_mode}" == "kvm" ]
+	then	mode_transfer=${config_fs}
+	elif [ -n "${config_certificate}" ] && [ "${snap_limit_source}" == "0" ]
+		then	mode_transfer=pipe
+	elif [ "${config_mode}" == "mysql" ] && [ "${snap_limit_source}" == "0" ] || [ "${config_mode}" == "pgsql" ] && [ "${snap_limit_source}" == "0" ]
+		then	mode_transfer=pipe
+	elif [ "${config_mode}" == "rsync" ] || [ "${config_fs}" == "file" ]
+		then	mode_transfer=rsync
 fi
-unset config_mode config_fields
+unset config_mode config_fs
 
 
 ##### ports for rsync and ssh #####

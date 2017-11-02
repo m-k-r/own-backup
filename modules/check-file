@@ -1,45 +1,38 @@
 #!/bin/bash
 
-if [ "${check_current}" == "target" ] && [ "${snap_limit_current}" == "0" ]
-	then	snap_root_current=unset
-	else	# check if dataroot/sync exists
-		if [ -n "${config_server_current}" ]
-			then	probe_snap_root_current=$(ssh ${config_server_current}${config_port_current} "find ${dir_root_current}${dir_offset_current}/${sync_name_current} -maxdepth 0 2> /dev/null")
-			else	probe_snap_root_current=$(find ${dir_root_current}${dir_offset_current}/${sync_name_current} -maxdepth 0 2> /dev/null)
+# root/syncname has to exist on source and not on target
+# snap/syncname doesn't have to exist on source and target but snap has to
+
+if [ "${check_current}" == "source" ] && [ "${dir_root_current}" == "${dir_snap_current}" ]
+	then	snap_set_current=unset
+	elif [ "${check_current}" == "target" ] && [ ! "${snap_set_current}" == "unset" ]
+		then	snap_root_current=unset
+fi
+
+# check if dir_root/sync exists
+if [ ! "${snap_root_current}" == "unset" ]
+	then	if [ -n "${config_server_current}" ]
+			then	snap_root_current=$(ssh ${config_server_current}${config_port_current} "find ${dir_root_current}${dir_offset_current}/${sync_name_source_current} -maxdepth 0 2> /dev/null")
+			else	snap_root_current=$(find ${dir_root_current}${dir_offset_current}/${sync_name_source_current} -maxdepth 0 2> /dev/null)
 		fi
 
-		if [ "${probe_snap_root_current}" == "${dir_root_current}${dir_offset_current}/${sync_name_source_current}" ]
-			then	snap_root_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
-				snap_set_current=${dir_snap_current}/${sync_name_target_current}
-			else	if [ -n "${config_server_current}" ]
-					then	probe_snap_root_current=$(ssh ${config_server_current}${config_port_current} "find ${dir_root_current} -maxdepth 0 2> /dev/null")
-					else	probe_snap_root_current=$(find ${dir_root_current} -maxdepth 0 2> /dev/null)
-				fi
-
-				if [ "${probe_snap_root_current}" == "${dir_root_current}/${sync_name_source_current}" ]
-					then	snap_root_current=${dir_root_current}/${sync_name_source_current}
-					else	exit 96
-				fi
+		if [ ! "${snap_root_current}" == "${dir_root_current}${dir_offset_current}/${sync_name_source_current}" ]
+			then	exit 96
 		fi
 fi
 
-
-# check if directory exists
-if [ -n "${config_server_current}" ]
-	then	probe=$(ssh ${config_server_current}${config_port_current} "find ${dir_snap_current} -maxdepth 0 2> /dev/null")
-	else	probe=$(find "${dir_snap_current} -maxdepth 0 2> /dev/null")
-fi
-
-if [ -n "${probe}" ]
-	then	if [ "${check_current}" == "source" ]
-			then	snap_set_current=${dir_snap_current}/$(echo ${snap_root_current} | rev | cut -d "/" -f 1 | rev)
-			elif [ "${check_current}" == "target" ]
-				then	snap_set_current=${dir_snap_current}${dir_offset_current}
+# check if dataset exists
+if [ ! "${snap_set_current}" == "unset" ]
+	then	if [ -n "${config_server_current}" ]
+			then	probe_snap_set_current=$(ssh ${config_server_current}${config_port_current} "find ${dir_snap_current} -maxdepth 0 2> /dev/null")
+			else	probe_snap_set_current=$(find ${dir_snap_current} -maxdepth 0 2> /dev/null)
 		fi
 
-	else	exit 87
+		if [ "${probe_snap_set_current}" == "${dir_snap_current}" ]
+			then	snap_set_current=${dir_snap_current}${dir_offset_current}/${sync_name_target_current}
+			else	exit 87
+		fi
 fi
-
 
 ##### exports of variables which are created here #####
 echo "${snap_root_current} ${snap_set_current}"
