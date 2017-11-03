@@ -149,13 +149,13 @@ do	# control variable. will be used for the arrays
 		then	sync_name_new[aa]=${sync_name[aa]}
 	fi
 
-	if [ ! -z "${sync_name_new_prefix[@]}" ]
+	if [ ! -z "${sync_name_new_prefix[*]}" ]
 		then	if [ -z "${sync_name_new_prefix[aa]}" ]
 					then	sync_name_new_prefix[aa]=${sync_name_new_prefix[aa_old]}
 			fi
 	fi
 
-	if [ ! -z "${sync_name_new_suffix[@]}" ]
+	if [ ! -z "${sync_name_new_suffix[*]}" ]
 		then	if [ -z "${sync_name_new_suffix[aa]}" ]
 					then	sync_name_new_suffix[aa]=${sync_name_new_suffix[aa_old]}
 			fi
@@ -169,6 +169,16 @@ do	# control variable. will be used for the arrays
 
 	##### define sync_name_source and sync_name_target #####
 
+	# files may have dot-sepparated file-types. It is convenient if this stays at the end.
+	if [ "${mode_snapshot}" == "file" ]
+		then	probe=$(echo "${sync_name_new[aa]}" | grep "\.")
+			if [ -n "${probe}" ]
+				then	sync_name_target_type[aa]=${config_file_type}.$(echo "${sync_name_new[aa]}" | cut -d "." -f 2-)
+					sync_name_new[aa]=$(echo "${sync_name_new[aa]}" | cut -d "." -f 1)
+				else	sync_name_target_type[aa]=${config_file_type}
+			fi
+	fi
+
 	# Define sync_name_source and sync_name_target
 	if [ "${snap_rollback}" == "set" ] && [ "${mode_transfer}" == "zfs" ]
 		then	sync_name_source[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
@@ -177,7 +187,7 @@ do	# control variable. will be used for the arrays
 			sync_name_target[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
 	fi
 done
-
+unset sync_name sync_name_new sync_name_new_prefix sync_name_new_suffix config_file_type
 
 ######################### SECOND LOOP: SET SNAP VARIABLES #########################
 
@@ -267,7 +277,7 @@ do	aa=$((${aa} + 1))
 
 	########## debug-output ##########
 	if [ "${show_datasets}" == "set" ]
-		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+		then	printf -- "\n--------------- ${sync_name_source[aa]} ---------------\n\n"
 			echo "Sourcedataset is ${snap_set_source[aa]}"
 			echo "Targetdataset is ${snap_set_target[aa]}"
 			echo "Sourceroot is ${snap_root_source[aa]}"
@@ -309,13 +319,16 @@ aa="-1"
 while [ "${sync_name_number}" -gt "${aa}" ]
 do	aa=$((${aa} + 1))
 
+	##### set global current variables #####
+	sync_name_target_type_current=${sync_name_target_type[aa]}
+
 	##### source #####
 	get_current=source
 	config_server_current=${config_server_source}
 	config_port_current=${config_port_source}
 	snap_set_current=${snap_set_source[aa]}
 	snap_root_current=${snap_root_source[aa]}
-	export get_current config_server_current config_port_current snap_set_current snap_root_current
+	export sync_name_target_type_current get_current config_server_current config_port_current snap_set_current snap_root_current
 
 	if [ "${snap_limit_source}"  -ge 1 ]
 		then	source ${dir_modules}/arg-osss
@@ -352,7 +365,7 @@ do	aa=$((${aa} + 1))
 	fi
 
 	if [ "${show_snapshots}" == "set" ]
-		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+		then	printf -- "\n--------------- ${sync_name_source[aa]} ---------------\n\n"
 			echo "-------------------------"
 			printf "The Snapshotnumber for source is ${snap_number_source[aa]}:\n${snap_shots_source[aa]}\nThe Snapshotnumber for source with the name ${snap_name} is ${snap_number_strict_source[aa]}:\n${snap_shots_strict_source[aa]}\n"
 			printf "The Snapshotnumber for for target is ${snap_number_target[aa]}:\n${snap_shots_target[aa]}\nThe Snapshotnumber for target with the name ${snap_name} is ${snap_number_strict_target[aa]}:\n${snap_shots_strict_target[aa]}\n"
@@ -414,7 +427,7 @@ do	aa=$((${aa} + 1))
 	fi
 
 	if [ "${show_commands}" == "set" ] || [ "${show_snapvars}" == "set" ]
-		then	printf -- "\n--------------- ${sync_name[aa]} ---------------\n\n"
+		then	printf -- "\n--------------- ${sync_name_source[aa]} ---------------\n\n"
 	fi
 
 	if  [ "${show_snapvars}" == "set" ]

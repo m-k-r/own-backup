@@ -13,9 +13,9 @@ mode_snapshot=${config_fs}
 
 if [ ! -n "${config_mode}" ] && [ ! "${config_fs}" == "file" ] || [ "${config_mode}" == "kvm" ]
 	then	mode_transfer=${config_fs}
-	elif [ -n "${config_certificate}" ] && [ "${snap_limit_source}" == "0" ]
+	elif [ -n "${config_certificate}" ] && [ "${dir_root_source}" == "${dir_snap_source}" ]
 		then	mode_transfer=pipe
-	elif [ "${config_mode}" == "mysql" ] && [ "${snap_limit_source}" == "0" ] || [ "${config_mode}" == "pgsql" ] && [ "${snap_limit_source}" == "0" ]
+	elif [ "${config_mode}" == "mysql" ] && [ "${dir_root_source}" == "${dir_snap_source}" ] || [ "${config_mode}" == "pgsql" ] && [ "${dir_root_source}" == "${dir_snap_source}" ]
 		then	mode_transfer=pipe
 	elif [ "${config_mode}" == "rsync" ] || [ "${config_fs}" == "file" ]
 		then	mode_transfer=rsync
@@ -57,6 +57,22 @@ if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap
 	then	snap_limit_target=0
 		unset snap_list_target
 		export snap_limit_target
+fi
+
+
+##### set  #####
+
+if [ -n "${config_file_type}" ]
+	then	probe=$(echo ${config_file_type}| rev | cut -c 1)
+		if [ "${probe}" == "." ]
+			then	config_file_type=$(echo "${config_file_type}"| rev | cut -d "." -f 2- | rev)
+		fi
+
+		probe=$(echo ${config_file_type} | cut -c 1)
+		if [ ! "${probe}" == "." ]
+			then	config_file_type=.${config_file_type}
+		fi
+		export config_file_type
 fi
 
 
