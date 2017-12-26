@@ -2,7 +2,7 @@
 #
 # -----------------------------------------------------------------------------
 #
-# Author:	Marcel Keller
+# Author:	Marcel Keller (m-k-r)
 # Usage:	uses config files to backup btrfs, zfs, file, directory, mysql and kvm to other disk or server
 # License:	GPLv3 http://www.gnu.org/licenses/gpl-3.0
 #
