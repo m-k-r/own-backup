@@ -114,6 +114,7 @@ fi
 
 # Backup the ifs
 IFSBAK=${IFS}
+export IFSBAK
 
 # get-synclist can return spaces. so the ifs has to be by newline
 IFS=$'\n'
@@ -134,7 +135,6 @@ fi
 
 
 ######################### FIRST LOOP: SET SYNC-VARIABLES #########################
-
 
 # set the control-variable for the first loop. This has to be -1 because arrays start at 0 and at the beginning of the loop aa is aa + 1
 aa="-1"
@@ -188,6 +188,7 @@ do	# control variable. will be used for the arrays
 	fi
 done
 unset sync_name sync_name_new sync_name_new_prefix sync_name_new_suffix config_file_type
+
 
 ######################### SECOND LOOP: SET SNAP VARIABLES #########################
 
