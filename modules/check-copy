@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# change IFS, that space in directory does not break find (temporary fix)
+IFS=$'\n'
 # check if all prerequisits for rsync are met
 if [ ! "${mode_snapshot}" == "file" ]
 	then	# not yet implemented
@@ -32,6 +34,7 @@ if [ ! "${mode_snapshot}" == "file" ]
 			fi
 	else	:
 fi
+IFS=${IFSBAK}
 
 ##### exports of variables which are created here #####
 echo "${snap_rsync_current}"

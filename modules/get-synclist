@@ -3,8 +3,8 @@
 for sync_list_element in ${sync_list}
 do	if [ ! "${mode_transfer}"  == "zfs" ]
 		then	if [ -n "${config_server_source}" ]
-				then	probe_sync_name_elements=$(ssh ${config_server_source}${config_port_source} "find ${dir_root_source}/${sync_list_element}* -maxdepth 0" | sed 's/ \+/\\ /g')
-				else	probe_sync_name_elements=$(find ${dir_root_source}/${sync_list_element}* -maxdepth 0 | sed 's/ \+/\\ /g')
+				then	probe_sync_name_elements=$(ssh ${config_server_source}${config_port_source} "find ${dir_root_source}/${sync_list_element}* -maxdepth 0")
+				else	probe_sync_name_elements=$(find ${dir_root_source}/${sync_list_element}* -maxdepth 0)
 			fi
 
 			if [ "${mode_transfer}"  == "btrfs" ]

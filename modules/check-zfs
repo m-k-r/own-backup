@@ -29,9 +29,9 @@ if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 		probe=$(echo "${dataset}" | awk '{ print $1 }')
 
 		if [ "${probe}" == "${dir_snap_current}" ]
-			then	if [ "${dir_snap_source}" == "${snap_set_current}" ]
-					then	snap_set_current=${dir_snap_current}
-					else	snap_set_current=${dir_snap_current}/${sync_name_current}
+			then	if [ "${check_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
+					then	snap_set_current=${dir_snap_current}/${sync_name_current}
+					else	snap_set_current=${dir_snap_current}
 				fi
 
 				probe=$(echo "${dataset}" | awk '{ print $5 }')
@@ -42,7 +42,8 @@ if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 				fi
 
 			else	if [ "${snap_limit_current}" == "0" ]
-					then	snap_set_current=unset && snap_root_current=unset
+					then	snap_set_current=unset
+						snap_root_current=unset
 					else	exit 86
 				fi
 		fi
