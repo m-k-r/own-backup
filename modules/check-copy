@@ -17,12 +17,12 @@ if [ ! "${mode_snapshot}" == "file" ]
 
 		# check if directory exists
 		if [ -n "${config_server_current}" ]
-			then	probe=$(ssh ${config_server_current}${config_port_current} "find ${probe_snap_rsync_current} -maxdepth 0 2> /dev/null")
-			else	probe=$(find ${probe_snap_rsync_current} -maxdepth 0 2> /dev/null)
+			then	probe=$(ssh ${config_server_current}${config_port_current} "if [ -e ${probe_snap_rsync_current} ]; then echo 1; else echo 0; fi")
+			else	probe=$(if [ -e ${probe_snap_rsync_current} ]; then echo 1; else echo 0; fi)
 		fi
 
-		if [ -n "${probe}" ]
-			then	snap_rsync_current=$(echo "${probe}" | sed 's/ /\\ /g')
+		if [ "${probe}" == "1" ]
+			then	snap_rsync_current=$(echo "${probe_snap_rsync_current}" | sed 's/ /\\ /g')
 			else	exit 81
 		fi
 
