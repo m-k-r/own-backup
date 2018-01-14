@@ -1,22 +1,22 @@
 #!/bin/bash
 
 # For output the script uses pv which has to be between send and receive
-if [ "${show_output}" == "set" ]
-	then	output=" | pv"
+if [ "${show_progress}" == "set" ]
+	then	progress=" | pv"
 fi
 
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
 if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
 	then	# incremental send/receive
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${output}\""
-			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${output}"
+			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""
+			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${progress}"
 		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send ${snap_new_source}${output}\""
-			else	command1="btrfs send ${snap_new_source}${output}"
+			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send ${snap_new_source}${progress}\""
+			else	command1="btrfs send ${snap_new_source}${progress}"
 		fi
 fi
 
@@ -29,3 +29,7 @@ if [ "${show_commands}" == "set" ]
 	then	echo "${command1} | ${command2}"
 	else	eval ${command1} | ${command2}
 fi
+
+##### variable list. these will be picked up by debug #####
+# import_fields = show_commands config_server_source config_port_source config_server_target config_port_target show_progress snap_new_source snap_common_source snap_set_target_current
+# export_fields =

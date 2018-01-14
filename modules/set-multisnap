@@ -76,7 +76,7 @@ do	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }')
 			fi
 	fi
 
-	if [ "${probe}" == "${snap_old_target}" ] || [ "${snap_old_target}" == "unset" ] || [ "${mode_transfer}" == "file" ] || [ "${show_commands}" == "set" ] 
+	if [ "${probe}" == "${snap_old_target}" ] || [ "${snap_old_target}" == "unset" ] || [ "${mode_transfer}" == "file" ] || [ "${show_commands}" == "set" ]
 		then	if [ "${mode_transfer}" == "zfs" ]
 				then	${dir_modules}/copy-zfs
 
@@ -93,3 +93,7 @@ do	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }')
 	snap_common_list_source=$(echo ${snap_common_list_source} | cut -d " " -f 2-)
 	snap_old_list_target=$(echo ${snap_old_list_target} | cut -d " " -f 2-)
 done
+
+##### variable list. these will be picked up by debug #####
+# import_fields = mode_transfer config_server_target config_port_target show_commands dir_modules snap_multi snap_string_separator snap_string_offset snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_common_source snap_old_target
+# export_fields =

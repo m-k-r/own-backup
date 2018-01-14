@@ -1,0 +1,132 @@
+#!/bin/bash
+#
+# -----------------------------------------------------------------------------
+#
+# Author:	Marcel Keller (m-k-r)
+# Usage:	debug script for modules
+# License:	GPLv3 http://www.gnu.org/licenses/gpl-3.0
+#
+# ----------------------------- Global Variables ------------------------------
+
+version=1.0
+usage="usage: own-backup -d [parameter]
+
+ -c	set of variables. name of the config file without '.conf' at the end
+ -d	debug level: commands, datasets, snapshots, snapvars, full. default is commands
+ -m	module-name for override. otherwise the module-name from the dump will be used
+ -t	target: either deb or git (default)
+ -v	show version of this script
+ -h	this page"
+dir_root=/usr/local/own-backup
+mode_supported="directory file kvm mysql pgsql rsync"
+fs_supported="btrfs zfs file"
+output=commands
+
+# --------------------------------- Parameter ----------------------------------
+
+if [ "$#" == "0" ]
+	then	echo "${usage}" && exit 0
+fi
+
+while getopts ":c:dm:t:vh" opt; do
+	case ${opt} in
+		c)	config=$OPTARG
+			;;
+		d)	debug=set
+			;;
+		m)	module_command=$OPTARG
+			;;
+		t)	target=$OPTARG
+			;;
+		v)	echo "${version}"
+			exit 0
+			;;
+		h)	echo "${usage}"
+			exit 0
+			;;
+		?)	echo "Invalid option: -$OPTARG" >&2 && exit 1
+			;;
+	esac
+done
+
+
+
+##### define functions #####
+
+# if exit returns a non-zero value, show the apropriate error message and exit
+function check-exit {
+	exit_code=${?}
+	if [ ! "${exit_code}" == "0" ]
+		then	export exit_code && ${dir_modules}/do-exit
+			if [ ! "${?}" == "0" ]
+				then	exit 1
+			fi
+	fi
+}
+
+# if an error occurs own-back creates a dump of the variables
+function create-dump {
+	debug_file=${dir_conf}/debug/${module_current}_${config}.conf
+
+	# get the fields from the module
+	import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+	export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+
+	# print header to dump
+	dump="config=\"${config}\""$'\n'
+	dump+="module=\"${module_current}\""$'\n'
+	dump+="export_fields=\"${export_fields}\""$'\n'
+
+	# print variables to dump
+	for import_field in ${import_fields}
+	do	line="${import_field}=\"${!import_field}\""
+		dump+=${line}$'\n'
+	done
+
+	# print the variables to export
+	dump+="export ${import_fields}"$'\n'
+
+	# copy dump to file
+	echo "${dump}" | grep -v '^$' > ${debug_file}
+	echo "a dump of the variables for ${module_current} has been written to ${debug_file}"
+}
+
+# used for debugging
+function check-module {
+	# get variables from config
+	source ${conf}
+
+	if [ -n "${module_command}" ]
+		then	module_current=${module}
+			export module_current
+		else	module_command=${module}
+	fi
+
+
+	# test module
+	${dir_modules}/${module_command}
+	check-exit
+}
+
+if [ -n "${module_current}" ]
+	then	create-dump
+	else	if [ "${target}" == "deb" ]
+			then	dir_root=/usr/lib/own-backup
+		fi
+
+		dir_modules=${dir_root}/modules
+		dir_conf=/etc/own-backup
+		conf=${dir_conf}/${config}.conf
+		probe=$(find ${conf} 2>&1)
+
+		# check if config file exists
+		if [ ! "${probe}" == "${conf}" ]
+			then	echo "the config-file does not exist" && exit 1
+		fi
+
+		check-module
+fi
+
+##### variable list. these will be picked up by debug #####
+# import_fields = exit_code dir_modules dir_conf module_current module_command config conf
+# export_fields =

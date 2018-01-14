@@ -53,3 +53,7 @@ fi
 
 snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}')
 echo "${snap_common_source} ${snap_old_target} ${bb}"
+
+##### variable list. these will be picked up by debug #####
+# import_fields = mode_transfer snap_string_offset snap_shots_source_current snap_number_source_current snap_shots_target_current snap_number_target_current
+# export_fields = snap_common_source snap_old_target snap_old_target

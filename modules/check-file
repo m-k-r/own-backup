@@ -34,7 +34,8 @@ if [ ! "${snap_set_current}" == "unset" ]
 		fi
 fi
 
-##### exports of variables which are created here #####
 echo "${snap_root_current} ${snap_set_current}"
 
-config_fields="snap_set_current snap_root_current"
+##### variable list. these will be picked up by debug #####
+# import_fields = check_current config_server_current config_port_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
+# export_fields = snap_set_current snap_root_current

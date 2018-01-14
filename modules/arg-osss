@@ -1,7 +1,7 @@
 unset arg_oss_source
 
-if [ -n "${debug}" ]
-	then	arg_oss_source+=" -d ${debug}"
+if [ -n "${output}" ]
+	then	arg_oss_source+=" -d ${output}"
 	else	arg_oss_source+=" -d previous"
 fi
 

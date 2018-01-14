@@ -3,31 +3,40 @@
 ##### checks with exit 1 #####
 
 # checks if a valid debuglevel is set
-if [ -n "${debug}" ]
-	then	if [ "${debug}" == "commands" ]
-			then	show_commands="set"
-				export show_commands
+if [ -n "${output}" ]
+	then	if [ "${output}" == "progress" ]
+			then	show_progress="set"
+				export show_progress
 
-			elif [ "${debug}" == "datasets" ]
-				then	show_datasets="set"
-					export show_datasets
+			elif [ "${output}" == "commands" ]
+				then	show_progress=set
+					show_commands="set"
+					export show_progress show_commands
 
-			elif [ "${debug}" == "snapshots" ]
-				then	show_snapshots="set"
-					export show_snapshots
+			elif [ "${output}" == "datasets" ]
+				then	show_progress=set
+					show_datasets="set"
+					export show_progress show_datasets
 
-			elif [ "${debug}" == "snapvars" ]
-				then	show_snapvars="set"
-					export show_snapvars
+			elif [ "${output}" == "snapshots" ]
+				then	show_progress=set
+					show_snapshots="set"
+					export show_progress show_snapshots
 
-			elif [ "${debug}" == "full" ]
-				then	show_commands="set"
+			elif [ "${output}" == "snapvars" ]
+				then	show_progress=set
+					show_snapvars="set"
+					export show_progress show_snapvars
+
+			elif [ "${output}" == "full" ]
+				then	show_progress=set
+					show_commands="set"
 					show_datasets="set"
 					show_snapshots="set"
 					show_snapvars="set"
-					export show_commands show_datasets show_snapshots show_snapvars
+					export show_progress show_commands show_datasets show_snapshots show_snapvars
 
-			else	echo "no supported debug-level found: ${debug}" && exit 1
+			else	echo "no supported output-level found: ${output}" && exit 1
 		fi
 fi
 
@@ -111,4 +120,6 @@ fi
 ##### exports of variables which are created here #####
 export dir_root_source dir_snap_source dir_root_target dir_snap_target snap_limit_source snap_limit_target
 
-config_fields="show_output show_commands show_datasets show_snapshots snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target"
+##### variable list. these will be picked up by debug #####
+# import_fields =
+# export_fields = output show_commands show_datasets show_snapshots snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target

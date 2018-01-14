@@ -32,3 +32,7 @@ if [ ! "${snap_old_target}" == "unset" ]
 				fi
 		fi
 fi
+
+##### variable list. these will be picked up by debug #####
+# import_fields = mode_snapshot show_commands config_server_target config_port_target log_server log_server_port log_usr log_dir snap_old_target snap_new_target sync_name_source_current snap_date
+# export_fields =

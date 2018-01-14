@@ -53,3 +53,7 @@ do	snap_del_current=$(echo ${snap_del} | awk '{ print $1 }')
 	snap_del=$(echo ${snap_del} | cut -d " " -f 2-)
 	snap_del_number=$((${snap_del_number} - 1))
 done
+
+##### variable list. these will be picked up by debug #####
+# import_fields = mode_snapshot config_server_current config_port_current snap_limit_current sync_vmid_current snap_string_offset snap_shots_current snap_number_current
+# export_fields =

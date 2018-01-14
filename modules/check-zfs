@@ -50,3 +50,7 @@ if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 fi
 
 echo "${snap_root_current} ${snap_set_current}"
+
+##### variable list. these will be picked up by debug #####
+# import_fields = check_current mode_transfer config_server_current config_port_current dir_snap_current sync_name_current
+# export_fields = snap_root_current snap_set_current

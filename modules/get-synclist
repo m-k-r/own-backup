@@ -41,3 +41,7 @@ done
 
 sync_name=$(printf "${sync_name}" | grep -v '^$' | rev | cut -d "/" -f -1 | rev)
 echo "${sync_name}"
+
+##### variable list. these will be picked up by debug #####
+# import_fields = mode_transfer config_server_source config_port_source sync_list dir_root_source dir_snap_source
+# export_fields = sync_name
