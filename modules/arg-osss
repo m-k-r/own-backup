@@ -1,8 +1,8 @@
 unset arg_oss_source
 
 if [ -n "${output}" ]
-	then	arg_oss_source+=" -d ${output}"
-	else	arg_oss_source+=" -d previous"
+	then	arg_oss_source+=" -o ${output}"
+	else	arg_oss_source+=" -o previous"
 fi
 
 if [ -n "${config_server_source}" ] && [ ! "${snap_list_location_source}" == "ssh" ]
@@ -16,7 +16,7 @@ if [ -n "${snap_list_source}" ]
 
 	else	arg_oss_source+=" -m ${mode_create}"
 		arg_oss_source+=" -l ${snap_string}"
-		arg_oss_source+=" -o ${snap_set_source[aa]}${sync_name_target_type[aa]}"
+		arg_oss_source+=" -n ${snap_set_source[aa]}${sync_name_target_type[aa]}"
 
 		if [ -n "${sync_vmid[aa]}" ]
 			then	arg_oss_source+=" -r ${sync_vmid[aa]}"
