@@ -28,11 +28,11 @@ if [ "$#" == "0" ]
 	then	echo "${usage}" && exit 0
 fi
 
-while getopts ":c:dm:t:vh" opt; do
+while getopts ":c:d:m:t:vh" opt; do
 	case ${opt} in
 		c)	config=$OPTARG
 			;;
-		d)	debug=set
+		d)	debug=$OPTARG
 			;;
 		m)	module_command=$OPTARG
 			;;
@@ -66,11 +66,15 @@ function check-exit {
 
 # if an error occurs own-back creates a dump of the variables
 function create-dump {
-	debug_file=${dir_conf}/debug/${module_current}_${config}.conf
+	debug_file=${dir_conf}/debug/${config}_${module_current}.conf
 
-	# get the fields from the module
-	import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
-	export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+	if [ "${module_current}" == "own-snapshot" ]
+		then	import_fields=oss_parameter
+			export_fields=
+		else	# get the fields from the module
+			import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+			export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+	fi
 
 	# print header to dump
 	dump="config=\"${config}\""$'\n'

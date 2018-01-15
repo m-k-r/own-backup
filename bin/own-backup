@@ -12,7 +12,7 @@ version=1.0
 usage="usage: own-backup [parameter]
 
  -c	name of the config file without '.conf' at the end
- -d	debug
+ -d	debug: if check then open the debug module, else create a dump of every module
  -e	overrides the target for snapshot in config
  -f	overrides the frequency in config for source and target
  -m	copies multiple snapshots instead of the last. valid: all or a restriction like 'daily' for all snapshots containing daily
@@ -34,12 +34,14 @@ if [ "$#" == "0" ]
 	then	echo "${usage}" && exit 0
 fi
 
-while getopts ":c:de:f:m:n:o:rs:t:vh" opt; do
+while getopts ":c:d:e:f:m:n:o:rs:t:vh" opt; do
 	case ${opt} in
 		c)	config=$OPTARG
 			;;
-		d)	${dir_modules}/do-debug "$@"
-			exit 0
+		d)	debug=$OPTARG
+			if [ ${debug} == "check" ]; then 
+			${dir_modules}/do-debug "$@"
+			exit 0; fi
 			;;
 		e)	dir_snap_target_override=$OPTARG
 			;;
@@ -91,13 +93,15 @@ export debug snap_multi dir_snap_target_override snap_rollback snap_name_overrid
 # if exit returns a non-zero value, show the apropriate error message and exit
 function check-exit {
 	exit_code=${?}
-	if [ ! "${exit_code}" == "0" ]
+	if [ ! "${exit_code}" == "0" ] || [ -n "${debug}" ]
 		then	export module_current oss_parameter dir_modules dir_conf config exit_code
-                        ${dir_modules}/do-debug -d
+                        ${dir_modules}/do-debug -d create
 			${dir_modules}/do-exit
 			if [ ! "${?}" == "0" ]
 				then	exit 1
 			fi
+			# unexport variables but not unset. If config is exported, own-snapshot will use list mode because it detects the config variable is set
+			export -n module_current oss_parameter dir_modules dir_conf config exit_code
 	fi
         unset module_current
 }
