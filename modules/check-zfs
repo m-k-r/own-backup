@@ -29,7 +29,7 @@ if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 		probe=$(echo "${dataset}" | awk '{ print $1 }')
 
 		if [ "${probe}" == "${dir_snap_current}" ]
-			then	if [ "${check_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
+			then	if [ "${check_current}" == "target" ] && [ "${mode_transfer}" == "zfs" ]
 					then	snap_set_current=${dir_snap_current}/${sync_name_current}
 					else	snap_set_current=${dir_snap_current}
 				fi
