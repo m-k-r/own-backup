@@ -10,7 +10,7 @@ if [ ! "${mode_snapshot}" == "file" ]
 		#	else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
 		#fi
 
-		if [ "${check_current}" == "source" ]
+		if [ "${side_current}" == "source" ]
 			then	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
 			else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
 		fi
@@ -27,9 +27,9 @@ if [ ! "${mode_snapshot}" == "file" ]
 		fi
 
 	elif	[ "${mode_snapshot}" == "file" ]
-		then	if [ "${check_current}" == "source" ] && [ "${snap_limit_current}" == "0" ]
+		then	if [ "${side_current}" == "source" ] && [ "${snap_limit_current}" == "0" ]
 				then	snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
-				elif [ "${check_current}" == "target" ]
+				elif [ "${side_current}" == "target" ]
 					then	snap_rsync_current=${dir_root_current}${dir_offset_current}
 			fi
 	else	:
@@ -39,5 +39,5 @@ IFS=${IFSBAK}
 echo "${snap_rsync_current}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = check_current mode_snapshot config_server_current config_port_current snap_limit_current snap_list_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current
+# import_fields = side_current mode_snapshot config_server_current config_port_current snap_limit_current snap_list_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current
 # export_fields = snap_rsync_current 

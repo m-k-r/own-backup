@@ -66,7 +66,7 @@ function check-exit {
 
 # if an error occurs own-back creates a dump of the variables
 function create-dump {
-	debug_file=${dir_conf}/debug/${config}_${module_current}.conf
+	debug_file=${dir_conf}/debug/${config}_${side_current}_${module_current}.conf
 
 	if [ "${module_current}" == "own-snapshot" ]
 		then	import_fields=oss_parameter
@@ -106,10 +106,29 @@ function check-module {
 		else	module_command=${module}
 	fi
 
+	printf -- "\n--------------- ${module_command} ---------------\n\n"
 
 	# test module
+	output=$(${dir_modules}/${module_command})
+
+	if [ -n "${output}" ]
+		then	if [ -n "${export_fields}" ]
+				then	echo "export_fields are ${export_fields}"
+				else	echo "there is output while no export_fields are defined"
+			fi
+
+		else	if [ -n "${export_fields}" ]
+				then	echo "the export_fields ${export_fields} are defined but there is no output"
+				else	echo "there is no output but no export fields are defined"
+			fi
+	fi
+
 	${dir_modules}/${module_command}
 	check-exit
+
+	# at this point there is no problem that exits the script
+	printf -- "\n--------------- ${module_command} ---------------\n"
+	echo "no problem found"
 }
 
 if [ -n "${module_current}" ]

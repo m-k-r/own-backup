@@ -3,9 +3,9 @@
 # root/syncname has to exist on source and not on target
 # snap/syncname doesn't have to exist on source and target but snap has to
 
-if [ "${check_current}" == "source" ] && [ "${dir_root_current}" == "${dir_snap_current}" ]
+if [ "${side_current}" == "source" ] && [ "${dir_root_current}" == "${dir_snap_current}" ]
 	then	snap_set_current=unset
-	elif [ "${check_current}" == "target" ] && [ ! "${snap_set_current}" == "unset" ]
+	elif [ "${side_current}" == "target" ] && [ ! "${snap_set_current}" == "unset" ]
 		then	snap_root_current=unset
 fi
 
@@ -37,5 +37,5 @@ fi
 echo "${snap_root_current} ${snap_set_current}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = check_current config_server_current config_port_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
+# import_fields = side_current config_server_current config_port_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
 # export_fields = snap_set_current snap_root_current

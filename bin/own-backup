@@ -218,7 +218,7 @@ do	aa=$((${aa} + 1))
 	export sync_name_source_current sync_name_target_current
 
 	##### check the prerequisits on source side #####
-	check_current=source
+	side_current=source
 	config_server_current=${config_server_source}
 	config_port_current=${config_port_source}
 	dir_snap_current=${dir_snap_source}
@@ -228,7 +228,7 @@ do	aa=$((${aa} + 1))
 	snap_limit_current=${snap_limit_source}
 	sync_name_current=${sync_name_source[aa]}
 	sync_vmid_current=${sync_vmid[aa]}
-	export check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
+	export side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
 
 	##### checks on source side #####
 
@@ -238,7 +238,7 @@ do	aa=$((${aa} + 1))
 			${dir_modules}/${module_current}
 			check-exit
 
-			if [ "${mode_create}" == "mysql" ] ||  "${mode_create}" == "pgsql" ]
+			if [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
 				then	config_sql_credentials[aa]=$(echo ${config_options_sql} | cut -d " " -f 1)
 					config_sql_certificate[aa]=$(echo ${config_options_sql} | cut -d " " -f 2)
 			fi
@@ -262,7 +262,7 @@ do	aa=$((${aa} + 1))
 	fi
 
 	##### check the prerequisits on target side #####
-	check_current=target
+	side_current=target
 	config_server_current=${config_server_target}
 	config_port_current=${config_port_target}
 	dir_snap_current=${dir_snap_target}
@@ -271,7 +271,7 @@ do	aa=$((${aa} + 1))
 	snap_list_current=${snap_list_target}
 	snap_limit_current=${snap_limit_target}
 	sync_name_current=${sync_name_target[aa]}
-	export snap_set_current check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+	export snap_set_current side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
 
 	# basically not necessary on target side but left as a hook for future additions
 	#if [ ! "${mode_create}" == "mode_snapshot" ]
@@ -308,7 +308,7 @@ do	aa=$((${aa} + 1))
 			echo "sync_name_target is ${sync_name_target[aa]}"
 	fi
 
-	unset snap_set_current check_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+	unset snap_set_current side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
 done
 
 # if output = datasets the script ends here
@@ -325,14 +325,14 @@ fi
 
 if [ -n "${snap_list_source}" ]
 	then	source ${dir_modules}/arg-osss
+		module_current="own-snapshot"
+		oss_parameter=${arg_oss_source}
 		if [ "${snap_list_location_source}" == "ssh" ]
 			then	ssh ${config_server_source}${config_port_source} "own-snapshot ${arg_oss_source}"
-			else	module_current="own-snapshot"
-				oss_parameter=${arg_oss_source}
-				own-snapshot ${arg_oss_source}
-				check-exit
-				unset oss_parameter
+			else	own-snapshot ${arg_oss_source}
 		fi
+		check-exit
+		unset oss_parameter
 fi
 
 # set back the control-variable for the next loop
@@ -346,12 +346,12 @@ do	aa=$((${aa} + 1))
 	sync_name_target_type_current=${sync_name_target_type[aa]}
 
 	##### source #####
-	get_current=source
+	side_current=source
 	config_server_current=${config_server_source}
 	config_port_current=${config_port_source}
 	snap_set_current=${snap_set_source[aa]}
 	snap_root_current=${snap_root_source[aa]}
-	export sync_name_target_type_current get_current config_server_current config_port_current snap_set_current snap_root_current
+	export sync_name_target_type_current side_current config_server_current config_port_current snap_set_current snap_root_current
 
 	if [ "${snap_limit_source}"  -ge 1 ]
 		then	source ${dir_modules}/arg-osss
@@ -375,12 +375,12 @@ do	aa=$((${aa} + 1))
 
 	##### target #####
 	if [ -n "${mode_snapshot}" ]
-		then	get_current=target
+		then	side_current=target
 			config_server_current=${config_server_target}
 			config_port_current=${config_port_target}
 			snap_set_current=${snap_set_target[aa]}
 			snap_root_current=${snap_root_target[aa]}
-			export get_current config_server_current config_port_current snap_set_current snap_root_current
+			export side_current config_server_current config_port_current snap_set_current snap_root_current
 
 			module_current=get-snapshots
 			snap_shots_target[aa]=$(${dir_modules}/${module_current})
@@ -400,7 +400,7 @@ do	aa=$((${aa} + 1))
 			echo "-------------------------"
 	fi
 
-	unset get_current config_server_current config_port_current snap_set_current snap_root_current
+	unset side_current config_server_current config_port_current snap_set_current snap_root_current
 done
 
 # if output = datasets the script ends here
@@ -516,14 +516,14 @@ done
 
 if [ -n "${snap_list_target}" ]
 	then	source ${dir_modules}/arg-osst
+		module_current=own-snapshot
+		oss_parameter=${arg_oss_target}
 		if [ "${snap_list_location_target}" == "ssh" ]
 			then	ssh ${config_server_target}${config_port_target} "own-snapshot ${arg_oss_target}"
-			else	module_current=own-snapshot
-				oss_parameter=${arg_oss_target}
-				own-snapshot ${arg_oss_target}
-				check-exit
-				unset oss_parameter
+			else	own-snapshot ${arg_oss_target}
 		fi
+		check-exit
+		unset oss_parameter
 fi
 
 if [ "${show_snapvars}" == "set" ] && [ ! "${show_commands}" == "set" ]
@@ -545,11 +545,12 @@ if [ "${snap_limit_source}"  -ge 1 ] || [ "${snap_limit_target}"  -ge 1 ]
 
 			if [ "${snap_limit_source}" -gt 0 ]
 				then	# variables on source side
+					side_current=source
 					snap_shots_current=${snap_shots_strict_source[aa]}
 					snap_number_current=${snap_number_strict_source[aa]}
 					snap_limit_current=${snap_limit_source}
 					sync_vmid_current=${sync_vmid[aa]}
-					export snap_shots_current snap_number_current snap_limit_current sync_vmid_current
+					export side_current snap_shots_current snap_number_current snap_limit_current sync_vmid_current
 
 					module_current=do-snapdel
 					${dir_modules}/${module_current}
@@ -559,17 +560,17 @@ if [ "${snap_limit_source}"  -ge 1 ] || [ "${snap_limit_target}"  -ge 1 ]
 
 			if [ "${snap_limit_target}" -gt 0 ]
 				then	# variables on target side
-					do_current=target
+					side_current=target
 					# when the snapshots are read, the snapshot on target wasn't created yet. so a dummy has to be created in order to delete the right amount of snapshots
 					snap_shots_current=${snap_shots_strict_target[aa]}
 					snap_number_current=${snap_number_strict_target[aa]}
 					snap_limit_current=${snap_limit_target}
-					export snap_shots_current snap_number_current snap_limit_current
+					export side_current snap_shots_current snap_number_current snap_limit_current
 
 					module_current=do-snapdel
 					${dir_modules}/${module_current}
 					check-exit
-					unset snap_shots_current snap_number_current snap_limit_current
+					unset side_current snap_shots_current snap_number_current snap_limit_current
 			fi
 		done
 fi
