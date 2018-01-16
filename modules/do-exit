@@ -7,7 +7,7 @@ if  [ "${exit_code}" == "0" ]
 		then	echo "${module_current}: The VM ${sync_vmid_current} does not exist" && exit 1
 
 	elif [ "${exit_code}" == "81" ]
-		then	echo "${dir_root_current}${dir_offset_current}/${sync_name_current} does not exist" && exit 1
+		then	echo "${dir_root_current}${dir_offset_current}/${sync_name_source_current} does not exist" && exit 1
 
 	elif [ "${exit_code}" == "82" ]
 		then	echo "${module_current}: btrfs send does not work if the source ${dir_root_current}/${sync_name_current} does not exist or is no subvolume" && exit 1
