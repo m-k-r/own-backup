@@ -39,7 +39,7 @@ while getopts ":c:d:e:f:m:n:o:rs:t:vh" opt; do
 		c)	config=$OPTARG
 			;;
 		d)	debug=$OPTARG
-			if [ ${debug} == "check" ]; then 
+			if [ ! ${debug} == "create" ]; then
 			${dir_modules}/do-debug "$@"
 			exit 0; fi
 			;;
@@ -481,8 +481,7 @@ do	aa=$((${aa} + 1))
 						${dir_modules}/${module_current}
 
 				elif [ "${mode_transfer}" == "btrfs" ]
-					then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
-						module_current=copy-btrfs
+					then	module_current=copy-btrfs
 						${dir_modules}/${module_current}
 
 				elif [ "${mode_transfer}" == "rsync" ]

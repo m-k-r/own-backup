@@ -8,7 +8,7 @@ zfs, btrfs and qm use their own tools, directories and files use rsync to copy a
 
 ### usage
 
-**own-backup -c** $CONFIG **-d** $DEBBUG
+**own-backup -c** $CONFIG **-d** $DEBUG **-o** $OUTPUT
 
 **additional:**  
 -m : copies multiple snapshots instead of the last.  

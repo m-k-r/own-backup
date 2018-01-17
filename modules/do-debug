@@ -131,7 +131,7 @@ function check-module {
 	echo "no problem found"
 }
 
-if [ -n "${module_current}" ]
+if [ "${debug}" == "create" ]
 	then	create-dump
 	else	if [ "${target}" == "deb" ]
 			then	dir_root=/usr/lib/own-backup
@@ -147,7 +147,11 @@ if [ -n "${module_current}" ]
 			then	echo "the config-file does not exist" && exit 1
 		fi
 
-		check-module
+		if [ "${debug}" == "check" ]
+		 	then	check-module
+			elif [ "${debug}" == "show" ]
+				then	cat "${conf}"
+		fi
 fi
 
 ##### variable list. these will be picked up by debug #####

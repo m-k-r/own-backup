@@ -5,6 +5,9 @@ if [ "${show_progress}" == "set" ]
 	then	progress=" | pv"
 fi
 
+# btrfs copies the subvolume to a directory. for that reason the actual subvolname has to be cut off
+snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
+
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
 if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
 	then	# incremental send/receive
