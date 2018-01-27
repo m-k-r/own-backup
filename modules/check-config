@@ -5,35 +5,35 @@
 # checks if a valid debuglevel is set
 if [ -n "${output}" ]
 	then	if [ "${output}" == "progress" ]
-			then	show_progress="set"
+			then	show_progress=set
 				export show_progress
 
 			elif [ "${output}" == "commands" ]
 				then	show_progress=set
-					show_commands="set"
+					show_commands=set
 					export show_progress show_commands
 
 			elif [ "${output}" == "datasets" ]
 				then	show_progress=set
-					show_datasets="set"
+					show_datasets=set
 					export show_progress show_datasets
 
 			elif [ "${output}" == "snapshots" ]
 				then	show_progress=set
-					show_snapshots="set"
+					show_snapshots=set
 					export show_progress show_snapshots
 
 			elif [ "${output}" == "snapvars" ]
 				then	show_progress=set
-					show_snapvars="set"
+					show_snapvars=set
 					export show_progress show_snapvars
 
 			elif [ "${output}" == "full" ]
 				then	show_progress=set
-					show_commands="set"
-					show_datasets="set"
-					show_snapshots="set"
-					show_snapvars="set"
+					show_commands=set
+					show_datasets=set
+					show_snapshots=set
+					show_snapvars=set
 					export show_progress show_commands show_datasets show_snapshots show_snapvars
 
 			else	echo "no supported output-level found: ${output}" && exit 1

@@ -12,7 +12,7 @@ version=1.0
 usage="usage: own-backup [parameter]
 
  -c	name of the config file without '.conf' at the end
- -d	debug: if check then open the debug module, else create a dump of every module
+ -d	debug: check or show a dump, or create a dump of every module
  -e	overrides the target for snapshot in config
  -f	overrides the frequency in config for source and target
  -m	copies multiple snapshots instead of the last. valid: all or a restriction like 'daily' for all snapshots containing daily

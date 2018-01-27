@@ -12,7 +12,6 @@ version=1.0
 usage="usage: own-backup -d [parameter]
 
  -c	set of variables. name of the config file without '.conf' at the end
- -d	debug level: commands, datasets, snapshots, snapvars, full. default is commands
  -m	module-name for override. otherwise the module-name from the dump will be used
  -t	target: either deb or git (default)
  -v	show version of this script
@@ -138,7 +137,7 @@ if [ "${debug}" == "create" ]
 		fi
 
 		dir_modules=${dir_root}/modules
-		dir_conf=/etc/own-backup
+		dir_conf=/etc/own-backup/debug
 		conf=${dir_conf}/${config}.conf
 		probe=$(find ${conf} 2>&1)
 
