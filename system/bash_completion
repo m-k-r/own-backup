@@ -1,0 +1,80 @@
+_own-backup() {
+	local cur prev list
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	# define variables
+	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
+		dir_conf=/etc/own-backup/debug/
+		offset=5 ; else
+		dir_conf=/etc/own-backup/
+		offset=4
+	fi
+
+	# define functions
+	__get_conf_name() {
+		file_conf=${dir_conf}${COMP_WORDS[$(echo ${COMP_WORDS[@]} | awk -v name='-c' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')]}.conf
+	}
+
+	case "${prev}" in
+		-c)	list=$(find ${dir_conf} | grep "\.conf" | cut -d "/" -f ${offset}- | rev | cut -d "." -f 2- | rev)
+			;;
+		-d)	list="check create show"
+			;;
+		-e)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				__get_conf_name
+				fs=$(awk -v condition1="filesystem" '$1 == condition1 { print $3 }' ${file_conf})
+
+				if [[ "${fs}" == "zfs" ]] ; then
+					list=$(zfs list | awk '{ print $1 }' | tail -n +2) ; else
+					list=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+				fi
+			fi
+			;;
+		-f)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				__get_conf_name
+				list=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${file_conf})
+			fi
+			;;
+		-m)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				__get_conf_name
+				list="all $(awk -v condition1='snapshotformat' -v condition2='(name)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})  $(date +$(awk -v condition1='snapshotformat' -v condition2='(date)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))"
+			fi
+			;;
+		-n)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+				snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+
+				if [[ ! -n "${snap_limit_source}" ]] ; then
+					snap_limit_source=0
+				fi
+
+				if [[ ! -n "${snap_limit_target}" ]] ; then
+					snap_limit_target=0
+				fi
+
+				list="${snap_limit_source}:${snap_limit_target}"
+			fi
+			;;
+		-o)
+			list="commands datasets full progress snapshots snapvars"
+			;;
+		-s)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				__get_conf_name
+				list=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+			fi
+			;;
+		-t)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+				__get_conf_name
+				list=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))
+			fi
+			;;
+		*)	list="-c -d -e -f -m -n -o -r -s -t -v -h"
+			;;
+	esac
+
+	COMPREPLY=( $(compgen -W "${list}" -- ${cur}) )
+	return 0
+}
+complete -F _own-backup own-backup
