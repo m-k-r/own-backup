@@ -12,6 +12,7 @@ version=1.0
 usage="usage: own-backup -d [parameter]
 
  -c	set of variables. name of the config file without '.conf' at the end
+ -d	debug level: create, check, show
  -m	module-name for override. otherwise the module-name from the dump will be used
  -t	target: either deb or git (default)
  -v	show version of this script
