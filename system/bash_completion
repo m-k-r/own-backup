@@ -7,7 +7,12 @@ _own-backup() {
 	# define variables
 	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
 		dir_conf=/etc/own-backup/debug/
-		offset=5 ; else
+		offset=5
+
+		if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-t deb')" ]] ; then
+			dir_modules=/usr/share/own-backup/modules/ ; else
+			dir_modules=/usr/local/own-backup/modules/
+		fi ; else
 		dir_conf=/etc/own-backup/
 		offset=4
 	fi
@@ -37,9 +42,12 @@ _own-backup() {
 				list=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${file_conf})
 			fi
 			;;
-		-m)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				__get_conf_name
-				list="all $(awk -v condition1='snapshotformat' -v condition2='(name)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})  $(date +$(awk -v condition1='snapshotformat' -v condition2='(date)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))"
+		-m)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
+				list=$(ls ${dir_modules}) ; else
+				if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+					__get_conf_name
+					list="all $(awk -v condition1='snapshotformat' -v condition2='(name)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})  $(date +$(awk -v condition1='snapshotformat' -v condition2='(date)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))"
+				fi
 			fi
 			;;
 		-n)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
@@ -65,9 +73,12 @@ _own-backup() {
 				list=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
 			fi
 			;;
-		-t)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				__get_conf_name
-				list=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))
+		-t)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
+				list="deb git" ; else
+				if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
+					__get_conf_name
+					list=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))
+				fi
 			fi
 			;;
 		*)	list="-c -d -e -f -m -n -o -r -s -t -v -h"
