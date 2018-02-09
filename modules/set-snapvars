@@ -51,9 +51,14 @@ if [ ! -n "${snap_common_source}" ]
 	then	exit 89
 fi
 
-snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}')
+# if no snapshots on target exist, snap_old_target hast to be unset
+if [ -n "${snap_shots_target_current}" ]
+	then	snap_old_target=$(echo ${snap_shots_target_current} | awk '{print $(NF)}' | tr "~" " ")
+	else	snap_old_target=unset
+fi
+
 echo "${snap_common_source} ${snap_old_target} ${bb}"
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = mode_transfer snap_string_offset snap_shots_source_current snap_number_source_current snap_shots_target_current snap_number_target_current
-# export_fields = snap_common_source snap_old_target snap_old_target
+# export_fields = snap_common_source snap_old_target bb
