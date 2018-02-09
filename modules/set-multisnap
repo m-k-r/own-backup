@@ -52,10 +52,6 @@ if [ -n "${snap_new_list_source}" ] && [ ! -z "${snap_new_list_source}" ]
 		done
 fi
 
-if [ "${mode_transfer}" == "btrfs" ]
-	then	snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
-fi
-
 for snap_new_source in ${snap_new_list_source}
 do	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }')
 	snap_old_target=$(echo ${snap_old_list_target} | awk '{ print $1 }')
