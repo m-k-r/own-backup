@@ -20,7 +20,8 @@ usage="usage: own-backup -d [parameter]
 dir_root=/usr/local/own-backup
 mode_supported="directory file kvm mysql pgsql rsync"
 fs_supported="btrfs zfs file"
-output=commands
+show_commands=set
+export show_commands
 
 # --------------------------------- Parameter ----------------------------------
 
@@ -66,7 +67,8 @@ function check-exit {
 
 # if an error occurs own-back creates a dump of the variables
 function create-dump {
-	debug_file=${dir_conf}/debug/${config}_${side_current}_${module_current}.conf
+	debug_file=${dir_conf}/debug/${config}_${name_current}_${side_current}_${module_current}.conf
+	debug_dir=$(echo ${debug_file} | rev | cut -d "/" -f 2- | rev)
 
 	if [ "${module_current}" == "own-snapshot" ]
 		then	import_fields=oss_parameter
@@ -91,6 +93,7 @@ function create-dump {
 	dump+="export ${import_fields}"$'\n'
 
 	# copy dump to file
+	mkdir -p ${debug_dir} && chmod 400 ${debug_dir}
 	echo "${dump}" | grep -v '^$' > ${debug_file}
 	echo "a dump of the variables for ${module_current} has been written to ${debug_file}"
 }
@@ -109,7 +112,10 @@ function check-module {
 	printf -- "\n--------------- ${module_command} ---------------\n\n"
 
 	# test module
-	output=$(${dir_modules}/${module_command})
+	if [ "${module_command}" == "own-snapshot" ]
+		then	output=$(own-snapshot${oss_parameter})
+		else	output=$(${dir_modules}/${module_command})
+	fi
 
 	if [ -n "${output}" ]
 		then	if [ -n "${export_fields}" ]
@@ -119,11 +125,14 @@ function check-module {
 
 		else	if [ -n "${export_fields}" ]
 				then	echo "the export_fields ${export_fields} are defined but there is no output"
-				else	echo "there is no output but no export fields are defined"
+				else	echo "there is no output and export fields are defined"
 			fi
 	fi
 
-	${dir_modules}/${module_command}
+	if [ "${module_command}" == "own-snapshot" ]
+		then	own-snapshot${oss_parameter}
+		else	${dir_modules}/${module_command}
+	fi
 	check-exit
 
 	# at this point there is no problem that exits the script

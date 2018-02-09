@@ -95,6 +95,12 @@ function check-exit {
 	exit_code=${?}
 	if [ ! "${exit_code}" == "0" ] || [ -n "${debug}" ]
 		then	export module_current oss_parameter dir_modules dir_conf config exit_code
+
+			if [ -n "${aa}" ]
+				then	name_current=${sync_name_source[aa]}
+					export name_current
+			fi
+
                         ${dir_modules}/do-debug -d create
 			${dir_modules}/do-exit
 			if [ ! "${?}" == "0" ]
@@ -103,7 +109,7 @@ function check-exit {
 			# unexport variables but not unset. If config is exported, own-snapshot will use list mode because it detects the config variable is set
 			export -n module_current oss_parameter dir_modules dir_conf config exit_code
 	fi
-        unset module_current
+        unset module_current name_current
 }
 
 # hook for other configurations instead of a conf-file like a mysql database
