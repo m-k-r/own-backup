@@ -2,7 +2,7 @@
 
 # if multiple snapshots should be copied some additional steps are necessary
 # use the snapshotlist of source as base for snap_new_list_source
-snap_new_list_source=${snap_shots_source_current}
+snap_new_list_source=$(echo "${snap_shots_source_current}" | tr " " "~")
 snap_new_list_source_ts=${snap_shots_source_ts_current}
 snap_old_list_target_ts=${snap_shots_target_ts_current}
 
@@ -48,25 +48,26 @@ if [ -n "${snap_new_list_source}" ] && [ ! -z "${snap_new_list_source}" ]
 		snap_old_list_target=${snap_old_target}
 
 		for snap_new_list_source_element in ${snap_new_list_source}
-		do	snap_old_list_target+=$'\n'${snap_set_target_current}${snap_string_separator}${snap_new_list_source_element: -$snap_string_offset}
+		do	snap_old_list_target+=$'\n'"${snap_set_target_current}"${snap_string_separator}"${snap_new_list_source_element: -$snap_string_offset}"
 		done
 fi
 
 for snap_new_source in ${snap_new_list_source}
-do	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }')
-	snap_old_target=$(echo ${snap_old_list_target} | awk '{ print $1 }')
+do	snap_new_source=$(echo "${snap_new_source}" | tr "~" " " )
+	snap_common_source=$(echo ${snap_common_list_source} | awk '{ print $1 }' | tr "~" " ")
+	snap_old_target=$(echo ${snap_old_list_target} | awk '{ print $1 }' | "~" " ")
 	export snap_new_source snap_common_source snap_old_target
 
 	if [ ! "${snap_old_target}" == "unset" ] && [ ! "${show_commands}" == "set" ]
 		then	if [ "${mode_transfer}" == "zfs" ]
 				then	if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_target}${config_port_target} "zfs list ${snap_old_target} 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
-						else	probe=$(zfs list ${snap_old_target} 2> /dev/null | tail -n +2 | awk '{ print $1 }')
+						then	probe=$(ssh ${config_server_target}${config_port_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
+						else	probe=$(zfs list \"${snap_old_target}\" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
 					fi
 
 				elif [ "${mode_transfer}" == "btrfs" ]
 					then	if [ -n "${config_server_current}" ]
-							then	probe=$(ssh ${config_server_target}${config_port_target} "btrfs subvolume show ${snap_old_target} 2> /dev/null" | head -1 | awk '{ print $1 }')
+							then	probe=$(ssh ${config_server_target}${config_port_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
 							else	probe=$(btrfs subvolume show ${snap_old_target} 2> /dev/null | head -1 | awk '{ print $1 }')
 						fi
 			fi

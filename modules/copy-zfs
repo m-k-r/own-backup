@@ -12,7 +12,7 @@ if [ -n "${snap_old_target}" ] && [ ! "${snap_old_target}" == "unset" ]
 		if [ ! "${show_commands}" == "set" ]
 			then	if [ -n "${config_server_target}" ]
 					then	ssh ${config_server_target}${config_port_target} "zfs rollback ${snap_old_target}"
-					else	zfs rollback ${snap_old_target}
+					else	zfs rollback "${snap_old_target}"
 				fi
 		fi
 

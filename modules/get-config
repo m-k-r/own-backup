@@ -21,15 +21,15 @@ config_options_rsync=$(awk -v condition1="rsync-options" '$1 == condition1 { pri
 config_options_sql=$(awk -v condition1="sql-options" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-)
 
 # Source- and Targetdirectories/datastets and specific options for modes and filesystems
-dir_snap_source=$(awk -v condition1="snapshot-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+dir_snap_source=$(awk -v condition1="snapshot-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
 if [ ! -n "${dir_snap_target_override}" ]
-	then	dir_snap_target=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+	then	dir_snap_target=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
 	else	dir_snap_target=${dir_snap_target_override}
 fi
-dir_root_source=$(awk -v condition1="root-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-dir_root_target=$(awk -v condition1="root-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-dir_offset_source=$(awk -v condition1="offset-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
-dir_offset_target=$(awk -v condition1="offset-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+dir_root_source=$(awk -v condition1="root-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
+dir_root_target=$(awk -v condition1="root-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
+dir_offset_source=$(awk -v condition1="offset-directory" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
+dir_offset_target=$(awk -v condition1="offset-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${conf} | cut -d " " -f 4-)
 
 # Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won´t work if snapshots are not handled by another script
 if [ ! -n "${snap_name}" ]

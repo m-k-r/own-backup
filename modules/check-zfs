@@ -2,20 +2,12 @@
 
 # check if dataset/sync on sourcepool exists
 if [ -n "${config_server_current}" ]
-	then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list ${dir_snap_current}/${sync_name_current} 2> /dev/null | tail -n +2")
-	else	dataset=$(zfs list ${dir_snap_current}/${sync_name_current}  2> /dev/null | tail -n +2)
+	then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
+	else	dataset=$(zfs list -o name "${dir_snap_current}"/"${sync_name_current}"  2> /dev/null | tail -n +2)
 fi
 
-probe=$(echo "${dataset}" | awk '{ print $1 }')
-
-if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
+if [ "${dataset}" == "${dir_snap_current}/${sync_name_current}" ]
 	then	snap_set_current=${dir_snap_current}/${sync_name_current}
-		probe=$(echo "${dataset}" | awk '{ print $5 }')
-
-		if [ ! "${probe}" == "-" ]
-			then	snap_root_current=${probe}
-			else	snap_root_current=unset
-		fi
 
 	else	if [ "${side_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
 			then	exit 85
@@ -34,22 +26,25 @@ if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
 					else	snap_set_current=${dir_snap_current}
 				fi
 
-				probe=$(echo "${dataset}" | awk '{ print $5 }')
-
-				if [ ! "${probe}" == "-" ]
-					then	snap_root_current=${probe}
-					else	snap_root_current=unset
-				fi
-
 			else	if [ "${snap_limit_current}" == "0" ]
 					then	snap_set_current=unset
-						snap_root_current=unset
 					else	exit 86
 				fi
 		fi
 fi
 
-echo "${snap_root_current} ${snap_set_current}"
+if [ ! "${snap_set_current}" == "unset" ]
+	then	if [ -n "${config_server_current}" ]
+			then	snap_root_current=$(ssh ${config_server_current}${config_port_current} "zfs list -o mountpoint \"${snap_set_current}\" 2> /dev/null | tail -n +2")
+			else	snap_root_current=$(zfs list -o mountpoint "${snap_set_current}"  2> /dev/null | tail -n +2)
+		fi
+
+		if [ "${snap_root_current}" == "-" ]
+			then	snap_root_current=unset
+		fi
+fi
+
+echo "${snap_root_current}~${snap_set_current}"
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = side_current mode_transfer config_server_current config_port_current dir_snap_current sync_name_current

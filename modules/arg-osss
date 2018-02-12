@@ -16,11 +16,11 @@ if [ -n "${snap_list_source}" ]
 
 	else	arg_oss_source+=" -m ${mode_create}"
 		arg_oss_source+=" -l ${snap_string}"
-		arg_oss_source+=" -n ${snap_set_source[aa]}${sync_name_target_type[aa]}"
+		arg_oss_source+=" -n $(echo ${snap_set_source[aa]}${sync_name_target_type[aa]} | tr ' ' '~')"
 
 		if [ -n "${sync_vmid[aa]}" ]
 			then	arg_oss_source+=" -r ${sync_vmid[aa]}"
-			else	arg_oss_source+=" -r ${snap_root_source[aa]}"
+			else	arg_oss_source+=" -r $(echo ${snap_root_source[aa]} | tr ' ' '~')"
 		fi
 
 		if [ "${mode_create}" == "mysql" ]

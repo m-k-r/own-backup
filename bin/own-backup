@@ -255,8 +255,8 @@ do	aa=$((${aa} + 1))
 		then	module_current=check-${mode_snapshot}
 			snap_set_current=$(${dir_modules}/${module_current})
 			check-exit
-			snap_root_source[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
-			snap_set_current=$(echo ${snap_set_current} | cut -d " " -f 2)
+			snap_root_source[aa]=$(echo ${snap_set_current} | cut -d "~" -f 1)
+			snap_set_current=$(echo ${snap_set_current} | cut -d "~" -f 2)
 			snap_set_source[aa]=${snap_set_current}
 	fi
 
@@ -290,8 +290,8 @@ do	aa=$((${aa} + 1))
 		then	module_current=check-${mode_snapshot}
 			snap_set_current=$(${dir_modules}/${module_current})
 			check-exit
-			snap_root_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 1)
-			snap_set_target[aa]=$(echo ${snap_set_current} | cut -d " " -f 2)
+			snap_root_target[aa]=$(echo ${snap_set_current} | cut -d "~" -f 1)
+			snap_set_target[aa]=$(echo ${snap_set_current} | cut -d "~" -f 2)
 			unset snap_set_current
 	fi
 
@@ -372,11 +372,12 @@ do	aa=$((${aa} + 1))
 		then	module_current=get-snapshots
 			snap_shots_source[aa]=$(${dir_modules}/${module_current})
 			check-exit
-			snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk ' { print $2 } ')
-			snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk ' { print $1 } ')
-			snap_number_source[aa]=$(echo ${snap_shots_source[aa]} | awk -F ' ' '{print NF}')
+			snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $2 }')
+			snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $1 }')
+			# wc counts empty lines. that's just a temporary solution. awk -F ' ' '{print NF}' doesn't work anymore because snapshots with spaces are expected
+			snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | wc -l)
 			snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
-			snap_number_strict_source[aa]=$(echo ${snap_shots_strict_source[aa]} | awk -F ' ' '{print NF}')
+			snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | wc -l)
 	fi
 
 	##### target #####
@@ -391,11 +392,11 @@ do	aa=$((${aa} + 1))
 			module_current=get-snapshots
 			snap_shots_target[aa]=$(${dir_modules}/${module_current})
 			check-exit
-			snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk ' { print $2 } ')
-			snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk ' { print $1 } ')
-			snap_number_target[aa]=$(echo ${snap_shots_target[aa]} | awk -F ' ' '{print NF}')
+			snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $2 }')
+			snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $1 }')
+			snap_number_target[aa]=$(echo "${snap_shots_target[aa]}" | sed '/^\s*$/d' | wc -l)
 			snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
-			snap_number_strict_target[aa]=$(echo ${snap_shots_strict_target[aa]} | awk -F ' ' '{print NF}')
+			snap_number_strict_target[aa]=$(echo "${snap_shots_strict_target[aa]}" | sed '/^\s*$/d' | wc -l)
 	fi
 
 	if [ "${show_snapshots}" == "set" ]
@@ -443,15 +444,15 @@ do	aa=$((${aa} + 1))
 			module_current=set-snapvars
 			snap_new_source=$(${dir_modules}/${module_current})
 			check-exit
-			snap_common_source=$(echo ${snap_new_source} | cut -d " " -f 1)
-			snap_old_target=$(echo ${snap_new_source} | cut -d " " -f 2)
-			snap_exist_offset=$(echo ${snap_new_source} | cut -d " " -f 3)
-			snap_new_source=$(echo ${snap_shots_strict_source[aa]} | awk '{print $(NF)}')
+			snap_common_source=$(echo ${snap_new_source} | cut -d "~" -f 1)
+			snap_old_target=$(echo ${snap_new_source} | cut -d "~" -f 2)
+			snap_exist_offset=$(echo ${snap_new_source} | cut -d "~" -f 3)
+			snap_new_source=${snap_shots_strict_source[aa]##*$'\n'}
 			export snap_new_source snap_common_source snap_old_target snap_exist_offset
 
 			# when the snapshots are read, the snapshot on target wasn't created yet.
 			#so a dummy has to be created in order to delete the right amount of snapshots and diff
-			snap_shots_strict_target[aa]=$(echo -e "${snap_shots_strict_target[aa]}\n${snap_set_target_current}${snap_string_separator}${snap_string}")
+			snap_shots_strict_target[aa]="${snap_shots_strict_target[aa]}"$'\n'"${snap_set_target_current}"${snap_string_separator}${snap_string}
 			snap_number_strict_target[aa]=$((${snap_number_strict_target[aa]} + 1))
 	fi
 

@@ -16,7 +16,7 @@ if [ ! "${snap_old_target}" == "unset" ]
 
 		if [ -n "${log_server}" ]
 			then	if [ "${show_commands}" == "set" ]
-					then	echo "${command1} | ssh ${log_server}${log_server_port} \"cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt\""
+					then	echo "${command1} | ssh ${log_server}${log_server_port} \"cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
 						echo "ssh ${log_server}${log_server_port} \"chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt\""
 
 					else	eval ${command1} | ssh ${log_server}${log_server_port} "cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
@@ -27,8 +27,8 @@ if [ ! "${snap_old_target}" == "unset" ]
 					then	echo "${command1} | cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
 						echo "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
 
-					else	eval ${command1} | cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt
-						chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt
+					else	eval ${command1} | cat > "${log_dir}"/${mode_snapshot}_diff-"${sync_name_source_current}"-${snap_date}.txt
+						chown ${log_usr}:${log_usr} "${log_dir}"/${mode_snapshot}_diff-"${sync_name_source_current}"-${snap_date}.txt
 				fi
 		fi
 fi

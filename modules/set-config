@@ -46,21 +46,30 @@ fi
 
 ##### snapshot limits #####
 
-# in these cases no snapshots should be created. so snap_limit has to be 0
-if [ ! -n "${snap_limit_source}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+# the script expects an integer here. 0 means the snapshots are handled externally
+if [ ! -n "${snap_limit_source}" ]
+	then	snap_limit_source=0
+fi
+
+if [ ! -n "${snap_limit_target}" ]
+	then	snap_limit_target=0
+fi
+
+# in these cases no snapshots should be created. so snap_limit has to be 0 and snap_list has to be unset
+if [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_source=0
 		unset snap_list_source
 		export snap_limit_source
 fi
 
-if [ ! -n "${snap_limit_target}" ] || [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+if [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
 	then	snap_limit_target=0
 		unset snap_list_target
 		export snap_limit_target
 fi
 
 
-##### set  #####
+##### set filetype #####
 
 if [ -n "${config_file_type}" ]
 	then	probe=$(echo ${config_file_type}| rev | cut -c 1)
@@ -94,6 +103,71 @@ if [ "${mode_snapshot}" == "btrfs" ] || [ "${mode_snapshot}" == "file" ]|| [ "${
 		then	snap_string_separator="@"
 fi
 
+##### directory conventions #####
+
+# spaces in the directories are allowed but have to be escaped
+probe=$(echo ${dir_root_source} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	dir_root_source=$(echo ${dir_root_source} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${dir_root_target} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	dir_root_target=$(echo ${dir_root_target} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${dir_snap_source} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	dir_snap_source=$(echo ${dir_snap_source} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${dir_snap_target} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	dir_snap_targete=$(echo ${dir_snap_target} | sed 's/ /\\ /g')
+fi
+unset probe
+
+# if set, dir_offset needs to start with a / and end without
+if [ -n "${dir_offset_source}" ]
+	then	probe=$(echo ${dir_offset_source} | cut -c 1)
+		if [ ! "${probe}" == "/" ]
+			then	dir_offset_source="/${dir_offset_source}"
+		fi
+
+		probe=$(echo ${dir_offset_source} | rev | cut -c 1)
+		if [ "${probe}" == "/" ]
+			then	dir_offset_source=$(echo ${dir_offset_source} | rev | cut -c 2- | rev)
+		fi
+
+		probe=$(echo ${dir_offset_source} | grep " " | egrep -v "\\ ")
+		if [ -n "${probe}" ]
+			then	dir_offset_source=$(echo ${dir_offset_source} | sed 's/ /\\ /g')
+		fi
+
+		unset probe
+		export dir_offset_source
+fi
+
+if [ -n "${dir_offset_target}" ]
+	then	probe=$(echo ${dir_offset_target} | cut -c 1)
+		if [ ! "${probe}" == "/" ]
+			then	dir_offset_target="/${dir_offset_target}"
+		fi
+
+		probe=$(echo ${dir_offset_target} | rev | cut -c 1)
+		if [ "${probe}" == "/" ]
+			then	dir_offset_target=$(echo ${dir_offset_target} | rev | cut -c 2- | rev)
+		fi
+
+		probe=$(echo ${dir_offset_target} | grep " " | egrep -v "\\ ")
+		if [ -n "${probe}" ]
+			then	dir_offset_target=$(echo ${dir_offset_target} | sed 's/ /\\ /g')
+		fi
+
+		unset probe
+		export dir_offset_target
+fi
+
 ##### rollback handling #####
 
 # if rollback is set the source- and targetvariables have to be exchanged
@@ -112,12 +186,11 @@ if [ "${snap_rollback}" == "set" ]
 				dir_offset_target=${dir_trans_var}
 				export dir_offset_source dir_offset_target
 		fi
-
-		export dir_snap_source dir_snap_target dir_root_source dir_root_target
+		unset dir_trans_var
 fi
 
 ##### exports of variables which are created here #####
-export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
+export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_string snap_string_offset snap_string_separator dir_snap_source dir_snap_target dir_root_source dir_root_target
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =
