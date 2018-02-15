@@ -555,31 +555,34 @@ if [ "${snap_limit_source}"  -ge 1 ] || [ "${snap_limit_target}"  -ge 1 ]
 			if [ "${snap_limit_source}" -gt 0 ]
 				then	# variables on source side
 					side_current=source
+					config_server_current=${config_server_source}
+					ssh_current=${ssh_source}
 					snap_shots_current=${snap_shots_strict_source[aa]}
 					snap_number_current=${snap_number_strict_source[aa]}
 					snap_limit_current=${snap_limit_source}
 					sync_vmid_current=${sync_vmid[aa]}
-					export side_current snap_shots_current snap_number_current snap_limit_current sync_vmid_current
+					export side_current config_server_current ssh_current snap_shots_current snap_number_current snap_limit_current sync_vmid_current
 
 					module_current=do-snapdel
 					${dir_modules}/${module_current}
 					check-exit
-					unset snap_shots_current snap_number_current snap_limit_current sync_vmid_current
+					unset side_current config_server_current ssh_current snap_shots_current snap_number_current snap_limit_current sync_vmid_current
 			fi
 
 			if [ "${snap_limit_target}" -gt 0 ]
 				then	# variables on target side
 					side_current=target
-					# when the snapshots are read, the snapshot on target wasn't created yet. so a dummy has to be created in order to delete the right amount of snapshots
+					config_server_current=${config_server_target}
+					ssh_current=${ssh_target}
 					snap_shots_current=${snap_shots_strict_target[aa]}
 					snap_number_current=${snap_number_strict_target[aa]}
 					snap_limit_current=${snap_limit_target}
-					export side_current snap_shots_current snap_number_current snap_limit_current
+					export side_current config_server_current ssh_current snap_shots_current snap_number_current snap_limit_current
 
 					module_current=do-snapdel
 					${dir_modules}/${module_current}
 					check-exit
-					unset side_current snap_shots_current snap_number_current snap_limit_current
+					unset side_current config_server_current ssh_current snap_shots_current snap_number_current snap_limit_current
 			fi
 		done
 fi
