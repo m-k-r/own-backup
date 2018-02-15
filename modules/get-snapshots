@@ -4,14 +4,14 @@
 if [ "${mode_snapshot}" == "zfs" ]
 	then	if [ ! "${snap_root_current}" == "unset" ]
 			then	if [ -n "${config_server_current}" ]
-					then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find \"${snap_root_current}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
+					then	snap_shots=$(ssh ${ssh_current} "find \"${snap_root_current}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
 					else	snap_shots=$(find "${snap_root_current}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 				fi
 				snap_set_local="${snap_set_current}@"
 
 			else	# get snapshots for the dataset
 				if [ -n "${config_server_current}" ]
-					then	snap_shots=$(ssh ${config_server_current}${config_port_current} "zfs list -t snapshot" | grep \"${snap_set_current}\"@ | awk '{ print $1 }')
+					then	snap_shots=$(ssh ${ssh_current} "zfs list -t snapshot" | grep \"${snap_set_current}\"@ | awk '{ print $1 }')
 					else	snap_shots=$(zfs list -t snapshot | grep "${snap_set_current}"@ | awk '{ print $1 }')
 				fi
 		fi
@@ -19,7 +19,7 @@ if [ "${mode_snapshot}" == "zfs" ]
 		# this creates error messages when the full path is no dataset. this should not happen and has to be investigated further
 		for snap_shot in ${snap_shots}
 		do	if [ -n "${config_server_current}" ]
-				then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "LC_TIME="C" zfs get creation \"${snap_set_local}\"\"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
+				then	snap_shot_timestamp=$(ssh ${ssh_current} "LC_TIME="C" zfs get creation \"${snap_set_local}\"\"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
 				else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_set_local}""${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
 			fi
 			snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
@@ -29,13 +29,13 @@ if [ "${mode_snapshot}" == "zfs" ]
 	elif [ "${mode_snapshot}" == "btrfs" ]
 		then	# get snapshots for the subvolume
 			if [ -n "${config_server_current}" ]
-				then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
+				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
 				else	snap_shots=$(find "${snap_set_current}"_* -maxdepth 0 2> /dev/null)
 			fi
 
 			for snap_shot in ${snap_shots}
 			do	if [ -n "${config_server_current}" ]
-					then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+					then	snap_shot_timestamp=$(ssh ${ssh_current} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 					else	snap_shot_timestamp=$(btrfs subvolume show "${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 				fi
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
@@ -45,7 +45,7 @@ if [ "${mode_snapshot}" == "zfs" ]
 	elif [ "${mode_snapshot}" == "file" ]
 		then	# get snapshots for the subvolume
 			if [ -n "${config_server_current}" ]
-				then	snap_shots=$(ssh ${config_server_current}${config_port_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
+				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
 				else	snap_shots=$(find "${snap_set_current}"_* -maxdepth 0 2> /dev/null)
 			fi
 
@@ -55,7 +55,7 @@ if [ "${mode_snapshot}" == "zfs" ]
 
 			for snap_shot in ${snap_shots}
 			do	if [ -n "${config_server_current}" ]
-					then	snap_shot_timestamp=$(ssh ${config_server_current}${config_port_current} "stat -c %Z \"${snap_shot}\"")
+					then	snap_shot_timestamp=$(ssh ${ssh_current} "stat -c %Z \"${snap_shot}\"")
 					else	snap_shot_timestamp=$(stat -c %Z "${snap_shot}")
 				fi
 				snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";"${snap_shot}"~"${snap_shot_timestamp}";g" 2> /dev/null)
@@ -74,5 +74,5 @@ fi
 echo "${snap_shots}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current config_port_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current sync_name_target_type_current
+# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current sync_name_target_type_current
 # export_fields = snap_shots

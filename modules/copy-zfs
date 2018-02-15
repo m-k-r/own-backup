@@ -11,26 +11,26 @@ if [ -n "${snap_old_target}" ] && [ ! "${snap_old_target}" == "unset" ]
 		# so $snap_old_target can be missing but the snap_set_target_current exist. This scenario must be dealt with in the main script.
 		if [ ! "${show_commands}" == "set" ]
 			then	if [ -n "${config_server_target}" ]
-					then	ssh ${config_server_target}${config_port_target} "zfs rollback ${snap_old_target}"
-					else	zfs rollback "${snap_old_target}"
+					then	ssh ${ssh_target} "zfs rollback ${snap_old_target}"
+					else	zfs rollback ${snap_old_target}
 				fi
 		fi
 
 		# incremental send/receive
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
+			then	command1="ssh ${ssh_source} zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
 			else	command1="zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
 		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} zfs send ${snap_new_source}${progress}"
+			then	command1="ssh ${ssh_source} zfs send ${snap_new_source}${progress}"
 			else	command1="zfs send ${snap_new_source}${progress}"
 		fi
 fi
 
 if [ -n "${config_server_target}" ]
-	then	command2="ssh ${config_server_target}${config_port_target} zfs recv ${snap_set_target_current}"
+	then	command2="ssh ${ssh_target} zfs recv ${snap_set_target_current}"
 	else	command2="zfs recv ${snap_set_target_current}"
 fi
 

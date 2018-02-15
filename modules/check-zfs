@@ -2,7 +2,7 @@
 
 # check if dataset/sync on sourcepool exists
 if [ -n "${config_server_current}" ]
-	then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
+	then	dataset=$(ssh ${ssh_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
 	else	dataset=$(zfs list -o name "${dir_snap_current}"/"${sync_name_current}"  2> /dev/null | tail -n +2)
 fi
 
@@ -14,7 +14,7 @@ if [ "${dataset}" == "${dir_snap_current}/${sync_name_current}" ]
 		fi
 
 		if [ -n "${config_server_current}" ]
-			then	dataset=$(ssh ${config_server_current}${config_port_current} "zfs list ${dir_snap_current}" | tail -n +2)
+			then	dataset=$(ssh ${ssh_current} "zfs list ${dir_snap_current}" | tail -n +2)
 			else	dataset=$(zfs list ${dir_snap_current} | tail -n +2)
 		fi
 
@@ -35,7 +35,7 @@ fi
 
 if [ ! "${snap_set_current}" == "unset" ]
 	then	if [ -n "${config_server_current}" ]
-			then	snap_root_current=$(ssh ${config_server_current}${config_port_current} "zfs list -o mountpoint \"${snap_set_current}\" 2> /dev/null | tail -n +2")
+			then	snap_root_current=$(ssh ${ssh_current} "zfs list -o mountpoint \"${snap_set_current}\" 2> /dev/null | tail -n +2")
 			else	snap_root_current=$(zfs list -o mountpoint "${snap_set_current}"  2> /dev/null | tail -n +2)
 		fi
 
@@ -47,5 +47,5 @@ fi
 echo "${snap_root_current}~${snap_set_current}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_transfer config_server_current config_port_current dir_snap_current sync_name_current
+# import_fields = side_current mode_transfer config_server_current ssh_current dir_snap_current sync_name_current
 # export_fields = snap_root_current snap_set_current

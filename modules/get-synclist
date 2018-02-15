@@ -6,14 +6,14 @@ IFS=$'\n'
 for sync_list_element in ${sync_list}
 do	if [ ! "${mode_transfer}"  == "zfs" ]
 		then	if [ -n "${config_server_source}" ]
-				then	probe_sync_name_elements=$(ssh ${config_server_source}${config_port_source} "find \"${dir_root_source}\"\"${dir_offset_source}\"/${sync_list_element}* -maxdepth 0")
+				then	probe_sync_name_elements=$(ssh ${ssh_source} "find \"${dir_root_source}\"\"${dir_offset_source}\"/${sync_list_element}* -maxdepth 0")
 				else	probe_sync_name_elements=$(find "${dir_root_source}""${dir_offset_source}"/${sync_list_element}* -maxdepth 0)
 			fi
 
 			if [ "${mode_transfer}"  == "btrfs" ]
 				then	for probe_sync_name_element in ${probe_sync_name_elements}
 					do	if [ -n "${config_server_source}" ]
-							then	probe=$(ssh ${config_server_source}${config_port_source} "btrfs subvolume show \"${probe_sync_name_element}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
+							then	probe=$(ssh ${ssh_source} "btrfs subvolume show \"${probe_sync_name_element}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
 							else	probe=$(btrfs subvolume show "${probe_sync_name_element}" 2> /dev/null | head -1 | awk '{ print $1 }')
 						fi
 
@@ -27,7 +27,7 @@ do	if [ ! "${mode_transfer}"  == "zfs" ]
 
 		elif [ "${mode_transfer}"  == "zfs" ]
 			then	if [ -n "${config_server_source}" ]
-					then	probe_sync_name_elements=$(ssh ${config_server_source}${config_port_source} "zfs list -o name -r \"${dir_snap_source}\"" | tail -n +3 | grep ${sync_list_element})
+					then	probe_sync_name_elements=$(ssh ${ssh_source} "zfs list -o name -r \"${dir_snap_source}\"" | tail -n +3 | grep ${sync_list_element})
 					else	probe_sync_name_elements=$(zfs list -o name -r "${dir_snap_source}" | tail -n +3 | grep ${sync_list_element})
 				fi
 				sync_name=${syncname}'\n'${probe_sync_name_elements}
@@ -40,5 +40,5 @@ sync_name=$(printf "${sync_name}" | grep -v '^$' | rev | cut -d "/" -f -1 | rev)
 echo "${sync_name}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer config_server_source config_port_source sync_list dir_root_source dir_snap_source
+# import_fields = mode_transfer config_server_source ssh_source sync_list dir_root_source dir_snap_source
 # export_fields = sync_name

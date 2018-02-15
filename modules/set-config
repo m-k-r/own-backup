@@ -25,22 +25,34 @@ unset config_mode config_fs
 
 ##### ports for rsync and ssh #####
 
-if [ -n "${config_port_source}" ]
-	then	if [ "${mode_transfer}" == "rsync" ]
-			then	config_port_rsync_source=" -e \"ssh -p ${config_port_source}\""
-				export config_port_rsync_source
+if [ -n "${config_server_source}" ]
+	then	if [ ! -n "${config_port_source}" ]
+			then	config_port_source=22
 		fi
-		config_port_source=" -p ${config_port_source}"
-		export config_port_source
+
+		if [ "${mode_transfer}" == "rsync" ]
+			then	ssh_source_transfer=" -e \"ssh -p ${config_port_source}\" ${config_server_source}:"
+				export ssh_source_transfer
+		fi
+
+		ssh_source="${config_server_source} -p ${config_port_source} "
+		export ssh_source
+		unset config_port_source
 fi
 
-if [ -n "${config_port_target}" ]
-	then	if [ "${mode_transfer}" == "rsync" ]
-			then	config_port_rsync_target=" -e \"ssh -p ${config_port_target}\""
-				export config_port_rsync_target
+if [ -n "${config_server_target}" ]
+	then	if [ ! -n "${config_port_target}" ]
+			then	config_port_target=22
 		fi
-		config_port_target=" -p ${config_port_target}"
-		export config_port_target
+
+		if [ "${mode_transfer}" == "rsync" ]
+			then	ssh_target_transfer=" -e \"ssh -p ${config_port_target}\" ${config_server_target}:"
+				export ssh_target_transfer
+		fi
+
+		ssh_target="ssh ${config_server_target} -p ${config_port_target} "
+		export ssh_target
+		unset config_port_target
 fi
 
 
@@ -194,4 +206,4 @@ export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_s
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =
-# export_fields = mode_create mode_snapshot mode_transfer config_port_rsync_source config_port_rsync_target config_port_source config_port_target snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
+# export_fields = export_fields = mode_create mode_snapshot mode_transfer ssh_source ssh_source_transfer ssh_target ssh_target_transfer snap_limit_source snap_limit_target dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator

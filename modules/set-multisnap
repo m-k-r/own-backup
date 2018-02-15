@@ -61,13 +61,13 @@ do	snap_new_source=$(echo "${snap_new_source}" | tr "~" " " )
 	if [ ! "${snap_old_target}" == "unset" ] && [ ! "${show_commands}" == "set" ]
 		then	if [ "${mode_transfer}" == "zfs" ]
 				then	if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_target}${config_port_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
+						then	probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
 						else	probe=$(zfs list \"${snap_old_target}\" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
 					fi
 
 				elif [ "${mode_transfer}" == "btrfs" ]
 					then	if [ -n "${config_server_current}" ]
-							then	probe=$(ssh ${config_server_target}${config_port_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
+							then	probe=$(ssh ${ssh_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
 							else	probe=$(btrfs subvolume show ${snap_old_target} 2> /dev/null | head -1 | awk '{ print $1 }')
 						fi
 			fi
@@ -92,5 +92,5 @@ do	snap_new_source=$(echo "${snap_new_source}" | tr "~" " " )
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer config_server_target config_port_target show_commands dir_modules snap_multi snap_string_separator snap_string_offset snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_common_source snap_old_target
+# import_fields = mode_transfer config_server_target ssh_target show_commands dir_modules snap_multi snap_string_separator snap_string_offset snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_common_source snap_old_target
 # export_fields =

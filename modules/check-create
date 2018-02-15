@@ -2,7 +2,7 @@
 
 if [ "${mode_create}" == "kvm" ]
 	then	if [ -n "${config_server_current}" ]
-			then	probe=$(ssh ${config_server_current}${config_port_current} "qm list | grep ${sync_vmid_current}")
+			then	probe=$(ssh ${ssh_current} "qm list | grep ${sync_vmid_current}")
 			else	probe=$(qm list | grep ${sync_vmid_current})
 		fi
 
@@ -16,7 +16,7 @@ if [ "${mode_create}" == "kvm" ]
 
 			if [ "${mode_create}" == "mysql" ]
 				then	if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_current}${config_port_current} "find ${config_sql_credentials} -maxdepth 0 2> /dev/null")
+						then	probe=$(ssh ${ssh_current} "find ${config_sql_credentials} -maxdepth 0 2> /dev/null")
 						else	probe=$(find ${config_sql_credentials} -maxdepth 0 2> /dev/null)
 					fi
 
@@ -25,7 +25,7 @@ if [ "${mode_create}" == "kvm" ]
 					fi
 
 					if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_current}${config_port_current} "mysqlshow --defaults-extra-file=${config_sql_credentials} | grep ${sync_name_source_current} | awk '{ print $2 }'")
+						then	probe=$(ssh ${ssh_current} "mysqlshow --defaults-extra-file=${config_sql_credentials} | grep ${sync_name_source_current} | awk '{ print $2 }'")
 						else	probe=$(mysqlshow --defaults-extra-file=${config_sql_credentials} | grep ${sync_name_source_current} | awk '{ print $2 }')
 					fi
 
@@ -35,7 +35,7 @@ if [ "${mode_create}" == "kvm" ]
 
 				elif [ "${mode_create}" == "pgsql" ]
 					then	if [ -n "${config_server_current}" ]
-							then	probe=$(ssh ${config_server_current}${config_port_current} "find /root/.pgpass -maxdepth 0 2> /dev/null")
+							then	probe=$(ssh ${ssh_current} "find /root/.pgpass -maxdepth 0 2> /dev/null")
 							else	probe=$(find /root/.pgpass -maxdepth 0 2> /dev/null)
 						fi
 
@@ -44,7 +44,7 @@ if [ "${mode_create}" == "kvm" ]
 					fi
 
 					if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_current}${config_port_current} "psql -l -U ${config_sql_credentials} -h localhost | grep ${sync_name_source_current} | awk '{ print $1 }")
+						then	probe=$(ssh ${ssh_current} "psql -l -U ${config_sql_credentials} -h localhost | grep ${sync_name_source_current} | awk '{ print $1 }")
 						else	probe=$(psql -l -U ${config_sql_credentials} -h localhost | grep ${sync_name_source_current} | awk '{ print $1 }')
 					fi
 
@@ -55,7 +55,7 @@ if [ "${mode_create}" == "kvm" ]
 
 			if [ -n "${config_sql_certificate}" ]
 				then	if [ -n "${config_server_current}" ]
-						then	probe=$(ssh ${config_server_current}${config_port_current} "find ${config_sql_certificate} -maxdepth 0 2> /dev/null")
+						then	probe=$(ssh ${ssh_current} "find ${config_sql_certificate} -maxdepth 0 2> /dev/null")
 						else	probe=$(find ${config_sql_certificate} -maxdepth 0 2> /dev/null)
 					fi
 
@@ -69,5 +69,5 @@ if [ "${mode_create}" == "kvm" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields =mode_create config_server_current config_port_current config_options_sql sync_name_source_current sync_vmid_current
+# import_fields =mode_create config_server_current ssh_current config_options_sql sync_name_source_current sync_vmid_current
 # export_fields = 

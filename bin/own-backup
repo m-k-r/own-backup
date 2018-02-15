@@ -97,7 +97,7 @@ function check-exit {
 		then	export module_current oss_parameter dir_modules dir_conf config exit_code
 
 			if [ -n "${aa}" ]
-				then	name_current=${sync_name_source[aa]}
+				then	name_current=$(echo "${sync_name_source[aa]}" | tr " " "-")
 					export name_current
 			fi
 
@@ -226,7 +226,7 @@ do	aa=$((${aa} + 1))
 	##### check the prerequisits on source side #####
 	side_current=source
 	config_server_current=${config_server_source}
-	config_port_current=${config_port_source}
+	ssh_current=${ssh_source}
 	dir_snap_current=${dir_snap_source}
 	dir_root_current=${dir_root_source}
 	dir_offset_current=${dir_offset_source}
@@ -234,7 +234,7 @@ do	aa=$((${aa} + 1))
 	snap_limit_current=${snap_limit_source}
 	sync_name_current=${sync_name_source[aa]}
 	sync_vmid_current=${sync_vmid[aa]}
-	export side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
+	export side_current config_server_current ssh_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
 
 	##### checks on source side #####
 
@@ -270,14 +270,14 @@ do	aa=$((${aa} + 1))
 	##### check the prerequisits on target side #####
 	side_current=target
 	config_server_current=${config_server_target}
-	config_port_current=${config_port_target}
+	ssh_current=${ssh_target}
 	dir_snap_current=${dir_snap_target}
 	dir_root_current=${dir_root_target}
 	dir_offset_current=${dir_offset_target}
 	snap_list_current=${snap_list_target}
 	snap_limit_current=${snap_limit_target}
 	sync_name_current=${sync_name_target[aa]}
-	export snap_set_current side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+	export snap_set_current side_current config_server_current ssh_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
 
 	# basically not necessary on target side but left as a hook for future additions
 	#if [ ! "${mode_create}" == "mode_snapshot" ]
@@ -314,7 +314,7 @@ do	aa=$((${aa} + 1))
 			echo "sync_name_target is ${sync_name_target[aa]}"
 	fi
 
-	unset snap_set_current side_current config_server_current config_port_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
+	unset snap_set_current side_current config_server_current ssh_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current
 done
 
 # if output = datasets the script ends here
@@ -334,7 +334,7 @@ if [ -n "${snap_list_source}" ]
 		module_current="own-snapshot"
 		oss_parameter=${arg_oss_source}
 		if [ "${snap_list_location_source}" == "ssh" ]
-			then	ssh ${config_server_source}${config_port_source} "own-snapshot ${arg_oss_source}"
+			then	ssh ${ssh_source} "own-snapshot ${arg_oss_source}"
 			else	own-snapshot ${arg_oss_source}
 		fi
 		check-exit
@@ -354,10 +354,10 @@ do	aa=$((${aa} + 1))
 	##### source #####
 	side_current=source
 	config_server_current=${config_server_source}
-	config_port_current=${config_port_source}
+	ssh_current=${ssh_source}
 	snap_set_current=${snap_set_source[aa]}
 	snap_root_current=${snap_root_source[aa]}
-	export sync_name_target_type_current side_current config_server_current config_port_current snap_set_current snap_root_current
+	export sync_name_target_type_current side_current config_server_current ssh_current snap_set_current snap_root_current
 
 	if [ "${snap_limit_source}"  -ge 1 ]
 		then	source ${dir_modules}/arg-osss
@@ -375,28 +375,28 @@ do	aa=$((${aa} + 1))
 			snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $2 }')
 			snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $1 }')
 			# wc counts empty lines. that's just a temporary solution. awk -F ' ' '{print NF}' doesn't work anymore because snapshots with spaces are expected
-			snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | wc -l)
+			snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
 			snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
-			snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | wc -l)
+			snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
 	fi
 
 	##### target #####
 	if [ -n "${mode_snapshot}" ]
 		then	side_current=target
 			config_server_current=${config_server_target}
-			config_port_current=${config_port_target}
+			ssh_current=${ssh_target}
 			snap_set_current=${snap_set_target[aa]}
 			snap_root_current=${snap_root_target[aa]}
-			export side_current config_server_current config_port_current snap_set_current snap_root_current
+			export side_current config_server_current ssh_current snap_set_current snap_root_current
 
 			module_current=get-snapshots
 			snap_shots_target[aa]=$(${dir_modules}/${module_current})
 			check-exit
 			snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $2 }')
 			snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $1 }')
-			snap_number_target[aa]=$(echo "${snap_shots_target[aa]}" | sed '/^\s*$/d' | wc -l)
+			snap_number_target[aa]=$(echo "${snap_shots_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
 			snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
-			snap_number_strict_target[aa]=$(echo "${snap_shots_strict_target[aa]}" | sed '/^\s*$/d' | wc -l)
+			snap_number_strict_target[aa]=$(echo "${snap_shots_strict_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
 	fi
 
 	if [ "${show_snapshots}" == "set" ]
@@ -407,7 +407,7 @@ do	aa=$((${aa} + 1))
 			echo "-------------------------"
 	fi
 
-	unset side_current config_server_current config_port_current snap_set_current snap_root_current
+	unset side_current config_server_current ssh_current snap_set_current snap_root_current
 done
 
 # if output = datasets the script ends here
@@ -482,14 +482,17 @@ do	aa=$((${aa} + 1))
 
 					module_current=set-multisnap
 					${dir_modules}/${module_current}
+					check-exit
 
 				elif [ "${mode_transfer}" == "zfs" ]
 					then	module_current=copy-zfs
 						${dir_modules}/${module_current}
+						check-exit
 
 				elif [ "${mode_transfer}" == "btrfs" ]
 					then	module_current=copy-btrfs
 						${dir_modules}/${module_current}
+						check-exit
 
 				elif [ "${mode_transfer}" == "rsync" ]
 					then	module_current=copy-rsync
@@ -501,11 +504,11 @@ do	aa=$((${aa} + 1))
 								module_current=own-snapshot
 								oss_parameter=${arg_oss_target}
 								own-snapshot ${arg_oss_target}
+								check-exit
 								unset oss_parameter
 						fi
 			fi
 	fi
-	check-exit
 
 	if [ -n "${log_dir}" ]
 		then	sync_name_source_current=${sync_name_source[aa]}
@@ -525,7 +528,7 @@ if [ -n "${snap_list_target}" ]
 		module_current=own-snapshot
 		oss_parameter=${arg_oss_target}
 		if [ "${snap_list_location_target}" == "ssh" ]
-			then	ssh ${config_server_target}${config_port_target} "own-snapshot ${arg_oss_target}"
+			then	ssh ${ssh_target} "own-snapshot ${arg_oss_target}"
 			else	own-snapshot ${arg_oss_target}
 		fi
 		check-exit

@@ -6,25 +6,25 @@ if [ "${show_progress}" == "set" ] && [ ! "${show_commands}" == "set" ]
 fi
 
 # btrfs copies the subvolume to a directory. for that reason the actual subvolname has to be cut off
-snap_set_target_current=$(echo "${snap_set_target_current}" | rev | cut -d "/" -f 2- | rev)
+snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
 
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
 if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
 	then	# incremental send/receive
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""
+			then	command1="ssh ${ssh_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""
 			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${progress}"
 		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
 		if [ -n "${config_server_source}" ]
-			then	command1="ssh ${config_server_source}${config_port_source} \"btrfs send ${snap_new_source}${progress}\""
+			then	command1="ssh ${ssh_source} \"btrfs send ${snap_new_source}${progress}\""
 			else	command1="btrfs send ${snap_new_source}${progress}"
 		fi
 fi
 
 if [ -n "${config_server_target}" ]
-	then	command2="ssh ${config_server_target}${config_port_target} \"btrfs receive ${snap_set_target_current}/\""
+	then	command2="ssh ${ssh_target} \"btrfs receive ${snap_set_target_current}/\""
 	else	command2="btrfs receive ${snap_set_target_current}/"
 fi
 
