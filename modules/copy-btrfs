@@ -34,5 +34,5 @@ if [ "${show_commands}" == "set" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = show_commands config_server_source config_port_source config_server_target config_port_target show_progress snap_new_source snap_common_source snap_set_target_current
+# import_fields = show_commands config_server_source ssh_source config_server_target ssh_target show_progress snap_new_source snap_common_source snap_set_target_current
 # export_fields =
