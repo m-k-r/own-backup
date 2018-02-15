@@ -35,7 +35,7 @@ if [ -n "${config_server_source}" ]
 				export ssh_source_transfer
 		fi
 
-		ssh_source="${config_server_source} -p ${config_port_source} "
+		ssh_source="${config_server_source} -p ${config_port_source}"
 		export ssh_source
 		unset config_port_source
 fi
@@ -50,7 +50,7 @@ if [ -n "${config_server_target}" ]
 				export ssh_target_transfer
 		fi
 
-		ssh_target="ssh ${config_server_target} -p ${config_port_target} "
+		ssh_target="ssh ${config_server_target} -p ${config_port_target}"
 		export ssh_target
 		unset config_port_target
 fi
