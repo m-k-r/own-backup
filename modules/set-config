@@ -81,22 +81,6 @@ if [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi
 fi
 
 
-##### set filetype #####
-
-if [ -n "${config_file_type}" ]
-	then	probe=$(echo ${config_file_type}| rev | cut -c 1)
-		if [ "${probe}" == "." ]
-			then	config_file_type=$(echo "${config_file_type}"| rev | cut -d "." -f 2- | rev)
-		fi
-
-		probe=$(echo ${config_file_type} | cut -c 1)
-		if [ ! "${probe}" == "." ]
-			then	config_file_type=.${config_file_type}
-		fi
-		export config_file_type
-fi
-
-
 ##### define strings for snapname #####
 
 # Get the actual date and time in format and its stringlength

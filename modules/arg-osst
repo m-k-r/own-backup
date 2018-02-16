@@ -16,6 +16,6 @@ if [ -n "${snap_list_target}" ]
 
 	else	arg_oss_target+=" -m ${mode_snapshot}"
 		arg_oss_target+=" -l ${snap_string}"
-		arg_oss_target+=" -n $(echo ${snap_set_target[aa]}${sync_name_target_type[aa]} | tr ' ' '~')"
+		arg_oss_target+=" -n $(echo ${snap_set_target[aa]}"
 		arg_oss_target+=" -r $(echo ${snap_root_target[aa]} | tr ' ' '~')"
 fi

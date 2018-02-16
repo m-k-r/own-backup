@@ -16,7 +16,7 @@ if [ -n "${snap_list_source}" ]
 
 	else	arg_oss_source+=" -m ${mode_create}"
 		arg_oss_source+=" -l ${snap_string}"
-		arg_oss_source+=" -n $(echo ${snap_set_source[aa]}${sync_name_target_type[aa]} | tr ' ' '~')"
+		arg_oss_source+=" -n $(echo ${snap_set_source[aa]}"
 
 		if [ -n "${sync_vmid[aa]}" ]
 			then	arg_oss_source+=" -r ${sync_vmid[aa]}"

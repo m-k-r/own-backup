@@ -49,10 +49,6 @@ if [ "${mode_snapshot}" == "zfs" ]
 				else	snap_shots=$(find "${snap_set_current}"_* -maxdepth 0 2> /dev/null)
 			fi
 
-			if [ -n "${sync_name_target_type_current}" ]
-				then	snap_shots=$(echo "${snap_shots}" | grep "${sync_name_target_type_current}" 2> /dev/null)
-			fi
-
 			for snap_shot in ${snap_shots}
 			do	if [ -n "${config_server_current}" ]
 					then	snap_shot_timestamp=$(ssh ${ssh_current} "stat -c %Z \"${snap_shot}\"")
@@ -67,12 +63,12 @@ snap_shots=$(echo "${snap_shots}" | sort -k2)
 # if output is set, there is no current snapshot, for that a virtual snapshot has to be created
 if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
 	then	if ([ "${side_current}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]) || ([ "${side_current}" == "source" ] && [ -n "${snap_list_source}" ])
-			then	snap_shots=$(echo -e "${snap_shots}\n${snap_set_current}${snap_string_separator}${snap_string}${sync_name_target_type_current}~$(date +'%s')")
+			then	snap_shots=$(echo -e "${snap_shots}\n${snap_set_current}${snap_string_separator}${snap_string}~$(date +'%s')")
 		fi
 fi
 
 echo "${snap_shots}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current sync_name_target_type_current
+# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current
 # export_fields = snap_shots

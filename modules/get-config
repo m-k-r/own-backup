@@ -15,7 +15,6 @@ config_port_target=$(awk -v condition1="targetserver" '$1 == condition1 { print 
 config_mode=$(awk -v condition1="mode" '$1 == condition1 { print $3 }' ${conf})
 config_fs=$(awk -v condition1="filesystem" '$1 == condition1 { print $3 }' ${conf})
 config_user=$(awk -v condition1="user" '$1 == condition1 { print $3 }' ${conf})
-config_file_type=$(awk -v condition1="filetype" '$1 == condition1 { print $3 }' ${conf})
 config_certificate=$(awk -v condition1="certificate" '$1 == condition1 { print $3 }' ${conf})
 config_options_rsync=$(awk -v condition1="rsync-options" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-)
 config_options_sql=$(awk -v condition1="sql-options" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-)
@@ -57,19 +56,18 @@ fi
 # Syncdataoptions like Synclist, Names, Su- and Prefixes and VMID
 sync_list=$(awk -v condition1="synclist" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-)
 sync_name=($(awk -v condition1="syncname" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-))
-sync_name_filetype=$(awk -v condition1="filetype" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-)
 sync_name_new=($(awk -v condition1="newsyncname" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-))
 sync_name_new_suffix=($(awk -v condition1="syncnamesuffix" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-))
 sync_name_new_prefix=($(awk -v condition1="syncnameprefix" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-))
 sync_vmid=($(awk -v condition1="VM-ID" '$1 == condition1 { print $0 }' ${conf} | cut -d " " -f 3-))
 
 export log_server log_server_port log_dir log_usr
-export config_server_source config_port_source config_server_target config_port_target config_mode config_fs config_user config_file_type config_certificate config_options_rsync config_options_sql
+export config_server_source config_port_source config_server_target config_port_target config_mode config_fs config_user config_certificate config_options_rsync config_options_sql
 export dir_offset_source dir_offset_target
 export snap_name snap_date snap_list_source snap_list_frequency_source snap_list_location_source snap_list_target snap_list_frequency_target snap_list_location_target
-export sync_list sync_name_filetype sync_vmid
+export sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
 
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =
-# export_fields = log_server log_server_port log_dir log_usr config_server_source config_port_source config_server_target config_port_target config_mode config_fs config_user config_file_type config_certificate config_options_rsync config_options_sql dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_name snap_date snap_list_source snap_list_frequency_source snap_list_location_source snap_list_target snap_list_frequency_target snap_list_location_target snap_limit_source snap_limit_target sync_list sync_name sync_name_filetype sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
+# export_fields = log_server log_server_port log_dir log_usr config_server_source config_port_source config_server_target config_port_target config_mode config_fs config_user config_certificate config_options_rsync config_options_sql dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_name snap_date snap_list_source snap_list_frequency_source snap_list_location_source snap_list_target snap_list_frequency_target snap_list_location_target snap_limit_source snap_limit_target sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
