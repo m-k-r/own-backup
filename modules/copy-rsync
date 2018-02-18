@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "${mode_snapshot}" == "file" ]
-	then	if [ -n "{snap_new_source}" ]
+	then	if [ -n "${snap_new_source}" ]
 			then	snap_rsync_source_current=${snap_new_source}
 			else	exit 90
 		fi
