@@ -245,8 +245,12 @@ do	aa=$((${aa} + 1))
 			snap_set_current=$(${dir_modules}/${module_current})
 			check-exit
 			snap_root_source[aa]=$(echo ${snap_set_current} | cut -d "~" -f 1)
-			snap_set_current=$(echo ${snap_set_current} | cut -d "~" -f 2)
-			snap_set_source[aa]=${snap_set_current}
+			snap_set_source[aa]=$(echo ${snap_set_current} | cut -d "~" -f 2)
+			if [ "${mode_snapshot}" == "file" ]
+				then	snap_file_type[aa]=$(echo ${snap_set_current} | cut -d "~" -f 3)
+					mode_override[aa]=$(echo ${snap_set_current} | cut -d "~" -f 4)
+			fi
+			unset snap_set_current
 	fi
 
 	# check all ${mode_transfer}. atm this is only rsync. if mode_file is file then rsync is assumed for mode_transfer and don't have to be checked extra
@@ -337,6 +341,10 @@ aa="-1"
 while [ "${sync_name_number}" -gt "${aa}" ]
 do	aa=$((${aa} + 1))
 
+	##### global #####
+	snap_file_type_current=${snap_file_type[aa]}
+	export snap_file_type_current
+
 	##### source #####
 	side_current=source
 	config_server_current=${config_server_source}
@@ -360,7 +368,6 @@ do	aa=$((${aa} + 1))
 			check-exit
 			snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $2 }')
 			snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $1 }')
-			# wc counts empty lines. that's just a temporary solution. awk -F ' ' '{print NF}' doesn't work anymore because snapshots with spaces are expected
 			snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
 			snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
 			snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
@@ -393,7 +400,7 @@ do	aa=$((${aa} + 1))
 			echo "-------------------------"
 	fi
 
-	unset side_current config_server_current ssh_current snap_set_current snap_root_current
+	unset snap_file_type_current side_current config_server_current ssh_current snap_set_current snap_root_current
 done
 
 # if output = datasets the script ends here

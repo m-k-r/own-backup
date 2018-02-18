@@ -1,7 +1,10 @@
 #!/bin/bash
 
-if [ "${mode_snapshot}" == "file" ] && [ -n "{snap_new_source}" ]
-	then	snap_rsync_source_current=${snap_new_source}
+if [ "${mode_snapshot}" == "file" ]
+	then	if [ -n "{snap_new_source}" ]
+			then	snap_rsync_source_current=${snap_new_source}
+			else	exit 90
+		fi
 fi
 
 if [ -n "${config_server_source}" ]
@@ -20,5 +23,5 @@ if [ -n "${show_commands}" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot show_commands config_server_source ssh_source_transfer config_server_target ssh_target_transfer snap_rsync_source_current snap_rsync_target_current snap_new_source
+# import_fields = mode_snapshot show_commands config_server_source ssh_source_transfer config_server_target ssh_target_transfer snap_new_source snap_rsync_source_current snap_rsync_target_current snap_new_source
 # export_fields =
