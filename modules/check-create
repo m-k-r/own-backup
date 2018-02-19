@@ -11,10 +11,7 @@ if [ "${mode_create}" == "kvm" ]
 		fi
 
 	elif [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-		then	config_sql_credentials=$(echo ${config_options_sql} | cut -d " " -f 1)
-			config_sql_certificate=$(echo ${config_options_sql} | cut -d " " -f 2)
-
-			if [ "${mode_create}" == "mysql" ]
+		then	if [ "${mode_create}" == "mysql" ]
 				then	if [ -n "${config_server_current}" ]
 						then	probe=$(ssh ${ssh_current} "find ${config_sql_credentials} -maxdepth 0 2> /dev/null")
 						else	probe=$(find ${config_sql_credentials} -maxdepth 0 2> /dev/null)
@@ -70,4 +67,4 @@ fi
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =mode_create config_server_current ssh_current config_options_sql sync_name_source_current sync_vmid_current
-# export_fields = 
+# export_fields =

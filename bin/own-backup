@@ -232,11 +232,6 @@ do	aa=$((${aa} + 1))
 		then	module_current=check-create
 			${dir_modules}/${module_current}
 			check-exit
-
-			if [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-				then	config_sql_credentials[aa]=$(echo ${config_options_sql} | cut -d " " -f 1)
-					config_sql_certificate[aa]=$(echo ${config_options_sql} | cut -d " " -f 2)
-			fi
 	fi
 
 	# check all ${mode_snapshot}

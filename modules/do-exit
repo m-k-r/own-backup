@@ -53,7 +53,7 @@ if  [ "${exit_code}" == "0" ]
 		then	echo "${module_current}: no supported output found: ${output}" && exit 1
 
 	elif [ "${exit_code}" == "96" ]
-		then	echo "${module_current}: root-set ${dir_root_current} or ${dir_root_current}${dir_offset_current}/${sync_name_source_current} does not exist" && exit 1
+		then	echo "${module_current}: root-set ${dir_root_current}${dir_offset_current}/${sync_name_source_current} does not exist" && exit 1
 
 	else	echo "${module_current}: an undefined error has occured: ${?}" && exit 1
 fi

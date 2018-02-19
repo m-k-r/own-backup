@@ -5,7 +5,7 @@ if [ -n "${output}" ]
 	else	arg_oss_target+=" -o previous"
 fi
 
-if [ -n "${config_server_target}" ] && [ ! "${snap_list_location_target}" == "ssh" ]
+if [ -n "${config_server_target}" ] && [ ! "${snap_location_target}" == "ssh" ]
 	then	arg_oss_target+=" -s ${config_server_target}"
 fi
 

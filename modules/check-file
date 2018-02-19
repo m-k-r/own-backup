@@ -1,55 +1,56 @@
 #!/bin/bash
 
 # root/syncname has to exist on source and not on target
-# snap/syncname doesn't have to exist on source and target but snap has to
+# snap has to exist on source and target
+# if snapshots on source shouldn't be used use own-snapshot instead
 
-if [ "${side_current}" == "source" ] && [ "${dir_root_current}" == "${dir_snap_current}" ]
-	then	snap_set_current=unset
-	elif [ "${side_current}" == "target" ] && [ ! "${snap_set_current}" == "unset" ]
-		then	snap_root_current=unset
+if [ "${side_current}" == "target" ]
+	then	snap_root_current=unset
 fi
 
 # check if dir_root/sync exists
 if [ ! "${snap_root_current}" == "unset" ]
-	then	if [ -n "${config_server_current}" ]
-			then	snap_root_current=$(ssh ${ssh_current} "find \"${dir_root_current}\"\"${dir_offset_current}\"/\"${sync_name_source_current}\" -maxdepth 0 2> /dev/null")
-			else	snap_root_current=$(find "${dir_root_current}""${dir_offset_current}"/"${sync_name_source_current}" -maxdepth 0 2> /dev/null)
-		fi
+	then	if [ "${mode_snapshot}" == "file" ]
+			then	if [ -n "${config_server_current}" ]
+					then	snap_root_current=$(ssh ${ssh_current} "find \"${dir_root_current}\"\"${dir_offset_current}\"/\"${sync_name_source_current}\" -maxdepth 0 2> /dev/null")
+					else	snap_root_current=$(find "${dir_root_current}""${dir_offset_current}"/"${sync_name_source_current}" -maxdepth 0 2> /dev/null)
+				fi
 
-		if [ ! "${snap_root_current}" == "${dir_root_current}${dir_offset_current}/${sync_name_source_current}" ]
-			then	exit 96
-			else	if [ "${mode_snapshot}" == "file" ]
-					then	if [ -d "${snap_root_current}" ]
+				if [ ! "${snap_root_current}" == "${dir_root_current}${dir_offset_current}/${sync_name_source_current}" ]
+					then	exit 96
+					else	# if snap_root is a directory the mode for own-snapshot gets overwritten so rsync doesn't create snap_set and copy root_set into it
+						if [ -d "${snap_root_current}" ]
 							then	mode_override=directory
 						fi
 				fi
+
+			elif [ "${mode_snapshot}" == "mysql" ] || [ "${mode_snapshot}" == "mysql" ]
+				then	snap_root_current=${sync_name_source}
 		fi
 fi
 
 # check if dataset exists
-if [ ! "${snap_set_current}" == "unset" ]
-	then	if [ -n "${config_server_current}" ]
-			then	probe_snap_set_current=$(ssh ${ssh_current} "find \"${dir_snap_current}\" -maxdepth 0 2> /dev/null")
-			else	probe_snap_set_current=$(find "${dir_snap_current}" -maxdepth 0 2> /dev/null)
+if [ -n "${config_server_current}" ]
+	then	probe_snap_set_current=$(ssh ${ssh_current} "find \"${dir_snap_current}\" -maxdepth 0 2> /dev/null")
+	else	probe_snap_set_current=$(find "${dir_snap_current}" -maxdepth 0 2> /dev/null)
+fi
+
+if [ "${probe_snap_set_current}" == "${dir_snap_current}" ]
+	then	probe=$(echo "${sync_name_target_current}" | grep "\.")
+
+		# if sync_name_target_current contains a dot, all after that is considered as filetype and put after the snapstring so that the fileextension stays at the end
+		if [ -n "${probe}" ]
+			then	snap_file_type=.$(echo "${sync_name_target_current}" | cut -d "." -f 2-)
+				snap_file=$(echo "${sync_name_target_current}" | cut -d "." -f 1)
+			else	snap_file=${sync_name_target_current}
 		fi
 
-		if [ "${probe_snap_set_current}" == "${dir_snap_current}" ]
-			then	probe=$(echo "${sync_name_target_current}" | grep "\.")
-
-				# if sync_name_target_current contains a dot, all after that is considered as filetype and put after the snapstring
-				if [ -n "${probe}" ]
-					then	snap_file_type=.$(echo "${sync_name_target_current}" | cut -d "." -f 2-)
-						snap_file=$(echo "${sync_name_target_current}" | cut -d "." -f 1)
-					else	snap_file=${sync_name_target_current}
-				fi
-
-				snap_set_current=${dir_snap_current}${dir_offset_current}/${snap_file}
-			else	exit 87
-		fi
+		snap_set_current=${dir_snap_current}${dir_offset_current}/${snap_file}
+	else	exit 87
 fi
 
 echo "${snap_root_current}~${snap_set_current}~${snap_file_type}~${mode_override}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current config_server_current ssh_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
+# import_fields = side_current mode_snapshot config_server_current ssh_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
 # export_fields = snap_set_current snap_root_current snap_file_type
