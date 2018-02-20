@@ -40,13 +40,13 @@ if [ ! -n "${snap_list_frequency_override}" ]
 	then	snap_list_frequency_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $5 }' ${conf})
 	else	snap_list_frequency_source=${snap_list_frequency_override}
 fi
-snap_location_source=$(awk -v condition1="create-remote" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+snap_location_source=$(awk -v condition1="snapshotremote" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 snap_list_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 if [ ! -n "${snap_list_frequency_override}" ]
 	then	snap_list_frequency_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${conf})
 	else	snap_list_frequency_target=${snap_list_frequency_override}
 fi
-snap_location_target=$(awk -v condition1="create-remote" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
+snap_location_target=$(awk -v condition1="snapshotremote" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 if [ ! -n "${snap_limit_source}" ]
 	then	snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${conf})
 fi

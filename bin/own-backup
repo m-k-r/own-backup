@@ -321,7 +321,7 @@ if [ -n "${snap_list_source}" ]
 	then	source ${dir_modules}/arg-osss
 		module_current="own-snapshot"
 		oss_parameter=${arg_oss_source}
-		if [ "${snap_list_location_source}" == "ssh" ]
+		if [ "${snap_location_source}" == "ssh" ]
 			then	ssh ${ssh_source} "own-snapshot ${arg_oss_source}"
 			else	own-snapshot ${arg_oss_source}
 		fi
@@ -515,7 +515,7 @@ if [ -n "${snap_list_target}" ]
 	then	source ${dir_modules}/arg-osst
 		module_current=own-snapshot
 		oss_parameter=${arg_oss_target}
-		if [ "${snap_list_location_target}" == "ssh" ]
+		if [ "${snap_location_target}" == "ssh" ]
 			then	ssh ${ssh_target} "own-snapshot ${arg_oss_target}"
 			else	own-snapshot ${arg_oss_target}
 		fi

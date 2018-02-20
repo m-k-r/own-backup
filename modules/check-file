@@ -4,7 +4,7 @@
 # snap has to exist on source and target
 # if snapshots on source shouldn't be used use own-snapshot instead
 
-if [ "${side_current}" == "target" ]
+if [ "${side_current}" == "target" ] || [ -n "${snap_list_current}" ]
 	then	snap_root_current=unset
 fi
 
@@ -52,5 +52,5 @@ fi
 echo "${snap_root_current}~${snap_set_current}~${snap_file_type}~${mode_override}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot config_server_current ssh_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
+# import_fields = side_current mode_snapshot config_server_current ssh_current snap_list_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current sync_name_target_current
 # export_fields = snap_set_current snap_root_current snap_file_type
