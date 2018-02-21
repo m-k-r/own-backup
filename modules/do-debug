@@ -1,56 +1,4 @@
 #!/bin/bash
-#
-# -----------------------------------------------------------------------------
-#
-# Author:	Marcel Keller (m-k-r)
-# Usage:	debug script for modules
-# License:	GPLv3 http://www.gnu.org/licenses/gpl-3.0
-#
-# ----------------------------- Global Variables ------------------------------
-
-version=1.0
-usage="usage: own-backup -d [parameter]
-
- -c	set of variables. name of the config file without '.conf' at the end
- -d	debug level: create, check, show
- -m	module-name for override. otherwise the module-name from the dump will be used
- -t	target: either deb or git (default)
- -v	show version of this script
- -h	this page"
-dir_root=/usr/local/own-backup
-mode_supported="directory file kvm mysql pgsql rsync"
-fs_supported="btrfs zfs file"
-show_commands=set
-export show_commands
-
-# --------------------------------- Parameter ----------------------------------
-
-if [ "$#" == "0" ]
-	then	echo "${usage}" && exit 0
-fi
-
-while getopts ":c:d:m:t:vh" opt; do
-	case ${opt} in
-		c)	config=$OPTARG
-			;;
-		d)	debug=$OPTARG
-			;;
-		m)	module_command=$OPTARG
-			;;
-		t)	target=$OPTARG
-			;;
-		v)	echo "${version}"
-			exit 0
-			;;
-		h)	echo "${usage}"
-			exit 0
-			;;
-		?)	echo "Invalid option: -$OPTARG" >&2 && exit 1
-			;;
-	esac
-done
-
-
 
 ##### define functions #####
 
@@ -80,7 +28,7 @@ function create-dump {
 
 	# print header to dump
 	dump="config=\"${config}\""$'\n'
-	dump+="module=\"${module_current}\""$'\n'
+	dump+="module_current=\"${module_current}\""$'\n'
 	dump+="export_fields=\"${export_fields}\""$'\n'
 
 	# print variables to dump
@@ -102,19 +50,15 @@ function create-dump {
 function check-module {
 	# get variables from config
 	source ${conf}
+	export module_current
 
-	if [ -n "${module_command}" ]
-		then	module_current=${module}
-			export module_current
-		else	module_command=${module}
-	fi
-
-	printf -- "\n--------------- ${module_command} ---------------\n\n"
+	printf -- "\n--------------- ${module_current} ---------------\n\n"
 
 	# test module
-	if [ "${module_command}" == "own-snapshot" ]
-		then	output=$(own-snapshot${oss_parameter})
-		else	output=$(${dir_modules}/${module_command})
+	if [ "${module_current}" == "own-snapshot" ]
+		then	unset config
+			output=$(own-snapshot${oss_parameter})
+		else	output=$(${dir_modules}/${module_current})
 	fi
 
 	if [ -n "${output}" ]
@@ -129,23 +73,26 @@ function check-module {
 			fi
 	fi
 
-	if [ "${module_command}" == "own-snapshot" ]
+	if [ "${module_current}" == "own-snapshot" ]
 		then	own-snapshot${oss_parameter}
-		else	${dir_modules}/${module_command}
+		else	${dir_modules}/${module_current}
 	fi
 	check-exit
 
 	# at this point there is no problem that exits the script
-	printf -- "\n--------------- ${module_command} ---------------\n"
+	printf -- "\n--------------- ${module_current} ---------------\n"
 	echo "no problem found"
 }
 
 if [ "${debug}" == "create" ]
 	then	create-dump
-	else	if [ "${target}" == "deb" ]
+	else	# -t (target) parameter is in main script snap_date_override
+		if [ "${snap_date_override}" == "deb" ]
 			then	dir_root=/usr/lib/own-backup
 		fi
 
+		show_commands=set
+		export show_commands
 		dir_modules=${dir_root}/modules
 		dir_conf=/etc/own-backup/debug
 		conf=${dir_conf}/${config}.conf
@@ -164,5 +111,4 @@ if [ "${debug}" == "create" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = exit_code dir_modules dir_conf module_current module_command config conf
 # export_fields =
