@@ -111,4 +111,5 @@ if [ "${debug}" == "create" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
+# import_fields = exit_code dir_modules dir_conf module_current config
 # export_fields =
