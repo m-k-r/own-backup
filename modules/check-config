@@ -93,9 +93,34 @@ if [ -n "${snap_list_target}" ] && [ ! -n "${snap_list_frequency_target}" ]
 	then	echo "snap_list is set but no frequency to it" && exit 1
 fi
 
+# some snap_location_source/target are only allowed for some mode
+if [ -n "${snap_location_source}" ]
+	then	check_snap_location=$(echo "${snap_location_supported}" | grep "\b${snap_location_source}\b")
+
+		if [ ! -n "${check_snap_location}" ]
+			then	echo "${check_snap_location} is not viable for snapshotremote" && exit 1
+		fi
+
+		if [ "${snap_location_source}" == "native" ] && [[ ! "${mode}" == *"sql" ]] || [ "${snap_location_source}" == "local" ] && [ ! "${config_fs}" == "file" ]
+			then	echo "snapshotremote: ${snap_location_source} is not possible with mode/filesystem: ${mode}/${config_fs}" && exit 1
+		fi
+fi
+
+if [ -n "${snap_location_target}" ]
+	then	check_snap_location=$(echo "${snap_location_supported}" | grep "\b${snap_location_target}\b")
+
+		if [ ! -n "${check_snap_location}" ]
+			then	echo "${check_snap_location} is not viable for snapshotremote" && exit 1
+		fi
+
+		if [ "${snap_location_target}" == "native" ] && [[ ! "${mode}" == *"sql" ]] || [ "${snap_location_target}" == "local" ] && [ ! "${config_fs}" == "file" ]
+			then	echo "snapshotremote: ${snap_location_target} is not possible with mode/filesystem: ${mode}/${config_fs}" && exit 1
+		fi
+fi
+
 ##### exports of variables which are created here #####
 export dir_root_source dir_snap_source dir_root_target dir_snap_target
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =
-# export_fields = output show_commands show_datasets show_snapshots dir_snap_source dir_snap_target dir_root_source dir_root_target
+# export_fields = output show_commands show_datasets show_snapshots dir_snap_source dir_snap_target dir_root_source dir_root_target 

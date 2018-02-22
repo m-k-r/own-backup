@@ -35,6 +35,7 @@ dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
 mode_supported="directory file kvm mysql pgsql rsync"
 fs_supported="btrfs zfs file"
+snap_location_supported="native local server ssh"
 
 # --------------------------------- Parameter ----------------------------------
 
@@ -94,13 +95,13 @@ if [ -n "${snap_limit_override}" ]
 		snap_limit_target=$(echo "${snap_limit_override}" | cut -d ":" -f 2)
 fi
 
-export debug snap_multi dir_snap_target_override snap_rollback snap_name_override snap_date_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules mode_supported fs_supported
+export debug snap_multi dir_snap_target_override snap_rollback snap_name_override snap_date_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules mode_supported fs_supported snap_location_supported
 
 
 ######################### DEBUG #########################
 
 if [ -n "$debug" ]; then
-	if [[ ! "${debug}" == "create" ]]; then
+	if [[ ! "${debug}" == "create"* ]]; then
 		export config
 		${dir_modules}/do-debug && exit 0
 	fi
@@ -378,7 +379,10 @@ do	aa=$((${aa} + 1))
 		then	source ${dir_modules}/arg-osss
 			module_current="own-snapshot"
 			oss_parameter=${arg_oss_source}
-			own-snapshot ${arg_oss_source}
+			if [ "${snap_location_source}" == "ssh" ]
+				then	ssh ${ssh_source} "own-snapshot ${arg_oss_source}"
+				else	own-snapshot ${arg_oss_source}
+			fi
 			check-exit
 			unset oss_parameter
 	fi
@@ -517,7 +521,10 @@ do	aa=$((${aa} + 1))
 							then	source ${dir_modules}/arg-osst
 								module_current=own-snapshot
 								oss_parameter=${arg_oss_target}
-								own-snapshot ${arg_oss_target}
+								if [ "${snap_location_target}" == "ssh" ]
+									then	ssh ${ssh_target} "own-snapshot ${arg_oss_target}"
+									else	own-snapshot ${arg_oss_target}
+								fi
 								check-exit
 								unset oss_parameter
 						fi

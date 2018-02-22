@@ -7,6 +7,8 @@ fi
 
 if [ -n "${config_server_target}" ] && [ ! "${snap_location_target}" == "ssh" ]
 	then	arg_oss_target+=" -s ${config_server_target}"
+	elif [ ! -n "${config_server_target}" ] && [ -n "${snap_location_target}" ]
+		then	arg_oss_target+=" -s ${snap_location_remote_target}~${snap_location_target}"
 fi
 
 if [ -n "${snap_list_target}" ]

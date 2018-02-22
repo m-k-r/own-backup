@@ -11,7 +11,7 @@ fi
 # check if dir_root/sync exists
 if [ ! "${snap_root_current}" == "unset" ]
 	then	if [ "${mode_snapshot}" == "file" ]
-			then	if [ -n "${config_server_current}" ]
+			then	if [ -n "${config_server_current}" ] || [ -n "${snap_location_remote_source}" ]
 					then	snap_root_current=$(ssh ${ssh_current} "find \"${dir_root_current}\"\"${dir_offset_current}\"/\"${sync_name_source_current}\" -maxdepth 0 2> /dev/null")
 					else	snap_root_current=$(find "${dir_root_current}""${dir_offset_current}"/"${sync_name_source_current}" -maxdepth 0 2> /dev/null)
 				fi

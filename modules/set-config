@@ -29,14 +29,18 @@ if [ -n "${config_server_source}" ]
 	then	if [ ! -n "${config_port_source}" ]
 			then	config_port_source=22
 		fi
-
-		if [ "${mode_transfer}" == "rsync" ]
-			then	ssh_source_transfer=" -e \"ssh -p ${config_port_source}\" ${config_server_source}:"
-				export ssh_source_transfer
-		fi
-
 		ssh_source="${config_server_source} -p ${config_port_source}"
 		export ssh_source
+
+		if [ "${snap_location_source}" == "native" ] || [ "${snap_location_source}" == "local" ]
+			then	snap_location_remote_source=${config_server_source}
+				unset config_server_source
+				export snap_location_remote_source
+			else	if [ "${mode_transfer}" == "rsync" ]
+					then	ssh_source_transfer=" -e \"ssh -p ${config_port_source}\" ${config_server_source}:"
+						export ssh_source_transfer
+				fi
+		fi
 		unset config_port_source
 fi
 
@@ -44,14 +48,18 @@ if [ -n "${config_server_target}" ]
 	then	if [ ! -n "${config_port_target}" ]
 			then	config_port_target=22
 		fi
-
-		if [ "${mode_transfer}" == "rsync" ]
-			then	ssh_target_transfer=" -e \"ssh -p ${config_port_target}\" ${config_server_target}:"
-				export ssh_target_transfer
-		fi
-
 		ssh_target="ssh ${config_server_target} -p ${config_port_target}"
 		export ssh_target
+
+		if [ "${snap_location_target}" == "native" ] || [ "${snap_location_target}" == "local" ]
+			then	snap_location_remote_target=${config_server_target}
+				unset config_server_target
+				export snap_location_remote_target
+			else	if [ "${mode_transfer}" == "rsync" ]
+					then	ssh_target_transfer=" -e \"ssh -p ${config_port_target}\" ${config_server_target}:"
+						export ssh_target_transfer
+				fi
+		fi
 		unset config_port_target
 fi
 
@@ -199,4 +207,4 @@ export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_s
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =
-# export_fields = export_fields = mode_create mode_snapshot mode_transfer ssh_source ssh_source_transfer ssh_target ssh_target_transfer snap_limit_source snap_limit_target config_sql_credentials config_sql_certificate dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
+# export_fields = export_fields = mode_create mode_snapshot mode_transfer ssh_source snap_location_remote_source ssh_source_transfer ssh_target snap_location_remote_target ssh_target_transfer snap_limit_source snap_limit_target config_sql_credentials config_sql_certificate dir_snap_source dir_snap_target dir_root_source dir_root_target dir_offset_source dir_offset_target snap_date snap_date_offset snap_string snap_string_offset snap_string_separator
