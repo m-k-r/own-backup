@@ -25,11 +25,9 @@ usage="usage: own-backup [parameter]
  -h	this page"
 usage_debug="usage: own-backup -d [parameter]
 
- -c	set of variables. name of the config file without '.conf' at the end
- -d	debug level: create, check, show
- -m	module-name for override. otherwise the module-name from the dump will be used
+ -c	name of the config file without '.conf' at the end
+ -d	debug level: create(:${module_name}), check, show
  -t	target: either deb or git (default)
- -v	show version of this script
  -h	this page"
 dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
@@ -86,8 +84,10 @@ conf=${dir_conf}/${config}.conf
 probe=$(find ${conf} 2>&1)
 
 # check if config file exists
-if [ ! "${probe}" == "${conf}" ] && [ "${debug}" == "create" ]
-	then	echo "the config-file does not exist" && exit 1
+if [ ! "${probe}" == "${conf}" ]
+	then	if [ ! "${debug}" == "check" ] && [ ! "${debug}" == "show" ]
+			then	echo "the config-file does not exist" && exit 1
+		fi
 fi
 
 if [ -n "${snap_limit_override}" ]
@@ -102,8 +102,9 @@ export debug snap_multi dir_snap_target_override snap_rollback snap_name_overrid
 
 if [ -n "$debug" ]; then
 	if [[ ! "${debug}" == "create"* ]]; then
-		export config
-		${dir_modules}/do-debug && exit 0
+		export config dir_conf
+		${dir_modules}/do-debug
+		exit 0
 	fi
 
 	if [[ "${debug}" == *"create"* ]] && [[ "${debug}" == *":"* ]]; then

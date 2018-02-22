@@ -88,13 +88,11 @@ if [ "${debug}" == "create" ]
 	then	create-dump
 	else	# -t (target) parameter is in main script snap_date_override
 		if [ "${snap_date_override}" == "deb" ]
-			then	dir_root=/usr/lib/own-backup
+			then	dir_modules=/usr/lib/own-backup/modules
 		fi
-
+		dir_conf=${dir_conf}/debug
 		show_commands=set
 		export show_commands
-		dir_modules=${dir_root}/modules
-		dir_conf=/etc/own-backup/debug
 		conf=${dir_conf}/${config}.conf
 		probe=$(find ${conf} 2>&1)
 
