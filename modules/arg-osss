@@ -29,11 +29,11 @@ if [ -n "${snap_list_source}" ]
 			else	arg_oss_source+=" -r $(echo ${snap_root_source[aa]} | tr ' ' '~')"
 		fi
 
-		if [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-			then	arg_oss_source+=" -q ${config_sql_credentials}"
+		if [ -n "${config_options_sql}" ]
+			then	arg_oss_source+=" -q ${config_options_sql}"
 		fi
 
-		if [ ! -z "${config_sql_certificate}" ]
-			then	arg_oss_source+=" -z ${config_sql_certificate}"
+		if [ ! -z "${config_certificate}" ]
+			then	arg_oss_source+=" -z ${config_certificate}"
 		fi
 fi

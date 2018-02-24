@@ -37,10 +37,10 @@ if  [ "${exit_code}" == "0" ]
 		then	echo "${module_current}: mode_snapshot is file but snap_new_source does not exist" && exit 1
 
 	elif [ "${exit_code}" == "91" ]
-		then	echo "${module_current}: The credential-file ${config_sql_credentials} does not exist" && exit 1
+		then	echo "${module_current}: The credential-file ${config_options_sql} does not exist" && exit 1
 
 	elif [ "${exit_code}" == "92" ]
-		then	echo "${module_current}: a certificate is set: ${config_sql_certificate} but it does not exist" && exit 1
+		then	echo "${module_current}: a certificate is set: ${config_certificate} but it does not exist" && exit 1
 
 	elif [ "${exit_code}" == "93" ]
 		then	echo "${module_current}: the database ${sync_name_source_current} does not exist" && exit 1
