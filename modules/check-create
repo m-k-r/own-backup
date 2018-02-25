@@ -20,6 +20,7 @@ if [ "${mode_create}" == "kvm" ]
 						then	config_sql_server=${snap_location_remote_current}
 						else	config_sql_server=localhost
 					fi
+			fi
 
 			if [ "${mode_create}" == "mysql" ]
 				then	if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
@@ -31,7 +32,7 @@ if [ "${mode_create}" == "kvm" ]
 						then	exit 91
 					fi
 
-					if [ -n "${config_server_current}" ]
+					if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
 						then	probe=$(ssh ${ssh_current} "mysqlshow --defaults-extra-file=${config_options_sql} -h ${config_sql_server}" | grep ${sync_name_source_current} | awk '{ print $2 }')
 						else	probe=$(mysqlshow --defaults-extra-file=${config_options_sql} -h ${config_sql_server}| grep ${sync_name_source_current} | awk '{ print $2 }')
 					fi
@@ -50,7 +51,7 @@ if [ "${mode_create}" == "kvm" ]
 						then	exit 91
 					fi
 
-					if [ -n "${config_server_current}" ]
+					if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
 						then	probe=$(ssh ${ssh_current} "psql -l -U ${config_options_sql} -h ${config_sql_server}" | grep ${sync_name_source_current} | awk '{ print $1 }')
 						else	probe=$(psql -l -U ${config_options_sql} -h ${config_sql_server} | grep ${sync_name_source_current} | awk '{ print $1 }')
 					fi
