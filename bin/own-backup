@@ -33,7 +33,7 @@ dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
 mode_supported="directory file kvm mysql pgsql rsync"
 fs_supported="btrfs zfs file"
-snap_location_supported="native local server ssh"
+snap_location_supported="server ssh local direct"
 
 # --------------------------------- Parameter ----------------------------------
 
@@ -244,6 +244,8 @@ do	aa=$((${aa} + 1))
 	side_current=source
 	config_server_current=${config_server_source}
 	ssh_current=${ssh_source}
+	snap_location_current=${snap_location_source}
+	snap_location_remote_current=${snap_location_remote_source}
 	dir_snap_current=${dir_snap_source}
 	dir_root_current=${dir_root_source}
 	dir_offset_current=${dir_offset_source}
@@ -251,7 +253,7 @@ do	aa=$((${aa} + 1))
 	snap_limit_current=${snap_limit_source}
 	sync_name_current=${sync_name_source[aa]}
 	sync_vmid_current=${sync_vmid[aa]}
-	export side_current config_server_current ssh_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
+	export side_current config_server_current ssh_current snap_location_current snap_location_remote_current dir_snap_current dir_root_current dir_offset_current snap_list_current snap_limit_current sync_name_current sync_vmid_current
 
 	##### checks on source side #####
 
@@ -260,6 +262,7 @@ do	aa=$((${aa} + 1))
 		then	module_current=check-create
 			${dir_modules}/${module_current}
 			check-exit
+			unset snap_location_current snap_location_remote_current
 	fi
 
 	# check all ${mode_snapshot}

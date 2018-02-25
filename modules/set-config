@@ -28,7 +28,7 @@ if [ -n "${config_server_source}" ]
 		ssh_source="${config_server_source} -p ${config_port_source}"
 		export ssh_source
 
-		if [ "${snap_location_source}" == "native" ] || [ "${snap_location_source}" == "local" ]
+		if [ "${snap_location_source}" == "direct" ] || [ "${snap_location_source}" == "local" ]
 			then	snap_location_remote_source=${config_server_source}
 				unset config_server_source
 				export snap_location_remote_source
@@ -47,7 +47,7 @@ if [ -n "${config_server_target}" ]
 		ssh_target="ssh ${config_server_target} -p ${config_port_target}"
 		export ssh_target
 
-		if [ "${snap_location_target}" == "native" ] || [ "${snap_location_target}" == "local" ]
+		if [ "${snap_location_target}" == "direct" ] || [ "${snap_location_target}" == "local" ]
 			then	snap_location_remote_target=${config_server_target}
 				unset config_server_target
 				export snap_location_remote_target
