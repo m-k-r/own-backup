@@ -2,24 +2,25 @@
 
 # check if dataset/sync on sourcepool exists
 if [ -n "${config_server_current}" ]
-	then	dataset=$(ssh ${ssh_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
-	else	dataset=$(zfs list -o name "${dir_snap_current}"/"${sync_name_current}"  2> /dev/null | tail -n +2)
+	then	probe=$(ssh ${ssh_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
+	else	probe=$(zfs list -o name "${dir_snap_current}"/"${sync_name_current}"  2> /dev/null | tail -n +2)
 fi
 
-if [ "${dataset}" == "${dir_snap_current}/${sync_name_current}" ]
-	then	snap_set_current=${dir_snap_current}/${sync_name_current}
+if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
+	then	snap_set_current=${probe}
 
+		# sync_name_source is sent from source to current, so it has to exist in source but not on target
 	else	if [ "${side_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
 			then	exit 85
 		fi
 
 		if [ -n "${config_server_current}" ]
-			then	dataset=$(ssh ${ssh_current} "zfs list ${dir_snap_current}" | tail -n +2)
-			else	dataset=$(zfs list ${dir_snap_current} | tail -n +2)
+			then	probe=$(ssh ${ssh_current} "zfs list -o name ${dir_snap_current}" | tail -n +2)
+			else	probe=$(zfs list -o name ${dir_snap_current} | tail -n +2)
 		fi
 
-		probe=$(echo "${dataset}" | awk '{ print $1 }')
-
+		# in all cases dir_snap_current has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
+		# if mode transfer is rsync then sync_name_current will not be a zfs dataset and dir_snap_current will be snapshotted.
 		if [ "${probe}" == "${dir_snap_current}" ]
 			then	if [ "${side_current}" == "target" ] && [ "${mode_transfer}" == "zfs" ]
 					then	snap_set_current=${dir_snap_current}/${sync_name_current}
@@ -39,9 +40,12 @@ if [ ! "${snap_set_current}" == "unset" ]
 			else	snap_root_current=$(zfs list -o mountpoint "${snap_set_current}"  2> /dev/null | tail -n +2)
 		fi
 
-		if [ "${snap_root_current}" == "-" ]
+		# if snap_set_current doesn't exist yet on target, snap_root_current is zero, if it has no mountpoint snap_root_current is "-"
+		if [ -z "${snap_root_current}" ] ||  [ "${snap_root_current}" == "-" ]
 			then	snap_root_current=unset
 		fi
+		# if snap_set_current is unset snap_root_current is unset too
+	else	snap_root_current=unset
 fi
 
 echo "${snap_root_current}~${snap_set_current}"

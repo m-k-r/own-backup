@@ -95,21 +95,22 @@ if [ -n "${snap_limit_override}" ]
 		snap_limit_target=$(echo "${snap_limit_override}" | cut -d ":" -f 2)
 fi
 
-export debug snap_multi dir_snap_target_override snap_rollback snap_name_override snap_date_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules mode_supported fs_supported snap_location_supported
+export snap_multi dir_snap_target_override snap_rollback snap_name_override snap_date_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules mode_supported fs_supported snap_location_supported
 
 
 ######################### DEBUG #########################
 
 if [ -n "$debug" ]; then
 	if [[ ! "${debug}" == "create"* ]]; then
-		export config dir_conf
+		export config dir_conf debug
 		${dir_modules}/do-debug
 		exit 0
 	fi
 
-	if [[ "${debug}" == *"create"* ]] && [[ "${debug}" == *":"* ]]; then
+	if [[ "${debug}" == *":"* ]]; then
 		debug_create=$(echo "${debug}" | cut -d ":" -f 2)
-		debug=$(echo "${debug}" | cut -d ":" -f 1)
+		debug=$(echo "${debug}" | cut -d ":" -f 1); else
+		debug_create=all
 	fi
 fi
 
@@ -119,23 +120,26 @@ fi
 # if exit returns a non-zero value, show the apropriate error message and exit
 function check-exit {
 	exit_code=${?}
-	if [ ! "${exit_code}" == "0" ] || [ -n "${debug}" ]
-		then	if [ ! -n "${debug_create}" ] || [ "${debug_create}" == "${module_current}" ]
-				then	export module_current oss_parameter dir_modules dir_conf config exit_code
+	if [ ! "${exit_code}" == "0" ]
+		then	debug=create
+			debug_create=${module_current}
+	fi
 
-					if [ -n "${aa}" ]
-						then	name_current=$(echo "${sync_name_source[aa]}" | tr " " "-")
-							export name_current
-					fi
+	if [ "${debug_create}" == "all" ] || [ "${debug_create}" == "${module_current}" ]
+		then	export module_current oss_parameter dir_modules dir_conf config exit_code debug
 
-		                        ${dir_modules}/do-debug -d create
-					${dir_modules}/do-exit
-					if [ ! "${?}" == "0" ]
-						then	exit 1
-					fi
-					# unexport variables but not unset. If config is exported, own-snapshot will use list mode because it detects the config variable is set
-					export -n module_current oss_parameter dir_modules dir_conf config exit_code
+			if [ -n "${aa}" ]
+				then	name_current=$(echo "${sync_name_source[aa]}" | tr " " "-")
+					export name_current
 			fi
+
+			${dir_modules}/do-debug
+			${dir_modules}/do-exit
+			if [ ! "${?}" == "0" ]
+				then	exit 1
+			fi
+			# unexport variables but not unset. If config is exported, own-snapshot will use list mode because it detects the config variable is set
+			export -n module_current oss_parameter dir_modules dir_conf config exit_code
 	fi
         unset module_current name_current
 }
@@ -160,7 +164,6 @@ module_current=set-config
 
 # Backup the ifs
 IFSBAK=${IFS}
-export IFSBAK
 
 # get-synclist can return spaces. so the ifs has to be by newline
 IFS=$'\n'
@@ -172,13 +175,13 @@ if [ -n "${sync_list}" ]
 		check-exit
 fi
 
-IFS=${IFSBAK}
-
 # sync_name_number has n-elements but the script starts with element 0. So the script has to count to n-1
 if [ -n "${sync_name}" ] && [ ! -z "${sync_name}" ]
 	then	sync_name_number=$((${#sync_name[@]} -1))
 	else	echo "no sync_name is set. nothing to do" && exit 0
 fi
+
+IFS=${IFSBAK}
 
 
 ######################### FIRST LOOP: SET SYNC-VARIABLES #########################

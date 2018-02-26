@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# if a dir name or synclistelement has spaces the ifs has to be newline
-IFS=$'\n'
+# if a dir name or synclistelement has spaces. so instead of for loop you have to use a while loop
+sync_list_element=(${sync_list})
+sync_list_element_number=$((${#sync_list_element[@]} -1))
+bb="-1"
 
-for sync_list_element in ${sync_list}
-do	if [ ! "${mode_transfer}"  == "zfs" ]
+while [ "${sync_list_element_number}" -gt "${bb}" ]
+do	# control variable
+	bb=$((${bb} + 1))
+
+	if [ ! "${mode_transfer}"  == "zfs" ]
 		then	if [ -n "${config_server_source}" ]
-				then	probe_sync_name_elements=$(ssh ${ssh_source} "find \"${dir_root_source}\"\"${dir_offset_source}\"/${sync_list_element}* -maxdepth 0")
-				else	probe_sync_name_elements=$(find "${dir_root_source}""${dir_offset_source}"/${sync_list_element}* -maxdepth 0)
+				then	probe_sync_name_elements=$(ssh ${ssh_source} "find \"${dir_root_source}\"\"${dir_offset_source}\"/${sync_list_element[bb]}* -maxdepth 0")
+				else	probe_sync_name_elements=$(find "${dir_root_source}""${dir_offset_source}"/${sync_list_element[bb]}* -maxdepth 0)
 			fi
 
 			if [ "${mode_transfer}"  == "btrfs" ]
@@ -27,8 +32,8 @@ do	if [ ! "${mode_transfer}"  == "zfs" ]
 
 		elif [ "${mode_transfer}"  == "zfs" ]
 			then	if [ -n "${config_server_source}" ]
-					then	probe_sync_name_elements=$(ssh ${ssh_source} "zfs list -o name -r \"${dir_snap_source}\"" | tail -n +3 | grep ${sync_list_element})
-					else	probe_sync_name_elements=$(zfs list -o name -r "${dir_snap_source}" | tail -n +3 | grep ${sync_list_element})
+					then	probe_sync_name_elements=$(ssh ${ssh_source} "zfs list -o name -r \"${dir_snap_source}\"" | tail -n +3 | grep ${sync_list_element[bb]})
+					else	probe_sync_name_elements=$(zfs list -o name -r "${dir_snap_source}" | tail -n +3 | grep ${sync_list_element[bb]})
 				fi
 				sync_name=${syncname}'\n'${probe_sync_name_elements}
 

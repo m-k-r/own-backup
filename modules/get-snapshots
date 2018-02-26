@@ -58,7 +58,7 @@ if [ "${mode_snapshot}" == "zfs" ]
 			done
 fi
 
-snap_shots=$(echo "${snap_shots}" | sort -k2)
+snap_shots=$(echo "${snap_shots}" | sort -t '~' -k2)
 
 # if output is set, there is no current snapshot, for that a virtual snapshot has to be created
 if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
