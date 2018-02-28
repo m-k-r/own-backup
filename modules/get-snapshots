@@ -3,61 +3,69 @@
 # get snapshots for source  and target
 if [ "${mode_snapshot}" == "zfs" ]
 	then	if [ ! "${snap_root_current}" == "unset" ]
-			then	if [ -n "${config_server_current}" ]
+			then	# if the dataset is mounted, the unix tools can be used
+				# this doesn't wake other disks if they are in spindown
+				if [ -n "${config_server_current}" ]
 					then	snap_shots=$(ssh ${ssh_current} "find \"${snap_root_current}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
 					else	snap_shots=$(find "${snap_root_current}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 				fi
-				snap_set_local="${snap_set_current}@"
+				snap_shots=$(echo "${snap_shots}" | sed "s;^;${snap_set_current}${snap_string_separator};g" 2> /dev/null)
 
-			else	# get snapshots for the dataset
+			else	# if the dataset is not mounted or a zvol the zfs-tools are used
+				# this wakes all disks in the server if they are in spindown
 				if [ -n "${config_server_current}" ]
-					then	snap_shots=$(ssh ${ssh_current} "zfs list -t snapshot" | grep \"${snap_set_current}\"@ | awk '{ print $1 }')
-					else	snap_shots=$(zfs list -t snapshot | grep "${snap_set_current}"@ | awk '{ print $1 }')
+					then	snap_shots=$(ssh ${ssh_current} "zfs list -t snapshot" 2> /dev/null | grep \"${snap_set_current}\"${snap_string_separator} | awk '{ print $1 }')
+					else	snap_shots=$(zfs list -t snapshot 2> /dev/null | grep "${snap_set_current}"${snap_string_separator} | awk '{ print $1 }')
 				fi
 		fi
 
-		# this creates error messages when the full path is no dataset. this should not happen and has to be investigated further
-		for snap_shot in ${snap_shots}
-		do	if [ -n "${config_server_current}" ]
-				then	snap_shot_timestamp=$(ssh ${ssh_current} "LC_TIME="C" zfs get creation \"${snap_set_local}\"\"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
-				else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_set_local}""${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
-			fi
-			snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
-			snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";"${snap_set_local}""${snap_shot}"~"${snap_shot_timestamp}";g" 2> /dev/null)
-		done
-
 	elif [ "${mode_snapshot}" == "btrfs" ]
-		then	# get snapshots for the subvolume
-			if [ -n "${config_server_current}" ]
+		then	if [ -n "${config_server_current}" ]
 				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
 				else	snap_shots=$(find "${snap_set_current}"_* -maxdepth 0 2> /dev/null)
 			fi
 
-			for snap_shot in ${snap_shots}
-			do	if [ -n "${config_server_current}" ]
+	elif [ "${mode_snapshot}" == "file" ]
+		then	if [ -n "${config_server_current}" ]
+				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_*${snap_file_type_current} -maxdepth 0 2> /dev/null")
+				else	snap_shots=$(find "${snap_set_current}"_*${snap_file_type_current} -maxdepth 0 2> /dev/null)
+			fi
+fi
+
+# sorting snapshots is a more complicated topic. there are two ways to order the snapshots with their specific drawbacks:
+# the datestring in the snapshot name or the creation time
+#
+# for the datestring in filename all snapshot need to have a datestring in the same format
+# so if there are snapshots with different datestring or without one, the sorting isn't valid
+#
+# zfs and file only show the minute of the creation time not the seconds.
+# unix doesn't store the creation time of a file, just the time of the last modification
+# so if there are several snapshots within a minute or snapshots are altered, the sorting isn't valid
+# despite that, snapshots are sorted by their creation time in unix epoche
+# because snapshots not created by this script can be copied by set-multisnap or used as snap_common_source
+for snap_shot in ${snap_shots}
+do	if [ "${mode_snapshot}" == "zfs" ]
+		then	if [ -n "${config_server_current}" ]
+				then	snap_shot_timestamp=$(ssh ${ssh_current} "LC_TIME="C" zfs get creation \"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
+				else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
+			fi
+			snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
+
+		elif [ "${mode_snapshot}" == "btrfs" ]
+			then	if [ -n "${config_server_current}" ]
 					then	snap_shot_timestamp=$(ssh ${ssh_current} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 					else	snap_shot_timestamp=$(btrfs subvolume show "${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 				fi
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
-				snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";"${snap_shot}"~"${snap_shot_timestamp}";g" 2> /dev/null)
-			done
 
-	elif [ "${mode_snapshot}" == "file" ]
-		then	# get snapshots for the subvolume
-			if [ -n "${config_server_current}" ]
-				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_*${snap_file_type_current} -maxdepth 0 2> /dev/null")
-				else	snap_shots=$(find "${snap_set_current}"_*${snap_file_type_current} -maxdepth 0 2> /dev/null)
-			fi
-
-			for snap_shot in ${snap_shots}
-			do	if [ -n "${config_server_current}" ]
+		elif [ "${mode_snapshot}" == "file" ]
+			then	if [ -n "${config_server_current}" ]
 					then	snap_shot_timestamp=$(ssh ${ssh_current} "stat -c %Z \"${snap_shot}\"")
 					else	snap_shot_timestamp=$(stat -c %Z "${snap_shot}")
 				fi
-				snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";"${snap_shot}"~"${snap_shot_timestamp}";g" 2> /dev/null)
-			done
-fi
-
+	fi
+	snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";&~${snap_shot_timestamp};g" 2> /dev/null)
+done
 snap_shots=$(echo "${snap_shots}" | sort -t '~' -k2)
 
 # if output is set, there is no current snapshot, for that a virtual snapshot has to be created
@@ -70,5 +78,5 @@ fi
 echo "${snap_shots}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current
+# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current snap_file_type_current
 # export_fields = snap_shots

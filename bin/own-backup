@@ -457,23 +457,24 @@ do	aa=$((${aa} + 1))
 	if [ "${mode_transfer}" == "${mode_snapshot}" ] || [ "${mode_snapshot}" == "file" ] && [ "${snap_number_strict_source[aa]}" -ge "1" ] || [ -n "${log_dir}" ]
 		then	# variables on source side
 			snap_shots_source_current=${snap_shots_source[aa]}
+			snap_shots_source_ts_current=${snap_shots_source_ts[aa]}
 			snap_number_source_current=${snap_number_source[aa]}
-			export snap_shots_source_current snap_number_source_current
+			export snap_shots_source_current snap_shots_source_ts_current snap_number_source_current
 
 			# variables on target side
 			snap_shots_target_current=${snap_shots_target[aa]}
+			snap_shots_target_ts_current=${snap_shots_target_ts[aa]}
 			snap_number_target_current=${snap_number_target[aa]}
 			snap_set_target_current=${snap_set_target[aa]}
-			export snap_shots_target_current snap_number_target_current snap_set_target_current
+			export snap_shots_target_current snap_shots_target_ts_current snap_number_target_current snap_set_target_current
 
 			module_current=set-snapvars
 			snap_new_source=$(${dir_modules}/${module_current})
 			check-exit
-			snap_common_source=$(echo ${snap_new_source} | cut -d "~" -f 1)
-			snap_old_target=$(echo ${snap_new_source} | cut -d "~" -f 2)
-			snap_exist_offset=$(echo ${snap_new_source} | cut -d "~" -f 3)
+			snap_common_source=$(echo "${snap_new_source}" | cut -d "~" -f 1)
+			snap_old_target=$(echo "${snap_new_source}" | cut -d "~" -f 2)
 			snap_new_source=${snap_shots_strict_source[aa]##*$'\n'}
-			export snap_new_source snap_common_source snap_old_target snap_exist_offset
+			export snap_new_source snap_common_source snap_old_target
 
 			# when the snapshots are read, the snapshot on target wasn't created yet.
 			#so a dummy has to be created in order to delete the right amount of snapshots and diff
@@ -501,13 +502,13 @@ do	aa=$((${aa} + 1))
 
 	if [ ! "${snap_common_source}" == "newest" ] && [ ! "${show_snapvars}" == "set" ]
 		then	if [ -n "${snap_multi}" ]
-				then	snap_shots_source_ts_current=${snap_shots_source_ts[aa]}
-					snap_shots_target_ts_current=${snap_shots_target_ts[aa]}
-					export snap_exist_offset snap_shots_source_ts_current snap_shots_target_ts_current
+				then	snap_set_source_current=${snap_set_source[aa]}
+					export snap_set_source_current
 
 					module_current=set-multisnap
 					${dir_modules}/${module_current}
 					check-exit
+					unset snap_set_source_current
 
 				elif [ "${mode_transfer}" == "zfs" ]
 					then	module_current=copy-zfs
@@ -548,7 +549,7 @@ do	aa=$((${aa} + 1))
 			unset sync_name_source_current snap_new_target
 	fi
 
-	unset snap_shots_source_current snap_number_source_current snap_shots_target_current snap_number_target_current snap_rsync_source_current snap_rsync_target_current snap_new_source snap_common_source snap_old_target snap_exist_offset
+	unset snap_shots_source_current snap_shots_source_ts_current snap_number_source_current snap_shots_target_current snap_shots_target_ts_current snap_number_target_current snap_rsync_source_current snap_rsync_target_current snap_new_source snap_common_source snap_old_target snap_exist_offset
 done
 
 if [ -n "${snap_list_target}" ]

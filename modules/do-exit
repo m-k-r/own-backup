@@ -45,8 +45,7 @@ if  [ "${exit_code}" == "0" ]
 	elif [ "${exit_code}" == "93" ]
 		then	echo "${module_current}: the database ${sync_name_source_current} does not exist" && exit 1
 
-	elif [ "${exit_code}" == "94" ]
-		then	echo "${module_current}: there are no snapshots to copy matching your pattern ${snap_multi}" && exit 1
+	# 94 was: "set-multisnap: there are no snapshots to copy matching your pattern ${snap_multi}"
 
 	# prepared but not used at the moment because check-config and the main script are in the same shell
 	elif [ "${exit_code}" == "95" ]
