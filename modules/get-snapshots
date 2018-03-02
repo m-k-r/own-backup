@@ -9,7 +9,10 @@ if [ "${mode_snapshot}" == "zfs" ]
 					then	snap_shots=$(ssh ${ssh_current} "find \"${snap_root_current}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
 					else	snap_shots=$(find "${snap_root_current}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 				fi
-				snap_shots=$(echo "${snap_shots}" | sed "s;^;${snap_set_current}${snap_string_separator};g" 2> /dev/null)
+
+				if [ -n "${snap_shots}" ]
+					then	snap_shots=$(echo "${snap_shots}" | sed "s;^;${snap_set_current}${snap_string_separator};g" 2> /dev/null)
+				fi
 
 			else	# if the dataset is not mounted or a zvol the zfs-tools are used
 				# this wakes all disks in the server if they are in spindown

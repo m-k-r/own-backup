@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# because snapshots can contain spaces, set ifs to newline
+# snapshots can contain spaces, set ifs to newline
 IFSBAK=$IFS
 IFS=$'\n'
 snap_new_list_source=(${snap_shots_source_current})
 snap_new_list_source_ts=(${snap_shots_source_ts_current})
-snap_old_target_ts=$(echo "${snap_shots_target_ts_current}" | awk 'END{print NR}')
+snap_old_list_target_ts=(${snap_shots_target_ts_current})
+snap_old_target_ts=${snap_old_list_target_ts[-1]}
 
 # snap_old_target is always the last snpashot on target. so if not unset all snapshots up to snap_old_target are cut off
 if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_old_target}" == "unset" ]
@@ -15,6 +16,7 @@ if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_old_target}" == "unset" 
 		fi
 
 		# compare snap_new_list_source_ts and snap_old_list_target_ts and cut off all older snapshots
+		# only timestamp is used. snap_old_target doesn't necessarily exist on source so the strings can't be matched
 		bb="0"
 
 		while [ "${snap_new_list_source_ts[${bb}]}" -le "${snap_old_target_ts}" ]
@@ -23,7 +25,8 @@ if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_old_target}" == "unset" 
 		done
 fi
 
-# here the wanted snapshots are filtered out through the given pattern. If we would do it earlier we would have to synchronise the matching source snapshots with the list of timestamps
+# the wanted snapshots are filtered out through the given pattern.
+# If this would be done earlier, the list of timestamps would have to be matched to the snapshots
 # by recreating the array, in both cases the array keys are reset to beginn with 0
 if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_multi}" == "all" ]
 	then	snap_new_list_source=($(printf '%s\n' "${snap_new_list_source[@]}" | grep "${snap_multi}" 2> /dev/null))
@@ -37,6 +40,7 @@ fi
 
 
 # from snap_new_list_source all other lists are build
+# snap_common_list_source and snap_old_list_target have one element more than snap_new_list_source
 snap_new_list_source_number=${#snap_new_list_source[@]}
 snap_common_list_source=("${snap_common_source}" "${snap_new_list_source[@]}")
 snap_old_list_target=(${snap_old_target} $(printf '%s\n' "${snap_new_list_source[@]}" | sed "s;"${snap_set_source_current}";"${snap_set_target_current}";g" 2> /dev/null))
@@ -50,24 +54,26 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 	snap_old_target=${snap_old_list_target[${bb}]}
 	export snap_new_source snap_common_source snap_old_target
 
-#	if [ ! "${snap_old_target}" == "unset" ] && [ ! "${show_commands}" == "set" ]
-#		then	if [ "${mode_transfer}" == "zfs" ]
-#				then	if [ -n "${config_server_target}" ]
-#						then	probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
-#						else	probe=$(zfs list \"${snap_old_target}\" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
-#					fi
-#
-#				elif [ "${mode_transfer}" == "btrfs" ]
-#					then	if [ -n "${config_server_target}" ]
-#							then	probe=$(ssh ${ssh_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
-#							else	probe=$(btrfs subvolume show ${snap_old_target} 2> /dev/null | head -1 | awk '{ print $1 }')
-#						fi
-#			fi
-#	fi
+	# mode_transfer=file does not need snap_old_target unless logs are set, which is omitted in copying multiple snapshots
+	if [ "${snap_old_target}" == "unset" ] || [ "${show_commands}" == "set" ] || [ "${mode_transfer}" == "file" ]
+		then	probe=${snap_old_target}
+		# this is strictly not necessary because the creation of snapshots is documented, but if something is going wrong, this prevents the script from throwing errors
+		else	if [ "${mode_transfer}" == "zfs" ]
+				then	if [ -n "${config_server_target}" ]
+						then	probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
+						else	probe=$(zfs list "${snap_old_target}" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
+					fi
 
-#	if [ "${probe}" == "${snap_old_target}" ] || [ "${snap_old_target}" == "unset" ] || [ "${mode_transfer}" == "file" ] || [ "${show_commands}" == "set" ]
-#		then
-			if [ "${mode_transfer}" == "zfs" ]
+				elif [ "${mode_transfer}" == "btrfs" ]
+					then	if [ -n "${config_server_target}" ]
+							then	probe=$(ssh ${ssh_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
+							else	probe=$(btrfs subvolume show "${snap_old_target}" 2> /dev/null | head -1 | awk '{ print $1 }')
+						fi
+			fi
+	fi
+
+	if [ "${probe}" == "${snap_old_target}" ]
+		then	if [ "${mode_transfer}" == "zfs" ]
 				then	${dir_modules}/copy-zfs
 
 				elif [ "${mode_transfer}" == "btrfs" ]
@@ -77,11 +83,11 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 					then	${dir_modules}/copy-rsync
 			fi
 
-#		else	echo "The Target ${snap_old_target} didn't exist and was ommited"
-#	fi
+		else	echo "The Target ${snap_old_target} didn't exist and was ommited"
+	fi
 	bb=$((${bb} + 1))
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer config_server_target ssh_target show_commands dir_modules snap_multi snap_set_source_current snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_common_source snap_old_target
+# import_fields = mode_transfer config_server_target ssh_target show_commands dir_modules snap_multi snap_set_source_current snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_shots_target_ts_current snap_common_source snap_old_target
 # export_fields =

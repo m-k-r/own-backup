@@ -2,15 +2,31 @@
 
 if [ ! "${snap_old_target}" == "unset" ]
 	then	if [ "${mode_snapshot}" == "zfs" ]
-			then	if [ -n "${config_server_target}" ]
-					then	command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""
-					else	command1="zfs diff ${snap_old_target}"
+			then	output_modifier=" | sed 's;\\\0040; ;g'"
+				if [ -n "${config_server_target}" ]
+					then	command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\"${output_modifier}"
+					else	command1="zfs diff ${snap_old_target}${output_modifier}"
 				fi
 
 			elif [ "${mode_snapshot}" == "btrfs" ]
-				then	if [ -n "${config_server_target}" ]
-						then	command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"
-						else	command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
+				then	header=2
+					output_modifier=" | tail -n +${header}"
+					if [ -n "${config_server_target}" ]
+						then	command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u${output_modifier}"
+						else	command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u${output_modifier}"
+					fi
+
+			# unlike diff rsync can use checksums
+			elif [ "${mode_snapshot}" == "file" ]
+				then	if [ "${mode_override_current}" == "directory" ]
+						then	header=3
+						else	header=2
+					fi
+					footer=3
+					output_modifier=" | tail -n +${header} | head -n -${footer} | sed 's;^;+ ;g' | sed 's;+ deleting;-;g'"
+					if [ -n "${config_server_target}" ]
+						then	command1="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\"${output_modifier}"
+						else	command1="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}${output_modifier}"
 					fi
 		fi
 
@@ -34,5 +50,5 @@ if [ ! "${snap_old_target}" == "unset" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot show_commands config_server_target ssh_target log_server log_server_port log_usr log_dir snap_old_target snap_new_target sync_name_source_current snap_date
+# import_fields = mode_snapshot mode_override_current show_commands config_server_target ssh_target log_server log_server_port log_usr log_dir snap_old_target snap_new_target sync_name_source_current snap_date
 # export_fields =

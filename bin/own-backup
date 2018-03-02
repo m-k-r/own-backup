@@ -372,7 +372,8 @@ do	aa=$((${aa} + 1))
 
 	##### global #####
 	snap_file_type_current=${snap_file_type[aa]}
-	export snap_file_type_current
+	mode_override_current=${mode_override[aa]}
+	export snap_file_type_current mode_override_current
 
 	##### source #####
 	side_current=source
@@ -541,7 +542,7 @@ do	aa=$((${aa} + 1))
 
 	if [ -n "${log_dir}" ]
 		then	sync_name_source_current=${sync_name_source[aa]}
-			snap_new_target=$(echo ${snap_shots_strict_target[aa]} | awk '{print $(NF)}')
+			snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}
 			export sync_name_source_current snap_new_target
 			module_current=do-log
 			${dir_modules}/${module_current}
