@@ -88,10 +88,6 @@ fi
 ##### define strings for snapname #####
 
 # Get the actual date and time in format and its stringlength
-if [ -n "${snap_date_override}" ]
-	then	snap_date=${snap_date_override}
-	else	snap_date=$(date +${snap_date})
-fi
 snap_date_offset=$((${#snap_date}))
 # Defines the offset for the snapshot-comparison
 snap_string="${snap_name}_${snap_date}"
@@ -190,7 +186,7 @@ if [ "${snap_rollback}" == "set" ]
 fi
 
 ##### exports of variables which are created here #####
-export mode_create mode_snapshot mode_transfer snap_date snap_date_offset snap_string snap_string_offset snap_string_separator dir_snap_source dir_snap_target dir_root_source dir_root_target
+export mode_create mode_snapshot mode_transfer snap_date_offset snap_string snap_string_offset snap_string_separator dir_snap_source dir_snap_target dir_root_source dir_root_target
 
 ##### variable list. these will be picked up by debug #####
 # import_fields =

@@ -10,19 +10,32 @@ snap_old_target_ts=${snap_old_list_target_ts[-1]}
 
 # snap_old_target is always the last snpashot on target. so if not unset all snapshots up to snap_old_target are cut off
 if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_old_target}" == "unset" ]
-	then	# to prevent an endless loop check if source_snap_new is newer then source_snap_old
-		if [ "${snap_new_list_source_ts[-1]}" -le "${snap_old_target_ts}" ]
-			then	exit 0
+	then	bb="0"
+		if [ "${mode_transfer}" == "zfs" ]
+			then	# to prevent an endless loop check if source_snap_new is newer then source_snap_old
+				if [ "${snap_new_list_source_ts[-1]}" -le "${snap_old_target_ts}" ]
+					then	exit 0
+				fi
+
+				# compare snap_new_list_source_ts and snap_old_list_target_ts and cut off all older snapshots
+				# only timestamp is used. snap_old_target doesn't necessarily exist on source so the strings can't be matched
+				while [ "${snap_new_list_source_ts[${bb}]}" -le "${snap_old_target_ts}" ]
+				do	unset snap_new_list_source[${bb}]
+					bb=$((${bb} + 1))
+				done
+
+			# for now timestamps are not applicable for btrfs, since there is now way to preserve the actual creation time of a snapshot
+			# while it works fine under certain circumstances, it doesn't if snapshots are deleted, rolled back or copied in bulk
+			# file has the limitation that there is no way to get an actual filelock
+			# as a workaround instead of snap_old_target, snap_common_source is used as a reference point
+			elif [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "rsync" ]
+				then	until [ "${snap_new_list_source[${bb}]}" == "${snap_common_source}" ]
+					do	unset snap_new_list_source[${bb}]
+						bb=$((${bb} + 1))
+					done
+					# snap_common_source still exists in snap_new_list_source
+					unset snap_new_list_source[${bb}]
 		fi
-
-		# compare snap_new_list_source_ts and snap_old_list_target_ts and cut off all older snapshots
-		# only timestamp is used. snap_old_target doesn't necessarily exist on source so the strings can't be matched
-		bb="0"
-
-		while [ "${snap_new_list_source_ts[${bb}]}" -le "${snap_old_target_ts}" ]
-		do	unset snap_new_list_source[${bb}] snap_new_list_source_ts[${bb}]
-			bb=$((${bb} + 1))
-		done
 fi
 
 # the wanted snapshots are filtered out through the given pattern.
@@ -54,10 +67,10 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 	snap_old_target=${snap_old_list_target[${bb}]}
 	export snap_new_source snap_common_source snap_old_target
 
-	# mode_transfer=file does not need snap_old_target unless logs are set, which is omitted in copying multiple snapshots
-	if [ "${snap_old_target}" == "unset" ] || [ "${show_commands}" == "set" ] || [ "${mode_transfer}" == "file" ]
+	# mode_transfer=rsync does not need snap_old_target unless logs are set, which is omitted in copying multiple snapshots
+	if [ "${snap_old_target}" == "unset" ] || [ "${show_commands}" == "set" ] || [ "${mode_transfer}" == "rsync" ]
 		then	probe=${snap_old_target}
-		# this is strictly not necessary because the creation of snapshots is documented, but if something is going wrong, this prevents the script from throwing errors
+		# this is strictly not necessary because the creation of snapshots is documented, but if something is going wrong, this prevents errors
 		else	if [ "${mode_transfer}" == "zfs" ]
 				then	if [ -n "${config_server_target}" ]
 						then	probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
@@ -79,7 +92,7 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 				elif [ "${mode_transfer}" == "btrfs" ]
 					then	${dir_modules}/copy-btrfs
 
-				elif [ "${mode_transfer}" == "file" ]
+				elif [ "${mode_transfer}" == "rsync" ]
 					then	${dir_modules}/copy-rsync
 			fi
 

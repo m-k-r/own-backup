@@ -47,21 +47,21 @@ while getopts ":c:d:e:f:m:n:o:rs:t:vh" opt; do
 			;;
 		d)	debug=$OPTARG
 			;;
-		e)	dir_snap_target_override=$OPTARG
+		e)	override_dir_snap_target=$OPTARG
 			;;
-		f)	snap_list_frequency_override=$OPTARG
+		f)	override_snap_list_frequency=$OPTARG
 			;;
 		m)	snap_multi=$OPTARG
 			;;
-		n)	snap_limit_override=$OPTARG
+		n)	override_snap_limit=$OPTARG
 			;;
 		o)	output=$OPTARG
 			;;
 		r)	snap_rollback=set
 			;;
-		s)	snap_name_override=$OPTARG
+		s)	override_snap_name=$OPTARG
 			;;
-		t)	snap_date_override=$OPTARG
+		t)	override_snap_date=$OPTARG
 			;;
 		v)	echo "${version}"
 			exit 0
@@ -90,12 +90,7 @@ if [ ! "${probe}" == "${conf}" ]
 		fi
 fi
 
-if [ -n "${snap_limit_override}" ]
-	then	snap_limit_source=$(echo "${snap_limit_override}" | cut -d ":" -f 1)
-		snap_limit_target=$(echo "${snap_limit_override}" | cut -d ":" -f 2)
-fi
-
-export snap_multi dir_snap_target_override snap_rollback snap_name_override snap_date_override snap_list_frequency_override snap_limit_source snap_limit_target dir_modules mode_supported fs_supported snap_location_supported
+export snap_multi override_snap_limit override_dir_snap_target snap_rollback override_snap_name override_snap_date override_snap_list_frequency dir_modules mode_supported fs_supported snap_location_supported
 
 
 ######################### DEBUG #########################
@@ -372,8 +367,7 @@ do	aa=$((${aa} + 1))
 
 	##### global #####
 	snap_file_type_current=${snap_file_type[aa]}
-	mode_override_current=${mode_override[aa]}
-	export snap_file_type_current mode_override_current
+	export snap_file_type_current
 
 	##### source #####
 	side_current=source
@@ -540,14 +534,15 @@ do	aa=$((${aa} + 1))
 			fi
 	fi
 
-	if [ -n "${log_dir}" ]
-		then	sync_name_source_current=${sync_name_source[aa]}
+	if [ -n "${log_dir}" ] && [ ! -n "${snap_multi}" ] && [ ! -n "${snap_rollback}" ]
+		then	mode_override_current=${mode_override[aa]}
+			sync_name_source_current=${sync_name_source[aa]}
 			snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}
-			export sync_name_source_current snap_new_target
+			export mode_override_current sync_name_source_current snap_new_target
 			module_current=do-log
 			${dir_modules}/${module_current}
 			check-exit
-			unset sync_name_source_current snap_new_target
+			unset mode_override_current sync_name_source_current snap_new_target
 	fi
 
 	unset snap_shots_source_current snap_shots_source_ts_current snap_number_source_current snap_shots_target_current snap_shots_target_ts_current snap_number_target_current snap_rsync_source_current snap_rsync_target_current snap_new_source snap_common_source snap_old_target snap_exist_offset

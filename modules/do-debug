@@ -86,8 +86,8 @@ function check-module {
 
 if [ "${debug}" == "create" ]
 	then	create-dump
-	else	# -t (target) parameter is in main script snap_date_override
-		if [ "${snap_date_override}" == "deb" ]
+	else	# -t (target) parameter is in main script override_snap_date
+		if [ "${override_snap_date}" == "deb" ]
 			then	dir_modules=/usr/lib/own-backup/modules
 		fi
 		dir_conf=${dir_conf}/debug

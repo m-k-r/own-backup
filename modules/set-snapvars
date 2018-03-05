@@ -2,10 +2,10 @@
 
 # 3 Snapshots are needed:
 # snap_new_source - this is always the newest snapshot on source
-# snap_common_source - this is the last common snapshot on source and target. It is needed for btrfs and zfs send
+# snap_common_source - this is the last common snapshot on source and target. It is needed for btrfs and zfs send and file for copying multiple snapshots
 # snap_old_target - this is always the newest snapshot on target. It is needed for zfs rollback and log
 
-if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ]
+if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "rsync" ] && [ -n "${snap_multi}" ]
 	then	# if mode_transfer is either zfs or btrfs snapshots on source have to exist
 		if [ ! -n "${snap_shots_source_current}" ]
 			then	exit 88
@@ -32,8 +32,16 @@ if [ ! "${snap_common_source}" == "unset" ]
 		bb=$((${snap_number_source_current} - 1))
 
 		while [ "${bb}" -ge 0 ]
-		do	timestamps_matching=$(echo "${snap_shots_target_ts_current}" | grep -n "${snap_shots_source_ts[${bb}]}" | grep -Eo '^[^:]+')
-
+		do	# for zfs timestamps on source and target are the same
+			# for now timestamps are not applicable for btrfs, since there is now way to preserve the actual creation time of a snapshot
+			# a relationship between source and target snapshots could be established with the received uuid, but this wouldn't work
+			# if another fs like a cold backup is used or if the snapshot on source is snapshotted
+			# the current workaround is to ignore the timestamp and use the newest snapshot with the same name
+			if [ "${mode_transfer}" == "zfs" ]
+				then	timestamps_matching=$(echo "${snap_shots_target_ts_current}" | grep -n "${snap_shots_source_ts[${bb}]}" | grep -Eo '^[^:]+')
+				elif [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "rsync" ]
+					then	timestamps_matching=set
+			fi
 			# snap_common_source is determined through matching timestamp and matching snapstring
 			if [ -n "${timestamps_matching}" ]
 				then	# get snapstring for source. for zfs source and target can differ in snapname, for btrfs and file it is the same
@@ -82,5 +90,5 @@ fi
 echo "${snap_common_source}~${snap_old_target}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer snap_shots_source_current snap_shots_source_ts_current snap_number_source_current snap_shots_target_current snap_shots_target_ts_current snap_number_target_current snap_string_separator
+# import_fields = mode_transfer snap_multi snap_shots_source_current snap_shots_source_ts_current snap_number_source_current snap_shots_target_current snap_shots_target_ts_current snap_number_target_current
 # export_fields = snap_common_source snap_old_target
