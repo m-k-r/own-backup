@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Read the element
+element_version=$(awk -v condition1="version" '$1 == condition1 { print $3 }' ${element})
+
+# Logoptions
+log_server=$(awk -v condition1="logserver" '$1 == condition1 { print $3 }' ${element})
+log_server_port=$(awk -v condition1="logserver" '$1 == condition1 { print $4 }' ${element})
+log_dir=$(awk -v condition1="logdirectory" '$1 == condition1 { print $3 }' ${element})
+log_usr=$(awk -v condition1="loguser" '$1 == condition1 { print $3 }' ${element})
+
+# General Options, Source- and Targetserver, Ports, Mode and Filesystem
+elem_server_source=$(awk -v condition1="sourceserver" '$1 == condition1 { print $3 }' ${element})
+elem_port_source=$(awk -v condition1="sourceserver" '$1 == condition1 { print $4 }' ${element})
+elem_server_target=$(awk -v condition1="targetserver" '$1 == condition1 { print $3 }' ${element})
+elem_port_target=$(awk -v condition1="targetserver" '$1 == condition1 { print $4 }' ${element})
+elem_mode=$(awk -v condition1="mode" '$1 == condition1 { print $3 }' ${element})
+elem_fs=$(awk -v condition1="filesystem" '$1 == condition1 { print $3 }' ${element})
+elem_user=$(awk -v condition1="user" '$1 == condition1 { print $3 }' ${element})
+elem_certificate=$(awk -v condition1="certificate" '$1 == condition1 { print $3 }' ${element})
+elem_options_rsync=$(awk -v condition1="rsync-options" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)
+elem_options_sql=$(awk -v condition1="sql-options" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)
+
+# Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional
+path_snap_source=$(awk -v condition1="snapshot-path" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+if [ -n "${override_path_snap_target}" ]
+	then	path_snap_target=${override_path_snap_target}
+	else	path_snap_target=$(awk -v condition1="snapshot-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+fi
+path_root_source=$(awk -v condition1="root-path" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+path_root_target=$(awk -v condition1="root-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+path_offset_source=$(awk -v condition1="offset-path" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+path_offset_target=$(awk -v condition1="offset-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+
+# Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options
+if [ -n "${override_snap_name}" ]
+	then	snap_name=${override_snap_name}
+	else	snap_name=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+fi
+if [ -n "${override_snap_date}" ]
+	then	snap_date=${override_snap_date}
+	else	snap_date=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element}))
+fi
+snap_list_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+if [ -n "${override_snap_list_frequency}" ]
+	then	snap_list_frequency_source=${override_snap_list_frequency}
+	else	snap_list_frequency_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
+fi
+snap_location_source=$(awk -v condition1="snapshotremote" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+snap_list_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+if [ -n "${override_snap_list_frequency}" ]
+	then	snap_list_frequency_target=${override_snap_list_frequency}
+	else	snap_list_frequency_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
+fi
+snap_location_target=$(awk -v condition1="snapshotremote" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+if [ -n "${override_snap_limit}" ]
+	then	snap_limit_source=$(echo "${override_snap_limit}" | cut -d ":" -f 1)
+		snap_limit_target=$(echo "${override_snap_limit}" | cut -d ":" -f 2)
+	else	snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+		snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+fi
+# Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array
+sync_list=$(awk -v condition1="synclist" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)
+sync_name=($(awk -v condition1="syncname" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
+sync_name_new=($(awk -v condition1="newsyncname" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
+sync_name_new_suffix=($(awk -v condition1="syncnamesuffix" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
+sync_name_new_prefix=($(awk -v condition1="syncnameprefix" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
+sync_vmid=($(awk -v condition1="VM-ID" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
+
+export element_version
+export log_server log_server_port log_dir log_usr
+export elem_server_source elem_port_source elem_server_target elem_port_target elem_mode elem_fs elem_user elem_certificate elem_options_rsync elem_options_sql
+export path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target
+export snap_name snap_date snap_list_source snap_list_frequency_source snap_location_source snap_limit_source snap_list_target snap_list_frequency_target snap_location_target snap_limit_target
+export sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
+
+
+##### variable list. these will be picked up by debug #####
+# import_fields = element override_path_snap_target override_snap_name override_snap_date override_snap_list_frequency override_snap_limit
+# export_fields = log_server log_server_port log_dir log_usr elem_server_source elem_port_source elem_server_target elem_port_target elem_mode elem_fs elem_user elem_certificate elem_options_rsync elem_options_sql path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_name snap_date snap_list_source snap_list_frequency_source snap_location_source snap_list_target snap_list_frequency_target snap_location_target snap_limit_source snap_limit_target sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid

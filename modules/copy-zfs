@@ -8,30 +8,30 @@ fi
 # zfs send does not need snap_old_target, zfs send incremental does. sometimes without rollback it fails
 if [ -n "${snap_old_target}" ] && [ ! "${snap_old_target}" == "unset" ]
 	then	# unlike the old script we don't check for incremential before we check if $snap_old_target exists.
-		# so $snap_old_target can be missing but the snap_set_target_current exist. This scenario must be dealt with in the main script.
+		# so $snap_old_target can be missing but the current_snap_set_target exist. This scenario must be dealt with in the main script.
 		if [ ! "${show_commands}" == "set" ]
-			then	if [ -n "${config_server_target}" ]
+			then	if [ -n "${elem_server_target}" ]
 					then	ssh ${ssh_target} "zfs rollback ${snap_old_target}"
 					else	zfs rollback ${snap_old_target}
 				fi
 		fi
 
 		# incremental send/receive
-		if [ -n "${config_server_source}" ]
+		if [ -n "${elem_server_source}" ]
 			then	command1="ssh ${ssh_source} zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
 			else	command1="zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
 		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
-		if [ -n "${config_server_source}" ]
+		if [ -n "${elem_server_source}" ]
 			then	command1="ssh ${ssh_source} zfs send ${snap_new_source}${progress}"
 			else	command1="zfs send ${snap_new_source}${progress}"
 		fi
 fi
 
-if [ -n "${config_server_target}" ]
-	then	command2="ssh ${ssh_target} zfs recv ${snap_set_target_current}"
-	else	command2="zfs recv ${snap_set_target_current}"
+if [ -n "${elem_server_target}" ]
+	then	command2="ssh ${ssh_target} zfs recv ${current_snap_set_target}"
+	else	command2="zfs recv ${current_snap_set_target}"
 fi
 
 if [ "${show_commands}" == "set" ]
@@ -40,5 +40,5 @@ if [ "${show_commands}" == "set" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = show_commands config_server_source ssh_source config_server_target ssh_target show_progress snap_new_source snap_common_source snap_old_target snap_set_target_current
-# export_fields =
+# import_fields = show_progress show_commands elem_server_source elem_server_target ssh_source ssh_target current_snap_set_target snap_new_source snap_common_source snap_old_target
+# export_fields = command1 command2

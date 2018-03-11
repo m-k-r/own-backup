@@ -1,0 +1,192 @@
+#!/bin/bash
+
+##### translate mode and fs to the internal modi
+
+# translation matrix for mode and fs from frontend to mode{create|snapshot|transfer}
+# internally the script destinguishes between create (the snapshot), (handle the) snapshot and transfer (the data)
+if [ -n "${elem_mode}" ] && [ ! "${elem_mode}" == "rsync" ]
+	then	mode_create=${elem_mode}
+	else	mode_create=${elem_fs}
+fi
+
+mode_snapshot=${elem_fs}
+
+if [ ! -n "${elem_mode}" ] && [ ! "${elem_fs}" == "file" ] || [ "${elem_mode}" == "kvm" ]
+	then	mode_transfer=${elem_fs}
+	elif [ "${elem_mode}" == "rsync" ] || [ "${elem_fs}" == "file" ]
+		then	mode_transfer=rsync
+fi
+unset elem_mode elem_fs
+
+
+##### ports for rsync and ssh #####
+
+if [ -n "${elem_server_source}" ]
+	then	if [ ! -n "${elem_port_source}" ]
+			then	elem_port_source=22
+		fi
+		ssh_source="${elem_server_source} -p ${elem_port_source}"
+		export ssh_source
+
+		if [ "${snap_location_source}" == "direct" ] || [ "${snap_location_source}" == "local" ]
+			then	snap_location_remote_source=${elem_server_source}
+				unset elem_server_source
+				export snap_location_remote_source
+			else	if [ "${mode_transfer}" == "rsync" ]
+					then	ssh_source_transfer=" -e \"ssh -p ${elem_port_source}\" ${elem_server_source}:"
+						export ssh_source_transfer
+				fi
+		fi
+		unset elem_port_source
+fi
+
+if [ -n "${elem_server_target}" ]
+	then	if [ ! -n "${elem_port_target}" ]
+			then	elem_port_target=22
+		fi
+		ssh_target="ssh ${elem_server_target} -p ${elem_port_target}"
+		export ssh_target
+
+		if [ "${snap_location_target}" == "direct" ] || [ "${snap_location_target}" == "local" ]
+			then	snap_location_remote_target=${elem_server_target}
+				unset elem_server_target
+				export snap_location_remote_target
+			else	if [ "${mode_transfer}" == "rsync" ]
+					then	ssh_target_transfer=" -e \"ssh -p ${elem_port_target}\" ${elem_server_target}:"
+						export ssh_target_transfer
+				fi
+		fi
+		unset elem_port_target
+fi
+
+
+##### snapshot limits #####
+
+# the script expects an integer here. 0 means the snapshots are handled externally
+if [ ! -n "${snap_limit_source}" ]
+	then	snap_limit_source=0
+fi
+
+if [ ! -n "${snap_limit_target}" ]
+	then	snap_limit_target=0
+fi
+
+# in these cases no snapshots should be created. so snap_limit has to be 0 and snap_list has to be unset
+if [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_source=0
+		unset snap_list_source
+		export snap_limit_source
+fi
+
+if [ -n "${show_snapshots}" ] || [ -n "${snap_rollback}" ] || [ -n "${snap_multi}" ]
+	then	snap_limit_target=0
+		unset snap_list_target
+		export snap_limit_target
+fi
+
+
+##### define strings for snapname #####
+
+# Get the actual date and time in format and its stringlength
+snap_date_offset=$((${#snap_date}))
+# Defines the offset for the snapshot-comparison
+snap_string="${snap_name}_${snap_date}"
+
+if [ "${mode_snapshot}" == "btrfs" ] || [ "${mode_snapshot}" == "file" ]|| [ "${mode_snapshot}" == "mysql" ]
+	then	snap_string_separator="_"
+	elif [ "${mode_snapshot}" == "zfs" ] || [ "${mode_snapshot}" == "kvm" ]
+		then	snap_string_separator="@"
+fi
+
+##### directory conventions #####
+
+# spaces in the directories are allowed but have to be escaped
+probe=$(echo ${path_root_source} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	path_root_source=$(echo ${path_root_source} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${path_root_target} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	path_root_target=$(echo ${path_root_target} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${path_snap_source} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	path_snap_source=$(echo ${path_snap_source} | sed 's/ /\\ /g')
+fi
+
+probe=$(echo ${path_snap_target} | grep " " | egrep -v "\\ ")
+if [ -n "${probe}" ]
+	then	path_snap_targete=$(echo ${path_snap_target} | sed 's/ /\\ /g')
+fi
+unset probe
+
+# if set, path_offset needs to start with a / and end without
+if [ -n "${path_offset_source}" ]
+	then	probe=$(echo ${path_offset_source} | cut -c 1)
+		if [ ! "${probe}" == "/" ]
+			then	path_offset_source="/${path_offset_source}"
+		fi
+
+		probe=$(echo ${path_offset_source} | rev | cut -c 1)
+		if [ "${probe}" == "/" ]
+			then	path_offset_source=$(echo ${path_offset_source} | rev | cut -c 2- | rev)
+		fi
+
+		probe=$(echo ${path_offset_source} | grep " " | egrep -v "\\ ")
+		if [ -n "${probe}" ]
+			then	path_offset_source=$(echo ${path_offset_source} | sed 's/ /\\ /g')
+		fi
+
+		unset probe
+		export path_offset_source
+fi
+
+if [ -n "${path_offset_target}" ]
+	then	probe=$(echo ${path_offset_target} | cut -c 1)
+		if [ ! "${probe}" == "/" ]
+			then	path_offset_target="/${path_offset_target}"
+		fi
+
+		probe=$(echo ${path_offset_target} | rev | cut -c 1)
+		if [ "${probe}" == "/" ]
+			then	path_offset_target=$(echo ${path_offset_target} | rev | cut -c 2- | rev)
+		fi
+
+		probe=$(echo ${path_offset_target} | grep " " | egrep -v "\\ ")
+		if [ -n "${probe}" ]
+			then	path_offset_target=$(echo ${path_offset_target} | sed 's/ /\\ /g')
+		fi
+
+		unset probe
+		export path_offset_target
+fi
+
+##### rollback handling #####
+
+# if rollback is set the source- and targetvariables have to be exchanged
+if [ "${snap_rollback}" == "set" ]
+	then	path_trans_var=${path_snap_source}
+		path_snap_source=${path_snap_target}
+		path_snap_target=${path_trans_var}
+
+		path_trans_var=${path_root_source}
+		path_root_source=${path_root_target}
+		path_root_target=${path_trans_var}
+
+		if [ -n "${path_offset_source}" ] || [ -n "${path_offset_target}" ]
+			then	path_trans_var=${path_offset_source}
+				path_offset_source=${path_offset_target}
+				path_offset_target=${path_trans_var}
+				export path_offset_source path_offset_target
+		fi
+		unset path_trans_var
+fi
+
+##### exports of variables which are created here #####
+export mode_create mode_snapshot mode_transfer snap_date_offset snap_string snap_string_separator path_snap_source path_snap_target path_root_source path_root_target
+
+##### variable list. these will be picked up by debug #####
+# import_fields =
+# export_fields = mode_create mode_snapshot mode_transfer ssh_source snap_location_remote_source ssh_source_transfer ssh_target snap_location_remote_target ssh_target_transfer snap_limit_source snap_limit_target path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_date snap_date_offset snap_string snap_string_separator

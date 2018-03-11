@@ -1,12 +1,12 @@
 [template]
-version = 1.0
+version = 1.2
 
 # Logoptions
 logserver = logserver.mydomain.com
-logdirectory = /mnt/datastore/logshare
+logpath = /mnt/datastore/logshare
 loguser = loguser
 
-# Source-, Targetserver, Ports, Mode, Filesystem and general Options
+# General Options, Source- and Targetserver, Ports, Mode and Filesystem
 sourceserver = sourceserver.mydomain.com 222
 targetserver = targetserver.mydomain.com 222
 mode = kvm/rsync/mysql
@@ -16,15 +16,15 @@ certificate = /etc/ssl/mycert.pem
 rsync-options = -ash--delete-after--stats
 sql-options = (not yet tested)
 
-# Source- and Targetdirectories/datastets and specific options for modes and filesystems
-snapshot-directory (source) = /mnt/datastore1/intermediate_directory (zfs/btrfs/file)
-snapshot-directory (target) = /mnt/datastore2/intermediate_directory (zfs/btrfs/file)
-root-directory (source) = /mnt/datastore1/rsync_directory (zfs/btrfs/file)
-root-directory (target) = /mnt/datastore2/rsync_directory (zfs/btrfs/file)
-offset-directory (source) = files/files_to_backup (rsync/mysql with zfs/btrfs)
-offset-directory (target) = files-backup/files_backed_up (rsync/mysql with zfs/btrfs)
+# Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional
+snapshot-path (source) = /mnt/datastore1/intermediate_directory (zfs/btrfs/file)
+snapshot-path (target) = /mnt/datastore2/intermediate_directory (zfs/btrfs/file)
+root-path (source) = /mnt/datastore1/rsync_directory (zfs/btrfs/file)
+root-path (target) = /mnt/datastore2/rsync_directory (zfs/btrfs/file)
+offset-path (source) = files/files_to_backup (rsync/mysql with zfs/btrfs)
+offset-path (target) = files-backup/files_backed_up (rsync/mysql with zfs/btrfs)
 
-# Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won't work if snapshots are not handled by another script
+# Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options
 snapshotformat (name) = auto-03
 snapshotformat (date) = %Y%m%d-%H%M
 snapshotlist (source) = datastore1 daily
@@ -34,7 +34,7 @@ snapshotnumber (target) = 5
 snapshotremote (source) = server(default)/ssh(remote-own-snapshot)/local(file-based-only)/direct(sql-only)
 snapshotremote (target) = server(default)/ssh(remote-own-snapshot)/local(file-based-only)/direct(sql-only)
 
-# Syncdataoptions like Synclist, Names, Su- and Prefixes and VMID. Each is treated like an array
+# Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array
 synclist = A B C D E F
 syncname = share1 share2 share3
 newsyncname = newshare1 newshare2 newshare3

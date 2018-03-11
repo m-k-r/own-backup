@@ -1,59 +1,59 @@
 #!/bin/bash
 
-snap_del=${snap_shots_current}
-snap_del_number=${snap_number_current}
+list_snap_del=${current_snap_shots}
+snap_del_number=${current_snap_number}
 
-while [ "${snap_del_number}" -gt "${snap_limit_current}" ]
-do	snap_del_current=$(echo "${snap_del}" | awk 'NR==1{print $0}')
+while [ "${snap_del_number}" -gt "${current_snap_limit}" ]
+do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
-	if [ -n "${sync_vmid_current}" ]
-		then	snap_del_kvm=${snap_del_current: -$snap_string_offset}
-			if [ -n "${config_server_current}" ]
-				then	command1="ssh ${ssh_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current} | awk ' { print $1 } '"
-					command2="ssh ${ssh_current} \"qm delsnapshot ${sync_vmid_current} ${snap_del_kvm}\""
-				else	command1="zfs list ${snap_del_current} | grep ${snap_del_current} | awk ' { print $1 } '"
-					command2="qm delsnapshot ${sync_vmid_current} ${snap_del_kvm}"
+	if [ -n "${current_sync_vmid}" ]
+		then	snap_del_vm=$(echo "${snap_del}" | rev | cut -d "@" -f 1 | rev)
+			if [ -n "${current_server}" ]
+				then	command1="ssh ${current_ssh} \"zfs list ${snap_del}\" | grep ${snap_del} | awk ' { print $1 } '"
+					command2="ssh ${current_ssh} \"qm delsnapshot ${current_sync_vmid} ${snap_del_vm}\""
+				else	command1="zfs list ${snap_del} | grep ${snap_del} | awk ' { print $1 } '"
+					command2="qm delsnapshot ${current_sync_vmid} ${snap_del_vm}"
 			fi
 
 		elif [ "${mode_snapshot}" == "zfs" ]
-			then	if [ -n "${config_server_current}" ]
-					then	command1="ssh ${ssh_current} \"zfs list ${snap_del_current}\" | grep ${snap_del_current} | awk ' { print $1 } '"
-						command2="ssh ${ssh_current} \"zfs destroy ${snap_del_current}\""
-					else	command1="zfs list ${snap_del_current} | grep ${snap_del_current} | awk ' { print $1 } '"
-						command2="zfs destroy ${snap_del_current}"
+			then	if [ -n "${current_server}" ]
+					then	command1="ssh ${current_ssh} \"zfs list ${snap_del}\" | grep ${snap_del} | awk ' { print $1 } '"
+						command2="ssh ${current_ssh} \"zfs destroy ${snap_del}\""
+					else	command1="zfs list ${snap_del} | grep ${snap_del} | awk ' { print $1 } '"
+						command2="zfs destroy ${snap_del}"
 				fi
 
 		elif [ "${mode_snapshot}" == "btrfs" ]
-			then	if [ -n "${config_server_current}" ]
-					then	command1="ssh ${ssh_current} \"btrfs subvolume show ${snap_del_current} 2> /dev/null\" | grep ${snap_del_current}"
-						command2="ssh ${ssh_current} \"btrfs subvolume delete ${snap_del_current}\""
-					else	command1="btrfs subvolume show ${snap_del_current} 2> /dev/null | grep ${snap_del_current}"
-						command2="btrfs subvolume delete ${snap_del_current}"
+			then	if [ -n "${current_server}" ]
+					then	command1="ssh ${current_ssh} \"btrfs subvolume show ${snap_del} 2> /dev/null\" | grep ${snap_del}"
+						command2="ssh ${current_ssh} \"btrfs subvolume delete ${snap_del}\""
+					else	command1="btrfs subvolume show ${snap_del} 2> /dev/null | grep ${snap_del}"
+						command2="btrfs subvolume delete ${snap_del}"
 				fi
 
 		elif [ "${mode_snapshot}" == "file" ]
-			then	if [ -n "${config_server_current}" ]
-					then	command1="ssh ${ssh_current} \"find ${snap_del_current} -maxdepth 0 2> /dev/null\""
-						command2="ssh ${ssh_current} \"rm -rf ${snap_del_current}\""
-					else	command1="find ${snap_del_current} -maxdepth 0 2> /dev/null"
-						command2="rm -rf ${snap_del_current}"
+			then	if [ -n "${current_server}" ]
+					then	command1="ssh ${current_ssh} \"find ${snap_del} -maxdepth 0 2> /dev/null\""
+						command2="ssh ${current_ssh} \"rm -rf ${snap_del}\""
+					else	command1="find ${snap_del} -maxdepth 0 2> /dev/null"
+						command2="rm -rf ${snap_del}"
 				fi
 	fi
 
 	probe=$(eval ${command1} | awk '{ print $1 }')
 
-	if [ "${probe}" == "${snap_del_current}" ]
+	if [ "${probe}" == "${snap_del}" ]
 		then	if [ "${show_commands}" == "set" ]
 				then	echo "${command2}"
 				else	eval ${command2}
 			fi
 	fi
 
-	unset snap_del_current
-	snap_del=$(echo "${snap_del}" | tail -n +2)
+	unset snap_del
+	list_snap_del=$(echo "${list_snap_del}" | tail -n +2)
 	snap_del_number=$((${snap_del_number} - 1))
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot config_server_current ssh_current snap_limit_current sync_vmid_current snap_string_offset snap_shots_current snap_number_current
-# export_fields =
+# import_fields = mode_snapshot current_server current_ssh current_snap_limit current_sync_vmid current_snap_shots current_snap_number
+# export_fields = command1 command2

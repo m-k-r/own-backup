@@ -3,38 +3,38 @@
 # check if all prerequisits for rsync are met
 if [ ! "${mode_snapshot}" == "file" ]
 	then	# not yet implemented
-		#if [ "${snap_limit_current}" -gt "0" ] || [ -n "${snap_list_current}" ]
-		#	then	probe_snap_rsync_current=${dir_snap_current}${dir_offset_current}
-		#	else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
+		#if [ "${current_snap_limit}" -gt "0" ] || [ -n "${current_snap_list}" ]
+		#	then	probe_snap_rsync=${current_path_snap}${current_path_offset}
+		#	else	probe_snap_rsync=${current_path_root}${current_path_offset}
 		#fi
 
-		if [ "${side_current}" == "source" ]
-			then	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
-			else	probe_snap_rsync_current=${dir_root_current}${dir_offset_current}
+		if [ "${current_side}" == "source" ]
+			then	probe_snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}
+			else	probe_snap_rsync=${current_path_root}${current_path_offset}
 		fi
 
 		# check if directory exists
-		if [ -n "${config_server_current}" ]
-			then	probe=$(ssh ${ssh_current} "if [ -e \"${probe_snap_rsync_current}\" ]; then echo 1; else echo 0; fi")
-			else	probe=$(if [ -e "${probe_snap_rsync_current}" ]; then echo 1; else echo 0; fi)
+		if [ -n "${current_server}" ]
+			then	probe=$(ssh ${current_ssh} "if [ -e \"${probe_snap_rsync}\" ]; then echo 1; else echo 0; fi")
+			else	probe=$(if [ -e "${probe_snap_rsync}" ]; then echo 1; else echo 0; fi)
 		fi
 
 		if [ "${probe}" == "1" ]
-			then	snap_rsync_current=$(echo "${probe_snap_rsync_current}" | sed 's/ /\\ /g')
+			then	snap_rsync=$(echo "${probe_snap_rsync}" | sed 's/ /\\ /g')
 			else	exit 81
 		fi
 
 	elif	[ "${mode_snapshot}" == "file" ]
-		then	if [ "${side_current}" == "source" ] && [ "${snap_limit_current}" == "0" ]
-				then	snap_rsync_current=${dir_root_current}${dir_offset_current}/${sync_name_source_current}
-				elif [ "${side_current}" == "target" ]
-					then	snap_rsync_current=${dir_root_current}${dir_offset_current}
+		then	if [ "${current_side}" == "source" ] && [ "${current_snap_limit}" == "0" ]
+				then	snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}
+				elif [ "${current_side}" == "target" ]
+					then	snap_rsync=${current_path_root}${current_path_offset}
 			fi
 	else	:
 fi
 
-echo "${snap_rsync_current}"
+echo "${snap_rsync}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot config_server_current ssh_current snap_limit_current snap_list_current dir_root_current dir_snap_current dir_offset_current sync_name_source_current
-# export_fields = snap_rsync_current
+# import_fields = current_side mode_snapshot current_server current_ssh current_snap_limit current_snap_list current_path_root current_path_snap current_path_offset current_sync_name_source
+# export_fields = snap_rsync

@@ -6,26 +6,26 @@ if [ "${show_progress}" == "set" ] && [ ! "${show_commands}" == "set" ]
 fi
 
 # btrfs copies the subvolume to a directory. for that reason the actual subvolname has to be cut off
-snap_set_target_current=$(echo ${snap_set_target_current} | rev | cut -d "/" -f 2- | rev)
+current_snap_set_target=$(echo ${current_snap_set_target} | rev | cut -d "/" -f 2- | rev)
 
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
 if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
 	then	# incremental send/receive
-		if [ -n "${config_server_source}" ]
+		if [ -n "${elem_server_source}" ]
 			then	command1="ssh ${ssh_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""
 			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${progress}"
 		fi
 
 	else	# zfs send in case syncname does not exist on targetpool
-		if [ -n "${config_server_source}" ]
+		if [ -n "${elem_server_source}" ]
 			then	command1="ssh ${ssh_source} \"btrfs send ${snap_new_source}${progress}\""
 			else	command1="btrfs send ${snap_new_source}${progress}"
 		fi
 fi
 
-if [ -n "${config_server_target}" ]
-	then	command2="ssh ${ssh_target} \"btrfs receive ${snap_set_target_current}/\""
-	else	command2="btrfs receive ${snap_set_target_current}/"
+if [ -n "${elem_server_target}" ]
+	then	command2="ssh ${ssh_target} \"btrfs receive ${current_snap_set_target}/\""
+	else	command2="btrfs receive ${current_snap_set_target}/"
 fi
 
 if [ "${show_commands}" == "set" ]
@@ -34,5 +34,5 @@ if [ "${show_commands}" == "set" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = show_commands config_server_source ssh_source config_server_target ssh_target show_progress snap_new_source snap_common_source snap_set_target_current
-# export_fields =
+# import_fields = show_progress show_commands elem_server_source elem_server_target ssh_source ssh_target current_snap_set_target snap_new_source snap_common_source
+# export_fields = command1 command2

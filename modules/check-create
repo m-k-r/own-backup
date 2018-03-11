@@ -1,13 +1,13 @@
 #!/bin/bash
 
-if [ "${side_current}" == "source" ] && [ -n "${snap_location_remote_current}" ]
-	then	config_server_current=${snap_location_remote_current}
+if [ "${current_side}" == "source" ] && [ -n "${current_snap_location_remote}" ]
+	then	current_server=${current_snap_location_remote}
 fi
 
 if [ "${mode_create}" == "kvm" ]
-	then	if [ -n "${config_server_current}" ]
-			then	probe=$(ssh ${ssh_current} "qm list | grep ${sync_vmid_current}")
-			else	probe=$(qm list | grep ${sync_vmid_current})
+	then	if [ -n "${current_server}" ]
+			then	probe=$(ssh ${current_ssh} "qm list | grep ${current_sync_vmid}")
+			else	probe=$(qm list | grep ${current_sync_vmid})
 		fi
 
 		if [ ! -n "${probe}" ]
@@ -15,35 +15,35 @@ if [ "${mode_create}" == "kvm" ]
 		fi
 
 	elif [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-		then	if [ "${snap_location_current}" == "direct" ]
-				then	if [ -n "${snap_location_remote_current}" ]
-						then	config_sql_server=${snap_location_remote_current}
-						else	config_sql_server=localhost
+		then	if [ "${current_snap_location}" == "direct" ]
+				then	if [ -n "${current_snap_location_remote}" ]
+						then	elem_sql_server=${current_snap_location_remote}
+						else	elem_sql_server=localhost
 					fi
 			fi
 
 			if [ "${mode_create}" == "mysql" ]
-				then	if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
-						then	probe=$(ssh ${ssh_current} "find ${config_options_sql} -maxdepth 0 2> /dev/null")
-						else	probe=$(find ${config_options_sql} -maxdepth 0 2> /dev/null)
+				then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
+						then	probe=$(ssh ${current_ssh} "find ${elem_options_sql} -maxdepth 0 2> /dev/null")
+						else	probe=$(find ${elem_options_sql} -maxdepth 0 2> /dev/null)
 					fi
 
-					if [ ! "${probe}" == "${config_options_sql}" ]
+					if [ ! "${probe}" == "${elem_options_sql}" ]
 						then	exit 91
 					fi
 
-					if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
-						then	probe=$(ssh ${ssh_current} "mysqlshow --defaults-extra-file=${config_options_sql} -h ${config_sql_server}" | grep ${sync_name_source_current} | awk '{ print $2 }')
-						else	probe=$(mysqlshow --defaults-extra-file=${config_options_sql} -h ${config_sql_server}| grep ${sync_name_source_current} | awk '{ print $2 }')
+					if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
+						then	probe=$(ssh ${current_ssh} "mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $2 }')
+						else	probe=$(mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}| grep ${current_sync_name_source} | awk '{ print $2 }')
 					fi
 
-					if [ ! "${probe}" == "${sync_name_source_current}" ]
+					if [ ! "${probe}" == "${current_sync_name_source}" ]
 						then	exit 93
 					fi
 
 				elif [ "${mode_create}" == "pgsql" ]
-					then	if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
-							then	probe=$(ssh ${ssh_current} "find /root/.pgpass -maxdepth 0 2> /dev/null")
+					then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
+							then	probe=$(ssh ${current_ssh} "find /root/.pgpass -maxdepth 0 2> /dev/null")
 							else	probe=$(find /root/.pgpass -maxdepth 0 2> /dev/null)
 						fi
 
@@ -51,20 +51,20 @@ if [ "${mode_create}" == "kvm" ]
 						then	exit 91
 					fi
 
-					if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
-						then	probe=$(ssh ${ssh_current} "psql -l -U ${config_options_sql} -h ${config_sql_server}" | grep ${sync_name_source_current} | awk '{ print $1 }')
-						else	probe=$(psql -l -U ${config_options_sql} -h ${config_sql_server} | grep ${sync_name_source_current} | awk '{ print $1 }')
+					if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
+						then	probe=$(ssh ${current_ssh} "psql -l -U ${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $1 }')
+						else	probe=$(psql -l -U ${elem_options_sql} -h ${elem_sql_server} | grep ${current_sync_name_source} | awk '{ print $1 }')
 					fi
 
-					if [ ! "${probe}" == "${sync_name_source_current}" ]
+					if [ ! "${probe}" == "${current_sync_name_source}" ]
 						then	exit 93
 					fi
 			fi
 
-			if [ -n "${config_certificate}" ]
-				then	if [ -n "${config_server_current}" ] && [ ! "${snap_location_current}" == "direct" ]
-						then	probe=$(ssh ${ssh_current} "find ${config_certificate} -maxdepth 0 2> /dev/null")
-						else	probe=$(find ${config_certificate} -maxdepth 0 2> /dev/null)
+			if [ -n "${elem_certificate}" ]
+				then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
+						then	probe=$(ssh ${current_ssh} "find ${elem_certificate} -maxdepth 0 2> /dev/null")
+						else	probe=$(find ${elem_certificate} -maxdepth 0 2> /dev/null)
 					fi
 
 					if [ ! -n "${probe}" ]
@@ -77,5 +77,5 @@ if [ "${mode_create}" == "kvm" ]
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_create config_server_current ssh_current side_current snap_location_current snap_location_remote_current config_options_sql config_certificate sync_name_source_current sync_vmid_current
+# import_fields = mode_create current_server current_ssh current_side current_snap_location current_snap_location_remote elem_options_sql elem_certificate current_sync_name_source current_sync_vmid
 # export_fields =

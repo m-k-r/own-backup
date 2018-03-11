@@ -1,27 +1,27 @@
-unset arg_oss_target
+unset oss_parameter
 
-if [ -n "${output}" ]
-	then	arg_oss_target+=" -o ${output}"
-	else	arg_oss_target+=" -o previous"
+if [ -n "${arg_output}" ]
+	then	oss_parameter+=" -o ${arg_output}"
+	else	oss_parameter+=" -o previous"
 fi
 
-if [ -n "${config_server_target}" ] && [ ! "${snap_location_target}" == "ssh" ]
-	then	arg_oss_target+=" -s ${config_server_target}"
-	elif [ ! -n "${config_server_target}" ] && [ -n "${snap_location_target}" ]
-		then	arg_oss_target+=" -s ${snap_location_remote_target}~${snap_location_target}"
+if [ -n "${elem_server_target}" ] && [ ! "${snap_location_target}" == "ssh" ]
+	then	oss_parameter+=" -s ${elem_server_target}"
+	elif [ ! -n "${elem_server_target}" ] && [ -n "${snap_location_target}" ]
+		then	oss_parameter+=" -s ${snap_location_remote_target}~${snap_location_target}"
 fi
 
 if [ -n "${snap_list_target}" ]
-	then	arg_oss_target+=" -c ${snap_list_target}"
-		arg_oss_target+=" -f ${snap_list_frequency_target}"
-		arg_oss_target+=" -l ${snap_date}"
+	then	oss_parameter+=" -c ${snap_list_target}"
+		oss_parameter+=" -f ${snap_list_frequency_target}"
+		oss_parameter+=" -l ${snap_date}"
 
 	else	if [ -n "${mode_override[aa]}" ]
-			then	arg_oss_target+=" -m ${mode_override[aa]}"
-			else	arg_oss_target+=" -m ${mode_create}"
+			then	oss_parameter+=" -m ${mode_override[aa]}"
+			else	oss_parameter+=" -m ${mode_create}"
 		fi
 
-		arg_oss_target+=" -l ${snap_string}"
-		arg_oss_target+=" -n $(echo ${snap_set_target[aa]}${snap_file_type[aa]} | tr ' ' '~')"
-		arg_oss_target+=" -r $(echo ${snap_root_target[aa]} | tr ' ' '~')"
+		oss_parameter+=" -l ${snap_string}"
+		oss_parameter+=" -n $(echo ${snap_set_target[aa]}${snap_file_type[aa]} | tr ' ' '~')"
+		oss_parameter+=" -r $(echo ${snap_root_target[aa]} | tr ' ' '~')"
 fi

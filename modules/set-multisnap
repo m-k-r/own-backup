@@ -3,9 +3,9 @@
 # snapshots can contain spaces, set ifs to newline
 IFSBAK=$IFS
 IFS=$'\n'
-snap_new_list_source=(${snap_shots_source_current})
-snap_new_list_source_ts=(${snap_shots_source_ts_current})
-snap_old_list_target_ts=(${snap_shots_target_ts_current})
+snap_new_list_source=(${current_snap_shots_source})
+snap_new_list_source_ts=(${current_snap_shots_source_ts})
+snap_old_list_target_ts=(${current_snap_shots_target_ts})
 snap_old_target_ts=${snap_old_list_target_ts[-1]}
 
 # snap_old_target is always the last snpashot on target. so if not unset all snapshots up to snap_old_target are cut off
@@ -56,7 +56,7 @@ fi
 # snap_common_list_source and snap_old_list_target have one element more than snap_new_list_source
 snap_new_list_source_number=${#snap_new_list_source[@]}
 snap_common_list_source=("${snap_common_source}" "${snap_new_list_source[@]}")
-snap_old_list_target=(${snap_old_target} $(printf '%s\n' "${snap_new_list_source[@]}" | sed "s;"${snap_set_source_current}";"${snap_set_target_current}";g" 2> /dev/null))
+snap_old_list_target=(${snap_old_target} $(printf '%s\n' "${snap_new_list_source[@]}" | sed "s;"${current_snap_set_source}";"${current_snap_set_target}";g" 2> /dev/null))
 # reset the ifs, otherwise ssh_target will be interpreted as one string for the servername (with space and port)
 IFS=$IFSBAK
 bb="0"
@@ -72,13 +72,13 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 		then	probe=${snap_old_target}
 		# this is strictly not necessary because the creation of snapshots is documented, but if something is going wrong, this prevents errors
 		else	if [ "${mode_transfer}" == "zfs" ]
-				then	if [ -n "${config_server_target}" ]
+				then	if [ -n "${elem_server_target}" ]
 						then	probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }')
 						else	probe=$(zfs list "${snap_old_target}" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
 					fi
 
 				elif [ "${mode_transfer}" == "btrfs" ]
-					then	if [ -n "${config_server_target}" ]
+					then	if [ -n "${elem_server_target}" ]
 							then	probe=$(ssh ${ssh_target} "btrfs subvolume show \"${snap_old_target}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
 							else	probe=$(btrfs subvolume show "${snap_old_target}" 2> /dev/null | head -1 | awk '{ print $1 }')
 						fi
@@ -102,5 +102,5 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer config_server_target ssh_target show_commands dir_modules snap_multi snap_set_source_current snap_set_target_current snap_shots_source_current snap_shots_source_ts_current snap_shots_target_ts_current snap_common_source snap_old_target
+# import_fields = mode_transfer elem_server_target ssh_target show_commands dir_modules snap_multi current_snap_set_source current_snap_set_target current_snap_shots_source current_snap_shots_source_ts current_snap_shots_target_ts snap_common_source snap_old_target
 # export_fields =

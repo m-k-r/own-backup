@@ -3,7 +3,7 @@
 if [ ! "${snap_old_target}" == "unset" ]
 	then	if [ "${mode_snapshot}" == "zfs" ]
 			then	output_modifier=" | sed 's;\\\0040; ;g'"
-				if [ -n "${config_server_target}" ]
+				if [ -n "${elem_server_target}" ]
 					then	command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""
 					else	command1="zfs diff ${snap_old_target}"
 				fi
@@ -11,7 +11,7 @@ if [ ! "${snap_old_target}" == "unset" ]
 			elif [ "${mode_snapshot}" == "btrfs" ]
 				then	header=2
 					output_modifier=" | tail -n +${header}"
-					if [ -n "${config_server_target}" ]
+					if [ -n "${elem_server_target}" ]
 						then	command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"
 						else	command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
 					fi
@@ -24,7 +24,7 @@ if [ ! "${snap_old_target}" == "unset" ]
 					fi
 					footer=3
 					output_modifier=" | tail -n +${header} | head -n -${footer} | sed 's;^;+ ;g' | sed 's;+ deleting;-;g'"
-					if [ -n "${config_server_target}" ]
+					if [ -n "${elem_server_target}" ]
 						then	command1="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\""
 						else	command1="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"
 					fi
@@ -32,23 +32,23 @@ if [ ! "${snap_old_target}" == "unset" ]
 
 		if [ -n "${log_server}" ]
 			then	if [ "${show_commands}" == "set" ]
-					then	echo "${command1}${output_modifier} | ssh ${log_server}${log_server_port} \"cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
-						echo "ssh ${log_server}${log_server_port} \"chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt\""
+					then	echo "${command1}${output_modifier} | ssh ${log_server}${log_server_port} \"cat > ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt"
+						echo "ssh ${log_server}${log_server_port} \"chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt\""
 
-					else	eval ${command1}${output_modifier} | ssh ${log_server}${log_server_port} "cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
-						ssh ${log_server}${log_server_port} "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+					else	eval ${command1}${output_modifier} | ssh ${log_server}${log_server_port} "cat > ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt"
+						ssh ${log_server}${log_server_port} "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt"
 				fi
 
 			else	if [ "${show_commands}" == "set" ]
-					then	echo "${command1}${output_modifier} | cat > ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
-						echo "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${sync_name_source_current}-${snap_date}.txt"
+					then	echo "${command1}${output_modifier} | cat > ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt"
+						echo "chown ${log_usr}:${log_usr} ${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt"
 
-					else	eval ${command1}${output_modifier} | cat > "${log_dir}"/${mode_snapshot}_diff-"${sync_name_source_current}"-${snap_date}.txt
-						chown ${log_usr}:${log_usr} "${log_dir}"/${mode_snapshot}_diff-"${sync_name_source_current}"-${snap_date}.txt
+					else	eval ${command1}${output_modifier} | cat > "${log_dir}"/${mode_snapshot}_diff-"${current_sync_name_source}"-${snap_date}.txt
+						chown ${log_usr}:${log_usr} "${log_dir}"/${mode_snapshot}_diff-"${current_sync_name_source}"-${snap_date}.txt
 				fi
 		fi
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot mode_override_current show_commands config_server_target ssh_target log_server log_server_port log_usr log_dir snap_old_target snap_new_target sync_name_source_current snap_date
+# import_fields = mode_snapshot mode_override_current show_commands elem_server_target ssh_target log_server log_server_port log_usr log_dir snap_old_target snap_new_target current_sync_name_source snap_date
 # export_fields =

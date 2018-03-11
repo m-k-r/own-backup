@@ -7,12 +7,12 @@
 
 if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ] || ([ "${mode_transfer}" == "rsync" ] && [ -n "${snap_multi}" ])
 	then	# if mode_transfer is either zfs or btrfs snapshots on source have to exist
-		if [ ! -n "${snap_shots_source_current}" ]
+		if [ ! -n "${current_snap_shots_source}" ]
 			then	exit 88
 		fi
 
 		# if snapshots on source are <2 or on target <1 the loop would fail
-		if [  "${snap_number_target_current}" -lt 1 ] || [ "${snap_number_source_current}" -lt 2 ]
+		if [  "${current_snap_number_target}" -lt 1 ] || [ "${current_snap_number_source}" -lt 2 ]
 			then	snap_common_source=unset
 		fi
 
@@ -25,11 +25,11 @@ if [ ! "${snap_common_source}" == "unset" ]
 	then	# the snapshots can contain spaces. since the strings are counted the spaces have to be replaced
 		IFSBAK=$IFS
 		IFS=$'\n'
-		snap_shots_source=(${snap_shots_source_current})
-		snap_shots_target=(${snap_shots_target_current})
-		snap_shots_source_ts=(${snap_shots_source_ts_current})
+		snap_shots_source=(${current_snap_shots_source})
+		snap_shots_target=(${current_snap_shots_target})
+		snap_shots_source_ts=(${current_snap_shots_source_ts})
 		IFS=$IFSBAK
-		bb=$((${snap_number_source_current} - 1))
+		bb=$((${current_snap_number_source} - 1))
 
 		while [ "${bb}" -ge 0 ]
 		do	# for zfs timestamps on source and target are the same
@@ -38,7 +38,7 @@ if [ ! "${snap_common_source}" == "unset" ]
 			# if another fs like a cold backup is used or if the snapshot on source is snapshotted
 			# the current workaround is to ignore the timestamp and use the newest snapshot with the same name
 			if [ "${mode_transfer}" == "zfs" ]
-				then	timestamps_matching=$(echo "${snap_shots_target_ts_current}" | grep -n "${snap_shots_source_ts[${bb}]}" | grep -Eo '^[^:]+')
+				then	timestamps_matching=$(echo "${current_snap_shots_target_ts}" | grep -n "${snap_shots_source_ts[${bb}]}" | grep -Eo '^[^:]+')
 				elif [ "${mode_transfer}" == "btrfs" ] || [ "${mode_transfer}" == "rsync" ]
 					then	timestamps_matching=set
 			fi
@@ -70,7 +70,7 @@ if [ ! "${snap_common_source}" == "unset" ]
 			fi
 		done
 
-		if [ "${snap_number_source_current}" -eq "$((${bb} + 1))" ]
+		if [ "${current_snap_number_source}" -eq "$((${bb} + 1))" ]
 			then	# if this is true the common snapshot is the newest on source and send would fail
 				snap_common_source=newest
 		fi
@@ -82,13 +82,13 @@ if [ ! -n "${snap_common_source}" ]
 fi
 
 # if no snapshots on target exist, snap_old_target hast to be unset
-if [ -n "${snap_shots_target_current}" ]
-	then	snap_old_target=${snap_shots_target_current##*$'\n'}
+if [ -n "${current_snap_shots_target}" ]
+	then	snap_old_target=${current_snap_shots_target##*$'\n'}
 	else	snap_old_target=unset
 fi
 
 echo "${snap_common_source}~${snap_old_target}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer snap_multi snap_shots_source_current snap_shots_source_ts_current snap_number_source_current snap_shots_target_current snap_shots_target_ts_current snap_number_target_current
+# import_fields = mode_transfer snap_multi current_snap_shots_source current_snap_shots_source_ts current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_number_target
 # export_fields = snap_common_source snap_old_target

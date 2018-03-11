@@ -1,0 +1,43 @@
+[]
+version = 1.2
+
+# Logoptions
+logserver =
+logpath =
+loguser =
+
+# General Options, Source- and Targetserver, Ports, Mode and Filesystem
+sourceserver =
+targetserver =
+mode =
+filesystem =
+user =
+certificate =
+rsync-options =
+sql-options =
+
+# Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional
+snapshot-path (source) =
+snapshot-path (target) =
+root-path (source) =
+root-path (target) =
+offset-path (source) =
+offset-path (target) =
+
+# Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options
+snapshotformat (name) =
+snapshotformat (date) =
+snapshotlist (source) =
+snapshotlist (target) =
+snapshotnumber (source) =
+snapshotnumber (target) =
+snapshotremote (source) =
+snapshotremote (target) =
+
+# Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array
+synclist =
+syncname =
+newsyncname =
+syncnameprefix =
+syncnamesuffix =
+VM-ID =

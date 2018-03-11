@@ -2,36 +2,36 @@
 
 # get snapshots for source  and target
 if [ "${mode_snapshot}" == "zfs" ]
-	then	if [ ! "${snap_root_current}" == "unset" ]
+	then	if [ ! "${current_snap_root}" == "unset" ]
 			then	# if the dataset is mounted, the unix tools can be used
 				# this doesn't wake other disks if they are in spindown
-				if [ -n "${config_server_current}" ]
-					then	snap_shots=$(ssh ${ssh_current} "find \"${snap_root_current}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
-					else	snap_shots=$(find "${snap_root_current}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
+				if [ -n "${current_server}" ]
+					then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_root}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
+					else	snap_shots=$(find "${current_snap_root}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 				fi
 
 				if [ -n "${snap_shots}" ]
-					then	snap_shots=$(echo "${snap_shots}" | sed "s;^;${snap_set_current}${snap_string_separator};g" 2> /dev/null)
+					then	snap_shots=$(echo "${snap_shots}" | sed "s;^;${current_snap_set}${snap_string_separator};g" 2> /dev/null)
 				fi
 
 			else	# if the dataset is not mounted or a zvol the zfs-tools are used
 				# this wakes all disks in the server if they are in spindown
-				if [ -n "${config_server_current}" ]
-					then	snap_shots=$(ssh ${ssh_current} "zfs list -t snapshot" 2> /dev/null | grep \"${snap_set_current}\"${snap_string_separator} | awk '{ print $1 }')
-					else	snap_shots=$(zfs list -t snapshot 2> /dev/null | grep "${snap_set_current}"${snap_string_separator} | awk '{ print $1 }')
+				if [ -n "${current_server}" ]
+					then	snap_shots=$(ssh ${current_ssh} "zfs list -t snapshot" 2> /dev/null | grep \"${current_snap_set}\"${snap_string_separator} | awk '{ print $1 }')
+					else	snap_shots=$(zfs list -t snapshot 2> /dev/null | grep "${current_snap_set}"${snap_string_separator} | awk '{ print $1 }')
 				fi
 		fi
 
 	elif [ "${mode_snapshot}" == "btrfs" ]
-		then	if [ -n "${config_server_current}" ]
-				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_* -maxdepth 0 2> /dev/null")
-				else	snap_shots=$(find "${snap_set_current}"_* -maxdepth 0 2> /dev/null)
+		then	if [ -n "${current_server}" ]
+				then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_* -maxdepth 0 2> /dev/null")
+				else	snap_shots=$(find "${current_snap_set}"_* -maxdepth 0 2> /dev/null)
 			fi
 
 	elif [ "${mode_snapshot}" == "file" ]
-		then	if [ -n "${config_server_current}" ]
-				then	snap_shots=$(ssh ${ssh_current} "find \"${snap_set_current}\"_*${snap_file_type_current} -maxdepth 0 2> /dev/null")
-				else	snap_shots=$(find "${snap_set_current}"_*${snap_file_type_current} -maxdepth 0 2> /dev/null)
+		then	if [ -n "${current_server}" ]
+				then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_*${current_snap_file_type} -maxdepth 0 2> /dev/null")
+				else	snap_shots=$(find "${current_snap_set}"_*${current_snap_file_type} -maxdepth 0 2> /dev/null)
 			fi
 fi
 
@@ -48,22 +48,22 @@ fi
 # because snapshots not created by this script can be copied by set-multisnap or used as snap_common_source
 for snap_shot in ${snap_shots}
 do	if [ "${mode_snapshot}" == "zfs" ]
-		then	if [ -n "${config_server_current}" ]
-				then	snap_shot_timestamp=$(ssh ${ssh_current} "LC_TIME="C" zfs get creation \"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
+		then	if [ -n "${current_server}" ]
+				then	snap_shot_timestamp=$(ssh ${current_ssh} "LC_TIME="C" zfs get creation \"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
 				else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
 			fi
 			snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
 
 		elif [ "${mode_snapshot}" == "btrfs" ]
-			then	if [ -n "${config_server_current}" ]
-					then	snap_shot_timestamp=$(ssh ${ssh_current} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+			then	if [ -n "${current_server}" ]
+					then	snap_shot_timestamp=$(ssh ${current_ssh} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 					else	snap_shot_timestamp=$(btrfs subvolume show "${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
 				fi
 				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
 
 		elif [ "${mode_snapshot}" == "file" ]
-			then	if [ -n "${config_server_current}" ]
-					then	snap_shot_timestamp=$(ssh ${ssh_current} "stat -c %Z \"${snap_shot}\"")
+			then	if [ -n "${current_server}" ]
+					then	snap_shot_timestamp=$(ssh ${current_ssh} "stat -c %Z \"${snap_shot}\"")
 					else	snap_shot_timestamp=$(stat -c %Z "${snap_shot}")
 				fi
 	fi
@@ -73,13 +73,13 @@ snap_shots=$(echo "${snap_shots}" | sort -t '~' -k2)
 
 # if output is set, there is no current snapshot, for that a virtual snapshot has to be created
 if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
-	then	if ([ "${side_current}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]) || ([ "${side_current}" == "source" ] && [ -n "${snap_list_source}" ])
-			then	snap_shots=$(echo -e "${snap_shots}\n${snap_set_current}${snap_string_separator}${snap_string}${snap_file_type_current}~$(date +'%s')")
+	then	if ([ "${current_side}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]) || ([ "${current_side}" == "source" ] && [ -n "${snap_list_source}" ])
+			then	snap_shots=$(echo -e "${snap_shots}\n${current_snap_set}${snap_string_separator}${snap_string}${current_snap_file_type}~$(date +'%s')")
 		fi
 fi
 
 echo "${snap_shots}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_snapshot show_commands show_snapvars config_server_current ssh_current snap_limit_source snap_list_source snap_string snap_string_separator snap_root_current snap_set_current snap_file_type_current
+# import_fields = current_side mode_snapshot show_commands show_snapvars current_server current_ssh snap_limit_source snap_list_source snap_string snap_string_separator current_snap_root current_snap_set current_snap_file_type
 # export_fields = snap_shots

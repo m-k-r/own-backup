@@ -5,54 +5,58 @@ _own-backup() {
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 	# define variables
+	dir_conf=/etc/own-backup
+	offset=5
 	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
-		dir_conf=/etc/own-backup/debug/
-		offset=5
+		dir_current=${dir_conf}/debug/
+		file_type=dump
 
 		if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-t deb')" ]] ; then
 			dir_modules=/usr/share/own-backup/modules/ ; else
 			dir_modules=/usr/local/own-backup/modules/
-		fi ; else
-		dir_conf=/etc/own-backup/
-		offset=4
+		fi ;
+	elif [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-j')" ]] ; then
+		dir_current=${dir_conf}/job/
+		file_type=job ; else
+		dir_current=${dir_conf}/backup/
+		file_type=bak
 	fi
 
 	# define functions
-	__get_conf_name() {
-		file_conf=${dir_conf}${COMP_WORDS[$(echo ${COMP_WORDS[@]} | awk -v name='-c' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')]}.conf
+	__get_element_name() {
+		file_element=${dir_current}${COMP_WORDS[$(echo ${COMP_WORDS[@]} | awk -v name='-e' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')]}.bak
 	}
 
 	case "${prev}" in
-		-c)	list=$(find ${dir_conf} | grep "\.conf" | cut -d "/" -f ${offset}- | rev | cut -d "." -f 2- | rev)
+		-d)	list="check create export import"
 			;;
-		-d)	list="check create show"
+		-e)	list=$(find ${dir_current} | grep "\.${file_type}" | cut -d "/" -f ${offset}- | rev | cut -d "." -f 2- | rev)
 			;;
-		-e)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				__get_conf_name
-				fs=$(awk -v condition1="filesystem" '$1 == condition1 { print $3 }' ${file_conf})
+		-f)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+				__get_element_name
+				list="$(awk -v condition1='snapshotlist' -v condition2='(source)' '$1 == condition1 && $2 == condition2 { print $5 }' ${file_element}) $(awk -v condition1='snapshotlist' -v condition2='(target)' '$1 == condition1 && $2 == condition2 { print $5 }' ${file_element})"
+			fi
+			;;
+		-g)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+				__get_element_name
+				fs=$(awk -v condition1="filesystem" '$1 == condition1 { print $3 }' ${file_element})
 
 				if [[ "${fs}" == "zfs" ]] ; then
 					list=$(zfs list | awk '{ print $1 }' | tail -n +2) ; else
-					list=$(awk -v condition1="snapshot-directory" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+					list=$(awk -v condition1="snapshot-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})
 				fi
 			fi
 			;;
-		-f)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				__get_conf_name
-				list=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${file_conf})
+		-j)	list=$(find ${dir_current} | grep "\.job" | cut -d "/" -f ${offset}- | rev | cut -d "." -f 2- | rev)
+			;;
+		-m)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+				__get_element_name
+				list="all $(awk -v condition1='snapshotformat' -v condition2='(name)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})  $(date +$(awk -v condition1='snapshotformat' -v condition2='(date)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element}))"
 			fi
 			;;
-		-m)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
-				list=$(ls ${dir_modules}) ; else
-				if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-					__get_conf_name
-					list="all $(awk -v condition1='snapshotformat' -v condition2='(name)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})  $(date +$(awk -v condition1='snapshotformat' -v condition2='(date)' '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))"
-				fi
-			fi
-			;;
-		-n)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
-				snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+		-n)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+				snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})
+				snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})
 
 				if [[ ! -n "${snap_limit_source}" ]] ; then
 					snap_limit_source=0
@@ -68,20 +72,20 @@ _own-backup() {
 		-o)
 			list="commands datasets full progress snapshots snapvars"
 			;;
-		-s)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-				__get_conf_name
-				list=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf})
+		-s)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+				__get_element_name
+				list=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})
 			fi
 			;;
 		-t)	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
 				list="deb git" ; else
-				if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-c')" ]] ; then
-					__get_conf_name
-					list=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_conf}))
+				if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-e')" ]] ; then
+					__get_element_name
+					list=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element}))
 				fi
 			fi
 			;;
-		*)	list="-c -d -e -f -m -n -o -r -s -t -v -h"
+		*)	list="-d -e -f -g -j -m -n -o -r -s -t -v -h"
 			;;
 	esac
 

@@ -1,23 +1,20 @@
 #!/bin/bash
 
-##### define functions #####
+# ------------------------------- functions ------------------------------------
 
 # if exit returns a non-zero value, show the apropriate error message and exit
 function check-exit {
 	exit_code=${?}
 	if [ ! "${exit_code}" == "0" ]
-		then	export exit_code && ${dir_modules}/do-exit
+		then	export exit_code module_current
+			${dir_modules}/do-exit
 			if [ ! "${?}" == "0" ]
 				then	exit 1
 			fi
 	fi
 }
 
-# if an error occurs own-back creates a dump of the variables
-function create-dump {
-	debug_file=${dir_conf}/debug/${config}_${name_current}_${side_current}_${module_current}.conf
-	debug_dir=$(echo ${debug_file} | rev | cut -d "/" -f 2- | rev)
-
+function get-fields {
 	if [ "${module_current}" == "own-snapshot" ]
 		then	import_fields=oss_parameter
 			export_fields=
@@ -25,10 +22,19 @@ function create-dump {
 			import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
 			export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
 	fi
+}
+
+# if an error occurs own-back creates a dump of the variables
+function create-dump {
+	debug_file=${dir_conf}/debug/${arg_element}_${name_current}_${current_side}_${module_current}.dump
+	debug_dir=$(echo "${debug_file}" | rev | cut -d "/" -f 2- | rev)
+	get-fields
+
 
 	# print header to dump
-	dump="config=\"${config}\""$'\n'
+	dump="element=\"${arg_element}\""$'\n'
 	dump+="module_current=\"${module_current}\""$'\n'
+	dump+="dir_modules=\"${dir_modules}\""$'\n'
 	dump+="export_fields=\"${export_fields}\""$'\n'
 
 	# print variables to dump
@@ -47,67 +53,67 @@ function create-dump {
 }
 
 # used for debugging
-function check-module {
-	# get variables from config
-	source ${conf}
-	export module_current
+function get-import {
+	# get variables from element
+	source ${element}
+
+	# -t (target) parameter is in main script override_snap_date
+		if [ "${override_snap_date}" == "deb" ]
+			then	dir_modules=/usr/lib/own-backup/modules
+		fi
+		show_commands=set
+		export show_commands
 
 	printf -- "\n--------------- ${module_current} ---------------\n\n"
+}
 
-	# test module
-	if [ "${module_current}" == "own-snapshot" ]
-		then	unset config
-			output=$(own-snapshot${oss_parameter})
-		else	output=$(${dir_modules}/${module_current})
-	fi
-
-	if [ -n "${output}" ]
-		then	if [ -n "${export_fields}" ]
-				then	echo "export_fields are ${export_fields}"
-				else	echo "there is output while no export_fields are defined"
-			fi
-
-		else	if [ -n "${export_fields}" ]
-				then	echo "the export_fields ${export_fields} are defined but there is no output"
-				else	echo "there is no output and export fields are defined"
-			fi
-	fi
-
+function check-module {
 	if [ "${module_current}" == "own-snapshot" ]
 		then	own-snapshot${oss_parameter}
 		else	${dir_modules}/${module_current}
 	fi
 	check-exit
-
-	# at this point there is no problem that exits the script
-	printf -- "\n--------------- ${module_current} ---------------\n"
-	echo "no problem found"
 }
 
-if [ "${debug}" == "create" ]
-	then	create-dump
-	else	# -t (target) parameter is in main script override_snap_date
-		if [ "${override_snap_date}" == "deb" ]
-			then	dir_modules=/usr/lib/own-backup/modules
-		fi
-		dir_conf=${dir_conf}/debug
-		show_commands=set
-		export show_commands
-		conf=${dir_conf}/${config}.conf
-		probe=$(find ${conf} 2>&1)
+function export-variables {
+	get-fields
+	if [ "${module_current}" == "own-snapshot" ]
+		then	unset element
+			. own-snapshot${oss_parameter} > /dev/null
+		else	. ${dir_modules}/${module_current} > /dev/null
+	fi
 
-		# check if config file exists
-		if [ ! "${probe}" == "${conf}" ]
-			then	echo "the config-file does not exist" && exit 1
-		fi
+	for export_field in ${export_fields}
+	do	echo "${export_field} = ${!export_field}"
+	done
+}
 
-		if [ "${debug}" == "check" ]
-		 	then	check-module
-			elif [ "${debug}" == "show" ]
-				then	cat "${conf}"
+function import-variables {
+	get-fields
+	for import_field in ${import_fields}
+	do	echo "${import_field} = ${!import_field}"
+	done
+}
+
+# ------------------------------ Main Script -----------------------------------
+
+if [ "${debug_mode}" == "${module_current}" ] || [ "${debug_mode}" == "all" ]
+	then	element=$(echo "${element}" | rev | cut -d "/" -f 1 | cut -d "." -f 2- | rev)
+		create-dump
+	else	if [ "${debug_mode}" == "check" ]
+		 	then	get-import
+				check-module
+			elif [ "${debug_mode}" == "show" ]
+				then	cat "${element}"
+			elif [ "${debug_mode}" == "export" ]
+				then	get-import
+					export-variables
+			elif [ "${debug_mode}" == "import" ]
+				then	get-import
+					import-variables
 		fi
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = exit_code dir_modules dir_conf module_current config
+# import_fields = exit_code dir_modules dir_conf module_current element
 # export_fields =

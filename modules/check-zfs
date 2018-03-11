@@ -1,55 +1,55 @@
 #!/bin/bash
 
 # check if dataset/sync on sourcepool exists
-if [ -n "${config_server_current}" ]
-	then	probe=$(ssh ${ssh_current} "zfs list -o name \"${dir_snap_current}\"/\"${sync_name_current}\" 2> /dev/null | tail -n +2")
-	else	probe=$(zfs list -o name "${dir_snap_current}"/"${sync_name_current}"  2> /dev/null | tail -n +2)
+if [ -n "${current_server}" ]
+	then	probe=$(ssh ${current_ssh} "zfs list -o name \"${current_path_snap}\"/\"${current_sync_name}\" 2> /dev/null | tail -n +2")
+	else	probe=$(zfs list -o name "${current_path_snap}"/"${current_sync_name}"  2> /dev/null | tail -n +2)
 fi
 
-if [ "${probe}" == "${dir_snap_current}/${sync_name_current}" ]
-	then	snap_set_current=${probe}
+if [ "${probe}" == "${current_path_snap}/${current_sync_name}" ]
+	then	snap_set=${probe}
 
 		# sync_name_source is sent from source to current, so it has to exist in source but not on target
-	else	if [ "${side_current}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
+	else	if [ "${current_side}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
 			then	exit 85
 		fi
 
-		if [ -n "${config_server_current}" ]
-			then	probe=$(ssh ${ssh_current} "zfs list -o name ${dir_snap_current}" | tail -n +2)
-			else	probe=$(zfs list -o name ${dir_snap_current} | tail -n +2)
+		if [ -n "${current_server}" ]
+			then	probe=$(ssh ${current_ssh} "zfs list -o name ${current_path_snap}" | tail -n +2)
+			else	probe=$(zfs list -o name ${current_path_snap} | tail -n +2)
 		fi
 
-		# in all cases dir_snap_current has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
-		# if mode transfer is rsync then sync_name_current will not be a zfs dataset and dir_snap_current will be snapshotted.
-		if [ "${probe}" == "${dir_snap_current}" ]
-			then	if [ "${side_current}" == "target" ] && [ "${mode_transfer}" == "zfs" ]
-					then	snap_set_current=${dir_snap_current}/${sync_name_current}
-					else	snap_set_current=${dir_snap_current}
+		# in all cases current_path_snap has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
+		# if mode transfer is rsync then current_sync_name will not be a zfs dataset and current_path_snap will be snapshotted.
+		if [ "${probe}" == "${current_path_snap}" ]
+			then	if [ "${current_side}" == "target" ] && [ "${mode_transfer}" == "zfs" ]
+					then	snap_set=${current_path_snap}/${current_sync_name}
+					else	snap_set=${current_path_snap}
 				fi
 
-			else	if [ "${snap_limit_current}" == "0" ]
-					then	snap_set_current=unset
+			else	if [ "${current_snap_limit}" == "0" ]
+					then	snap_set=unset
 					else	exit 86
 				fi
 		fi
 fi
 
-if [ ! "${snap_set_current}" == "unset" ]
-	then	if [ -n "${config_server_current}" ]
-			then	snap_root_current=$(ssh ${ssh_current} "zfs list -o mountpoint \"${snap_set_current}\" 2> /dev/null | tail -n +2")
-			else	snap_root_current=$(zfs list -o mountpoint "${snap_set_current}"  2> /dev/null | tail -n +2)
+if [ ! "${snap_set}" == "unset" ]
+	then	if [ -n "${current_server}" ]
+			then	snap_root=$(ssh ${current_ssh} "zfs list -o mountpoint \"${snap_set}\" 2> /dev/null | tail -n +2")
+			else	snap_root=$(zfs list -o mountpoint "${snap_set}"  2> /dev/null | tail -n +2)
 		fi
 
-		# if snap_set_current doesn't exist yet on target, snap_root_current is zero, if it has no mountpoint snap_root_current is "-"
-		if [ -z "${snap_root_current}" ] ||  [ "${snap_root_current}" == "-" ]
-			then	snap_root_current=unset
+		# if snap_set doesn't exist yet on target, snap_root is zero, if it has no mountpoint snap_root is "-"
+		if [ -z "${snap_root}" ] ||  [ "${snap_root}" == "-" ]
+			then	snap_root=unset
 		fi
-		# if snap_set_current is unset snap_root_current is unset too
-	else	snap_root_current=unset
+		# if snap_set is unset snap_root is unset too
+	else	snap_root=unset
 fi
 
-echo "${snap_root_current}~${snap_set_current}"
+echo "${snap_root}~${snap_set}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = side_current mode_transfer config_server_current ssh_current dir_snap_current sync_name_current
-# export_fields = snap_root_current snap_set_current
+# import_fields = current_side mode_transfer current_server current_ssh current_path_snap current_sync_name
+# export_fields = snap_root snap_set
