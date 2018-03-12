@@ -1,5 +1,5 @@
 _own-backup() {
-	local cur prev list
+	local cur prev list dir_conf offset dir_current file_type file_element fs snap_limit_source snap_limit_target
 	COMPREPLY=()
 	cur="${COMP_WORDS[COMP_CWORD]}"
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -9,12 +9,7 @@ _own-backup() {
 	offset=5
 	if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-d' | egrep -v 'create')" ]] ; then
 		dir_current=${dir_conf}/debug/
-		file_type=dump
-
-		if [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-t deb')" ]] ; then
-			dir_modules=/usr/share/own-backup/modules/ ; else
-			dir_modules=/usr/local/own-backup/modules/
-		fi ;
+		file_type=dump ;
 	elif [[ -n "$(echo ${COMP_WORDS[@]} | grep '\-j')" ]] ; then
 		dir_current=${dir_conf}/job/
 		file_type=job ; else
@@ -28,7 +23,9 @@ _own-backup() {
 	}
 
 	case "${prev}" in
-		-d)	list="check create export import"
+		-c)	list="initial upgrade"
+			;;
+		-d)	list="check create export import show"
 			;;
 		-e)	list=$(find ${dir_current} | grep "\.${file_type}" | cut -d "/" -f ${offset}- | rev | cut -d "." -f 2- | rev)
 			;;
@@ -85,7 +82,7 @@ _own-backup() {
 				fi
 			fi
 			;;
-		*)	list="-d -e -f -g -j -m -n -o -r -s -t -v -h"
+		*)	list="-c -d -e -f -g -j -m -n -o -r -s -t -v -h"
 			;;
 	esac
 

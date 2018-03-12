@@ -29,7 +29,7 @@ usage_debug="usage: own-backup -d [parameter]
 
  -e	name of the dump file without '.dump' at the end
  -d	debug level: create(:${module_name}), check, export or import
- -t	target: either deb or git (default)
+ -t	target: either deb or git
  -h	this page"
 dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
@@ -57,8 +57,7 @@ while getopts ":c:d:e:f:g:j:m:n:o:rs:t:vh" opt; do
 			;;
 		g)	override_path_snap_target=$OPTARG
 			;;
-		j)	#arg_job=$OPTARG
-			echo "this function is not yet implemented" && exit 0
+		j)	arg_job=$OPTARG
 			;;
 		m)	arg_snap_multi=$OPTARG
 			;;
@@ -119,11 +118,6 @@ export supported_mode supported_fs supported_snap_location supported_element_ver
 # --------------------------------- Debug --------------------------------------
 
 if [ -n "${arg_debug}" ]; then
-	probe=$(echo "${supported_debug}" | grep "${arg_debug}")
-	if [[ ! -n "${probe}" ]]; then
-		echo "debug mode not supported: ${arg_debug}"
-	fi
-
 	# if arg_debug is not create, call the module and exit the script
 	if [[ ! "${arg_debug}" == "create"* ]]; then
 		debug_mode=${arg_debug}
@@ -146,7 +140,6 @@ function check-exit {
 	exit_code=${?}
 	if [ ! "${exit_code}" == "0" ]
 		then	debug_mode=${module_current}
-			export dir_modules debug_mode exit_code
 	fi
 
 	if [ "${debug_mode}" == "all" ] || [ "${debug_mode}" == "${module_current}" ]
@@ -154,7 +147,7 @@ function check-exit {
 				then	name_current=$(echo "${sync_name_source[aa]}" | tr " " "-")
 					export name_current
 			fi
-			export arg_element dir_conf module_current oss_parameter
+			export arg_element dir_conf dir_modules debug_mode exit_code module_current oss_parameter
 
 			${dir_modules}/do-debug
 			${dir_modules}/do-exit
@@ -177,13 +170,13 @@ if [ -n "${element}" ]
 		unset element
 fi
 
-# these modules are for now in the same shell so check-exit does not catch the exit codes
+# these modules are for now in the same shell so check-exit does not catch the exit codes. but debug can create dumps to check the variables
 module_current=check-element
 . ${dir_modules}/${module_current}
-#check-exit
+check-exit
 module_current=set-element
 . ${dir_modules}/${module_current}
-#check-exit
+check-exit
 unset supported_mode supported_fs supported_snap_location supported_element_version element override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name
 
 # get-synclist can return spaces. so the ifs has to be by newline

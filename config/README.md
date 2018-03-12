@@ -1,3 +1,4 @@
-Directory for the config files.  
-Templates can be found in /template.  
-Create a symlink at /etc/own-backup to this directory.
+config-directory
+
+Create a symlink at /etc/own-backup to this directory and create initial Directories with  
+own-back -c initial

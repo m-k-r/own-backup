@@ -58,11 +58,13 @@ function get-import {
 	source ${element}
 
 	# -t (target) parameter is in main script override_snap_date
-		if [ "${override_snap_date}" == "deb" ]
-			then	dir_modules=/usr/lib/own-backup/modules
-		fi
-		show_commands=set
-		export show_commands
+	if [ "${override_snap_date}" == "deb" ]
+		then	dir_modules=/usr/lib/own-backup/modules
+		elif [ "${override_snap_date}" == "git" ]
+			then dir_modules=/usr/local/own-backup/modules
+	fi
+	show_commands=set
+	export show_commands
 
 	printf -- "\n--------------- ${module_current} ---------------\n\n"
 }
@@ -98,8 +100,7 @@ function import-variables {
 # ------------------------------ Main Script -----------------------------------
 
 if [ "${debug_mode}" == "${module_current}" ] || [ "${debug_mode}" == "all" ]
-	then	element=$(echo "${element}" | rev | cut -d "/" -f 1 | cut -d "." -f 2- | rev)
-		create-dump
+	then	create-dump
 	else	if [ "${debug_mode}" == "check" ]
 		 	then	get-import
 				check-module

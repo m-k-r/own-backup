@@ -1,4 +1,6 @@
 unset oss_parameter
+current_side=source
+export current_side
 
 if [ -n "${arg_output}" ]
 	then	oss_parameter+=" -o ${arg_output}"
