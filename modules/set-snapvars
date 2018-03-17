@@ -5,7 +5,7 @@
 # snap_common_source - this is the last common snapshot on source and target. It is needed for btrfs and zfs send and file for copying multiple snapshots
 # snap_old_target - this is always the newest snapshot on target. It is needed for zfs rollback and log
 
-if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ] || ([ "${mode_transfer}" == "rsync" ] && [ -n "${snap_multi}" ])
+if [ "${mode_transfer}" == "zfs" ] || [ "${mode_transfer}" == "btrfs" ] || ([ "${mode_transfer}" == "rsync" ] && [ -n "${arg_snap_multi}" ])
 	then	# if mode_transfer is either zfs or btrfs snapshots on source have to exist
 		if [ ! -n "${current_snap_shots_source}" ]
 			then	exit 88
@@ -90,5 +90,5 @@ fi
 echo "${snap_common_source}~${snap_old_target}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer snap_multi current_snap_shots_source current_snap_shots_source_ts current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_number_target
+# import_fields = mode_transfer arg_snap_multi current_snap_shots_source current_snap_shots_source_ts current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_number_target
 # export_fields = snap_common_source snap_old_target

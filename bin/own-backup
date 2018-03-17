@@ -203,9 +203,7 @@ aa="0"
 # If these are set but the current element is empty, the last one set is used
 # If these are not set sync_name is used for sync_name_target
 while [ "${sync_name_number}" -gt "${aa}" ]
-do	aa_old=${aa}
-
-	if [ -z "${sync_name_new[aa]}" ]
+do	if [ -z "${sync_name_new[aa]}" ]
 		then	sync_name_new[aa]=${sync_name[aa]}
 	fi
 
@@ -228,12 +226,13 @@ do	aa_old=${aa}
 	fi
 
 	##### define sync_name_source and sync_name_target #####
-	if [ "${snap_rollback}" == "set" ] && [ "${mode_transfer}" == "zfs" ]
+	if [ "${arg_snap_rollback}" == "set" ] && [ "${mode_transfer}" == "zfs" ]
 		then	sync_name_source[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
 			sync_name_target[aa]=${sync_name[aa]}
 		else	sync_name_source[aa]=${sync_name[aa]}
 			sync_name_target[aa]=${sync_name_new_prefix[aa]}${sync_name_new[aa]}${sync_name_new_suffix[aa]}
 	fi
+	aa_old=${aa}
 	aa=$((${aa} + 1))
 done
 unset sync_name sync_name_new sync_name_new_prefix sync_name_new_suffix
@@ -492,7 +491,7 @@ do	if [ "${mode_transfer}" == "${mode_snapshot}" ] || [ -n "${log_dir}" ] || ([ 
 	fi
 
 	if [ ! "${snap_common_source}" == "newest" ]
-		then	if [ -n "${snap_multi}" ]
+		then	if [ -n "${arg_snap_multi}" ]
 				then	current_snap_set_source=${snap_set_source[aa]}
 					export dir_modules current_snap_set_source
 
@@ -528,7 +527,7 @@ do	if [ "${mode_transfer}" == "${mode_snapshot}" ] || [ -n "${log_dir}" ] || ([ 
 			fi
 	fi
 
-	if [ -n "${log_dir}" ] && [ ! -n "${snap_multi}" ] && [ ! -n "${snap_rollback}" ]
+	if [ -n "${log_dir}" ] && [ ! -n "${arg_snap_multi}" ] && [ ! -n "${arg_snap_rollback}" ]
 		then	mode_override_current=${mode_override[aa]}
 			current_sync_name_source=${sync_name_source[aa]}
 			snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}

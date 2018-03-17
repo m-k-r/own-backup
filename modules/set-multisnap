@@ -41,8 +41,8 @@ fi
 # the wanted snapshots are filtered out through the given pattern.
 # If this would be done earlier, the list of timestamps would have to be matched to the snapshots
 # by recreating the array, in both cases the array keys are reset to beginn with 0
-if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${snap_multi}" == "all" ]
-	then	snap_new_list_source=($(printf '%s\n' "${snap_new_list_source[@]}" | grep "${snap_multi}" 2> /dev/null))
+if [ ! -z "${snap_new_list_source[*]}" ] && [ ! "${arg_snap_multi}" == "all" ]
+	then	snap_new_list_source=($(printf '%s\n' "${snap_new_list_source[@]}" | grep "${arg_snap_multi}" 2> /dev/null))
 	else	snap_new_list_source=($(printf '%s\n' "${snap_new_list_source[@]}"))
 fi
 
@@ -102,5 +102,5 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer elem_server_target ssh_target show_commands dir_modules snap_multi current_snap_set_source current_snap_set_target current_snap_shots_source current_snap_shots_source_ts current_snap_shots_target_ts snap_common_source snap_old_target
+# import_fields = mode_transfer elem_server_target ssh_target show_commands dir_modules arg_snap_multi current_snap_set_source current_snap_set_target current_snap_shots_source current_snap_shots_source_ts current_snap_shots_target_ts snap_common_source snap_old_target
 # export_fields =
