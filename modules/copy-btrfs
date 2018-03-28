@@ -30,7 +30,7 @@ fi
 
 if [ "${show_commands}" == "set" ]
 	then	echo "${command1} | ${command2}"
-	else	eval ${command1} | ${command2}
+	else	eval ${command1} | eval ${command2}
 fi
 
 ##### variable list. these will be picked up by debug #####

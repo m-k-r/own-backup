@@ -16,10 +16,26 @@ if [ ! -n "${elem_mode}" ] && [ ! "${elem_fs}" == "file" ] || [ "${elem_mode}" =
 	elif [ "${elem_mode}" == "rsync" ] || [ "${elem_fs}" == "file" ]
 		then	mode_transfer=rsync
 fi
-unset elem_mode elem_fs
 
 
 ##### ports for rsync and ssh #####
+if [ "${arg_snap_rollback}" == "set" ] && ([ -n "${elem_server_source}" ] ||  [ -n "${elem_server_target}" ])
+	then	elem_trans_var=${elem_server_source}
+		elem_server_source=${elem_server_target}
+		elem_server_target=${elem_trans_var}
+
+		elem_trans_var=${snap_location_source}
+		snap_location_source=${snap_location_target}
+		snap_location_target=${elem_trans_var}
+		export elem_server_source elem_server_target snap_location_source snap_location_target
+
+		if [ -n "${elem_port_source}" ] ||  [ -n "${elem_port_target}" ]
+			then	elem_trans_var=${elem_port_source}
+				elem_port_source=${elem_port_target}
+				elem_server_target=${elem_trans_var}
+		fi
+		unset elem_trans_var
+fi
 
 if [ -n "${elem_server_source}" ]
 	then	if [ ! -n "${elem_port_source}" ]
@@ -44,7 +60,7 @@ if [ -n "${elem_server_target}" ]
 	then	if [ ! -n "${elem_port_target}" ]
 			then	elem_port_target=22
 		fi
-		ssh_target="ssh ${elem_server_target} -p ${elem_port_target}"
+		ssh_target="${elem_server_target} -p ${elem_port_target}"
 		export ssh_target
 
 		if [ "${snap_location_target}" == "direct" ] || [ "${snap_location_target}" == "local" ]
@@ -67,7 +83,7 @@ if [ ! -n "${snap_limit_source}" ]
 	then	snap_limit_source=0
 fi
 
-if [ ! -n "${snap_limit_target}" ]
+if [ ! -n "${snap_limit_source}" ]
 	then	snap_limit_target=0
 fi
 
@@ -188,5 +204,5 @@ fi
 export mode_create mode_snapshot mode_transfer snap_date_offset snap_string snap_string_separator path_snap_source path_snap_target path_root_source path_root_target
 
 ##### variable list. these will be picked up by debug #####
-# import_fields =
-# export_fields = mode_create mode_snapshot mode_transfer ssh_source snap_location_remote_source ssh_source_transfer ssh_target snap_location_remote_target ssh_target_transfer snap_limit_source snap_limit_target path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_date snap_date_offset snap_string snap_string_separator
+# import_fields = arg_snap_multi arg_snap_rollback elem_fs elem_mode elem_server_source elem_server_target elem_port_source elem_port_target snap_location_source snap_location_target snap_limit_source snap_limit_target mode_snapshot show_snapshots snap_date snap_name path_root_source path_root_target path_snap_source path_snap_target path_offset_source path_offset_target
+# export_fields = mode_create mode_snapshot mode_transfer elem_server_source ssh_source snap_location_source ssh_source_transfer snap_location_remote_source elem_server_target ssh_target snap_location_target ssh_target_transfer snap_location_remote_target snap_limit_source snap_limit_target path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_date snap_date_offset snap_string snap_string_separator

@@ -177,7 +177,7 @@ check-exit
 module_current=set-element
 . ${dir_modules}/${module_current}
 check-exit
-unset supported_mode supported_fs supported_snap_location supported_element_version element override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name
+unset supported_mode supported_fs supported_snap_location supported_element_version element override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name elem_mode elem_fs
 
 # get-synclist can return spaces. so the ifs has to be by newline
 IFS=$'\n'
