@@ -83,7 +83,7 @@ if [ ! -n "${snap_limit_source}" ]
 	then	snap_limit_source=0
 fi
 
-if [ ! -n "${snap_limit_source}" ]
+if [ ! -n "${snap_limit_target}" ]
 	then	snap_limit_target=0
 fi
 

@@ -6,7 +6,7 @@ element_version=$(awk -v condition1="version" '$1 == condition1 { print $3 }' ${
 # Logoptions
 log_server=$(awk -v condition1="logserver" '$1 == condition1 { print $3 }' ${element})
 log_server_port=$(awk -v condition1="logserver" '$1 == condition1 { print $4 }' ${element})
-log_dir=$(awk -v condition1="logdirectory" '$1 == condition1 { print $3 }' ${element})
+log_dir=$(awk -v condition1="logpath" '$1 == condition1 { print $3 }' ${element})
 log_usr=$(awk -v condition1="loguser" '$1 == condition1 { print $3 }' ${element})
 
 # General Options, Source- and Targetserver, Ports, Mode and Filesystem
