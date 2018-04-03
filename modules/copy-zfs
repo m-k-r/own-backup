@@ -1,44 +1,67 @@
 #!/bin/bash
 
 # For output the script uses pv which has to be between send and receive
-if [ "${show_progress}" == "set" ] && [ ! "${show_commands}" == "set" ]
-	then	progress=" | pv"
+if [[ "${show_progress}" == "set" ]] && [[ ! "${show_commands}" == "set" ]]; then
+	progress=" | pv"
 fi
 
 # zfs send does not need snap_old_target, zfs send incremental does. sometimes without rollback it fails
-if [ -n "${snap_old_target}" ] && [ ! "${snap_old_target}" == "unset" ]
-	then	# unlike the old script we don't check for incremential before we check if $snap_old_target exists.
-		# so $snap_old_target can be missing but the current_snap_set_target exist. This scenario must be dealt with in the main script.
-		if [ ! "${show_commands}" == "set" ]
-			then	if [ -n "${elem_server_target}" ]
-					then	ssh ${ssh_target} "zfs rollback ${snap_old_target}"
-					else	zfs rollback ${snap_old_target}
-				fi
-		fi
+if [[ -n "${snap_old_target}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then
+	# unlike the old script we don't check for incremental before we check if $snap_old_target exists.
+	# so $snap_old_target can be missing but the current_snap_set_target exist. This scenario must be dealt with in the main script.
+	if [[ "${show_commands}" == "set" ]]; then
+		if [[ -n "${elem_server_source}" ]]; then
+			command1="ssh ${ssh_source} zfs send -i ${snap_common_source} ${snap_new_source}${progress}"; else
+			command1="zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
+		fi; else
 
-		# incremental send/receive
-		if [ -n "${elem_server_source}" ]
-			then	command1="ssh ${ssh_source} zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
-			else	command1="zfs send -i ${snap_common_source} ${snap_new_source}${progress}"
+		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			ssh "${ssh_target}" "zfs rollback ${snap_old_target}"
+			ssh "${ssh_source}" zfs send -i "${snap_common_source}" "${snap_new_source}""${progress}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			zfs rollback "${snap_old_target}"
+			ssh "${ssh_source}" zfs send -i "${snap_common_source}" "${snap_new_source}""${progress}" | zfs recv "${current_snap_set_target}";
+		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			ssh "${ssh_target}" "zfs rollback ${snap_old_target}"
+			zfs send -i "${snap_common_source}" "${snap_new_source}${progress}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			zfs rollback "${snap_old_target}"
+			zfs send -i "${snap_common_source}" "${snap_new_source}${progress}" | zfs recv "${current_snap_set_target}"
 		fi
+	fi; else
 
-	else	# zfs send in case syncname does not exist on targetpool
-		if [ -n "${elem_server_source}" ]
-			then	command1="ssh ${ssh_source} zfs send ${snap_new_source}${progress}"
-			else	command1="zfs send ${snap_new_source}${progress}"
+	# if no snap_old_target exists
+	if [[ "${show_commands}" == "set" ]]; then
+		if [[ -n "${elem_server_source}" ]]; then
+			command1="ssh ${ssh_source} zfs send ${snap_new_source}${progress}"; else
+			command1="zfs send ${snap_new_source}${progress}"
+		fi; else
+
+		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" zfs send "${snap_new_source}""${progress}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" zfs send "${snap_new_source}""${progress}" | zfs recv "${current_snap_set_target}";
+		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			zfs send "${snap_new_source}""${progress}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			zfs send "${snap_new_source}${progress}" | zfs recv "${current_snap_set_target}"
 		fi
+	fi
 fi
 
-if [ -n "${elem_server_target}" ]
-	then	command2="ssh ${ssh_target} zfs recv ${current_snap_set_target}"
-	else	command2="zfs recv ${current_snap_set_target}"
-fi
-
-if [ "${show_commands}" == "set" ]
-	then	echo "${command1} | ${command2}"
-	else	eval ${command1} | eval ${command2}
+if [[ "${show_commands}" == "set" ]]; then
+	if [[ -n "${elem_server_target}" ]]; then
+		if [[ -n "${snap_old_target}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then
+			echo "ssh ${ssh_target} \"zfs rollback ${snap_old_target}\""
+		fi
+		echo "${command1} | ssh ${ssh_target} zfs recv ${current_snap_set_target}"; else
+		if [[ -n "${snap_old_target}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then
+			echo "zfs rollback ${snap_old_target}"
+		fi
+		echo "${command1} | zfs recv ${current_snap_set_target}"
+	fi
 fi
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = show_progress show_commands elem_server_source elem_server_target ssh_source ssh_target current_snap_set_target snap_new_source snap_common_source snap_old_target
-# export_fields = command1 command2
+# export_fields = command1

@@ -23,9 +23,9 @@ elem_options_sql=$(awk -v condition1="sql-options" '$1 == condition1 { print $0 
 
 # Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional
 path_snap_source=$(awk -v condition1="snapshot-path" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
-if [ -n "${override_path_snap_target}" ]
-	then	path_snap_target=${override_path_snap_target}
-	else	path_snap_target=$(awk -v condition1="snapshot-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
+if [[ -n "${override_path_snap_target}" ]]; then
+	path_snap_target=${override_path_snap_target}; else
+	path_snap_target=$(awk -v condition1="snapshot-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
 fi
 path_root_source=$(awk -v condition1="root-path" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
 path_root_target=$(awk -v condition1="root-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
@@ -33,31 +33,31 @@ path_offset_source=$(awk -v condition1="offset-path" -v condition2="(source)" '$
 path_offset_target=$(awk -v condition1="offset-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $0 }' ${element} | cut -d " " -f 4-)
 
 # Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options
-if [ -n "${override_snap_name}" ]
-	then	snap_name=${override_snap_name}
-	else	snap_name=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+if  [[ -n "${override_snap_name}" ]]; then
+	snap_name=${override_snap_name}; else
+	snap_name=$(awk -v condition1="snapshotformat" -v condition2="(name)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
 fi
-if [ -n "${override_snap_date}" ]
-	then	snap_date=${override_snap_date}
-	else	snap_date=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element}))
+if [[ -n "${override_snap_date}" ]]; then
+	snap_date=${override_snap_date}; else
+	snap_date=$(date +$(awk -v condition1="snapshotformat" -v condition2="(date)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element}))
 fi
 snap_list_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
-if [ -n "${override_snap_list_frequency}" ]
-	then	snap_list_frequency_source=${override_snap_list_frequency}
-	else	snap_list_frequency_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
+if [[ -n "${override_snap_list_frequency}" ]]; then
+	snap_list_frequency_source=${override_snap_list_frequency}; else
+	snap_list_frequency_source=$(awk -v condition1="snapshotlist" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
 fi
 snap_location_source=$(awk -v condition1="snapshotremote" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
 snap_list_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
-if [ -n "${override_snap_list_frequency}" ]
-	then	snap_list_frequency_target=${override_snap_list_frequency}
-	else	snap_list_frequency_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
+if [[ -n "${override_snap_list_frequency}" ]]; then
+	snap_list_frequency_target=${override_snap_list_frequency}; else
+	snap_list_frequency_target=$(awk -v condition1="snapshotlist" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $5 }' ${element})
 fi
 snap_location_target=$(awk -v condition1="snapshotremote" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
-if [ -n "${override_snap_limit}" ]
-	then	snap_limit_source=$(echo "${override_snap_limit}" | cut -d ":" -f 1)
-		snap_limit_target=$(echo "${override_snap_limit}" | cut -d ":" -f 2)
-	else	snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
-		snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+if [[ -n "${override_snap_limit}" ]]; then
+	snap_limit_source=$(echo "${override_snap_limit}" | cut -d ":" -f 1)
+	snap_limit_target=$(echo "${override_snap_limit}" | cut -d ":" -f 2); else
+	snap_limit_source=$(awk -v condition1="snapshotnumber" -v condition2="(source)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
+	snap_limit_target=$(awk -v condition1="snapshotnumber" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${element})
 fi
 # Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array
 sync_list=$(awk -v condition1="synclist" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)

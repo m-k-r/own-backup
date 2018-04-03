@@ -1,28 +1,18 @@
 #!/bin/bash
 
-if [ "${mode_snapshot}" == "file" ]
-	then	if [ -n "${snap_new_source}" ]
-			then	current_snap_rsync_source=${snap_new_source}
-				current_snap_rsync_target=$(echo ${current_snap_set_target} | rev | cut -d "/" -f 2- | rev)
-			else	exit 90
-		fi
+if [[ "${mode_snapshot}" == "file" ]]; then
+	if [[ -n "${snap_new_source}" ]]; then
+		current_snap_rsync_source=${snap_new_source}
+		current_snap_rsync_target=$(echo "${current_snap_set_target}" | rev | cut -d "/" -f 2- | rev); else
+		exit 90
+	fi
 fi
 
-if [ -n "${elem_server_source}" ]
-	then	command1="rsync ${elem_options_rsync} ${ssh_source_transfer}${current_snap_rsync_source}"
-	else	command1="rsync ${elem_options_rsync} ${current_snap_rsync_source}"
-fi
-
-if [ -n "${elem_server_target}" ]
-	then	command2="${ssh_target_transfer}${current_snap_rsync_target}"
-	else	command2="${current_snap_rsync_target}/"
-fi
-
-if [ -n "${show_commands}" ]
-	then	echo "${command1} ${command2}"
-	else	eval ${command1} ${command2}
+if [[ -n "${show_commands}" ]]; then
+	echo "rsync ${elem_options_rsync} ${ssh_source_transfer}${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/"; else
+	rsync ${elem_options_rsync} ${ssh_source_transfer}${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/
 fi
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = mode_snapshot show_commands elem_server_source elem_server_target elem_options_rsync ssh_source_transfer ssh_target_transfer current_snap_rsync_source current_snap_rsync_target snap_new_source current_snap_set_target
-# export_fields = command1 command2
+# export_fields =

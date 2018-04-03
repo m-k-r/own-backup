@@ -16,7 +16,7 @@ if  [ "${exit_code}" == "0" ]
 		then	echo "${module_current}: btrfs should be used for snapshots but neither ${current_path_root} nor ${current_path_root}/${current_sync_name} is a btrfs subvolume" && exit 1
 
 	elif [ "${exit_code}" == "84" ]
-		then	echo "${module_current}: no subvolume has been found under snapshot-directory ${current_snap_set}" && exit 1
+		then	echo "${module_current}: no subvolume has been found under snapshot-path ${current_snap_set}" && exit 1
 
 	elif [ "${exit_code}" == "85" ]
 		then	echo "${module_current}: zfs send does not work if the source ${current_path_snap}/${current_sync_name} does not exist" && exit 1

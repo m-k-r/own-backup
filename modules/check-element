@@ -3,124 +3,124 @@
 ##### checks which may lead to exit #####
 
 # check if the element has the correct version
-if [ ! "${element_version}" == "${supported_element_version}" ]
-	then	echo "the element has not the requiered version. please update the elements with own-backup -u" && exit 1
+if [[ ! "${element_version}" == "${supported_element_version}" ]]; then
+	echo "the element has not the requiered version. please update the elements with own-backup -u" && exit 1
 fi
 
 # checks if a valid debuglevel is set
-if [ -n "${arg_output}" ]
-	then	if [ "${arg_output}" == "progress" ]
-			then	show_progress=set
-				export show_progress
+if [[ -n "${arg_output}" ]]; then
+	if [[ "${arg_output}" == "progress" ]]; then
+		show_progress=set
+		export show_progress;
 
-			elif [ "${arg_output}" == "commands" ]
-				then	show_progress=set
-					show_commands=set
-					export show_progress show_commands
+	elif [[ "${arg_output}" == "commands" ]]; then
+		show_progress=set
+		show_commands=set
+		export show_progress show_commands;
 
-			elif [ "${arg_output}" == "datasets" ]
-				then	show_progress=set
-					show_datasets=set
-					export show_progress show_datasets
+	elif [[ "${arg_output}" == "datasets" ]]; then
+		show_progress=set
+		show_datasets=set
+		export show_progress show_datasets;
 
-			elif [ "${arg_output}" == "snapshots" ]
-				then	show_progress=set
-					show_snapshots=set
-					export show_progress show_snapshots
+	elif [[ "${arg_output}" == "snapshots" ]]; then
+		show_progress=set
+		show_snapshots=set
+		export show_progress show_snapshots;
 
-			elif [ "${arg_output}" == "snapvars" ]
-				then	show_progress=set
-					show_snapvars=set
-					export show_progress show_snapvars
+	elif [[ "${arg_output}" == "snapvars" ]]; then
+		show_progress=set
+		show_snapvars=set
+		export show_progress show_snapvars;
 
-			elif [ "${arg_output}" == "full" ]
-				then	show_progress=set
-					show_commands=set
-					show_datasets=set
-					show_snapshots=set
-					show_snapvars=set
-					export show_progress show_commands show_datasets show_snapshots show_snapvars
+	elif [[ "${arg_output}" == "full" ]]; then
+		show_progress=set
+		show_commands=set
+		show_datasets=set
+		show_snapshots=set
+		show_snapvars=set
+		export show_progress show_commands show_datasets show_snapshots show_snapvars; else
 
-			else	echo "no supported output-level found: ${arg_output}" && exit 1
-		fi
+		echo "no supported output-level found: ${arg_output}" && exit 1
+	fi
 fi
 
 # checks if mode and filesystem is, if set, correct.
-if [ -n "${elem_mode}" ]
+if [[ -n "${elem_mode}" ]]; then
 	# only grep whole words"
-	then	check_mode=$(echo ${supported_mode} | grep "\b${elem_mode}\b")
-		if [ ! -n "${check_mode}" ]
-			then	echo "${elem_mode} is not a viable mode" && exit 1
-		fi
+	check_mode=$(echo ${supported_mode} | grep "\b${elem_mode}\b")
+	if [[ ! -n "${check_mode}" ]]; then
+		echo "${elem_mode} is not a viable mode" && exit 1
+	fi; else
 
-	else	if [ ! -n "${elem_fs}" ]
-			then	echo "neither mode nor filesystem is set" && exit 1
-		fi
+	if [[ ! -n "${elem_fs}" ]]; then
+		echo "neither mode nor filesystem is set" && exit 1
+	fi
 fi
 
-if [ -n "${elem_fs}" ]
-	then	check_fs=$(echo ${supported_fs} | grep "\b${elem_fs}\b")
-		if [ ! -n "${check_fs}" ]
-			then	echo "${elem_fs} is not a viable filesystem" && exit 1
-		fi
+if [[ -n "${elem_fs}" ]]; then
+	check_fs=$(echo ${supported_fs} | grep "\b${elem_fs}\b")
+	if [[ ! -n "${check_fs}" ]]; then
+		echo "${elem_fs} is not a viable filesystem" && exit 1
+	fi
 fi
 unset check_mode check_fs
 
 # either ${path_snap_source} or ${path_root_source} has to be specified
-if [ ! -n "${path_snap_source}" ]
-	then	if [ -n "${path_root_source}" ]
-			then	path_snap_source=${path_root_source}
-			else	echo "no sourcedirectory is specified" && exit 1
-		fi
+if [[ ! -n "${path_snap_source}" ]]; then
+	if [[ -n "${path_root_source}" ]]; then
+		path_snap_source=${path_root_source}; else
+		echo "no sourcepath is specified" && exit 1
+	fi;
 
-	elif [ ! -n "${path_root_source}" ]
-		then	path_root_source=${path_snap_source}
+elif [[ ! -n "${path_root_source}" ]]; then
+	path_root_source=${path_snap_source}
 fi
 
 # either ${path_snap_target} or ${path_root_target} has to be specified
-if [ ! -n "${path_snap_target}" ]
-	then	if [ -n "${path_root_target}" ]
-			then	path_snap_target=${path_root_target}
-			else	echo "no targetdir is specified" && exit 1
-		fi
+if [[ ! -n "${path_snap_target}" ]]; then
+	if [[ -n "${path_root_target}" ]]; then
+		path_snap_target=${path_root_target}; else
+		echo "no targetpath is specified" && exit 1
+	fi;
 
-	elif [ ! -n "${path_root_target}" ]
-		then	path_root_target=${path_snap_target}
+elif [[ ! -n "${path_root_target}" ]]; then
+	path_root_target=${path_snap_target}
 fi
 
 
 # if snap_list is set but no frequency to it the script will fail
-if [ -n "${snap_list_source}" ] && [ ! -n "${snap_list_frequency_source}" ]
-	then	echo "snap_list is set but no frequency to it" && exit 1
+if [[ -n "${snap_list_source}" ]] && [[ ! -n "${snap_list_frequency_source}" ]]; then
+	echo "snap_list is set but no frequency to it" && exit 1
 fi
 
-if [ -n "${snap_list_target}" ] && [ ! -n "${snap_list_frequency_target}" ]
-	then	echo "snap_list is set but no frequency to it" && exit 1
+if [[ -n "${snap_list_target}" ]] && [[ ! -n "${snap_list_frequency_target}" ]]; then
+	echo "snap_list is set but no frequency to it" && exit 1
 fi
 
 # some snap_location_source/target are only allowed for some mode
-if [ -n "${snap_location_source}" ]
-	then	check_snap_location=$(echo "${supported_snap_location}" | grep "\b${snap_location_source}\b")
+if [[ -n "${snap_location_source}" ]]; then
+	check_snap_location=$(echo "${supported_snap_location}" | grep "\b${snap_location_source}\b")
 
-		if [ ! -n "${check_snap_location}" ]
-			then	echo "${snap_location_source} is not viable for snapshotremote" && exit 1
-		fi
+	if [[ ! -n "${check_snap_location}" ]]; then
+		echo "${snap_location_source} is not viable for snapshotremote" && exit 1
+	fi
 
-		if [ "${snap_location_source}" == "direct" ] && [[ ! "${elem_mode}" == *"sql" ]] || [ "${snap_location_source}" == "local" ] && [ ! "${elem_fs}" == "file" ]
-			then	echo "snapshotremote: ${snap_location_source} is not possible with mode/filesystem: ${elem_mode}/${elem_fs}" && exit 1
-		fi
+	if [[ "${snap_location_source}" == "direct" ]] && [[ ! "${elem_mode}" == *"sql" ]] || [[ "${snap_location_source}" == "local" ]] && [[ ! "${elem_fs}" == "file" ]]; then
+		echo "snapshotremote: ${snap_location_source} is not possible with mode/filesystem: ${elem_mode}/${elem_fs}" && exit 1
+	fi
 fi
 
-if [ -n "${snap_location_target}" ]
-	then	check_snap_location=$(echo "${supported_snap_location}" | grep "\b${snap_location_target}\b")
+if [[ -n "${snap_location_target}" ]]; then
+	check_snap_location=$(echo "${supported_snap_location}" | grep "\b${snap_location_target}\b")
 
-		if [ ! -n "${check_snap_location}" ]
-			then	echo "${snap_location_target} is not viable for snapshotremote" && exit 1
-		fi
+	if [[ ! -n "${check_snap_location}" ]]; then
+		echo "${snap_location_target} is not viable for snapshotremote" && exit 1
+	fi
 
-		if [ "${snap_location_target}" == "direct" ] && [[ ! "${elem_mode}" == *"sql" ]] || [ "${snap_location_target}" == "local" ] && [ ! "${elem_fs}" == "file" ]
-			then	echo "snapshotremote: ${snap_location_target} is not possible with mode/filesystem: ${elem_mode}/${elem_fs}" && exit 1
-		fi
+	if [[ "${snap_location_target}" == "direct" ]] && [[ ! "${elem_mode}" == *"sql" ]] || [[ "${snap_location_target}" == "local" ]] && [[ ! "${elem_fs}" == "file" ]]; then
+		echo "snapshotremote: ${snap_location_target} is not possible with mode/filesystem: ${elem_mode}/${elem_fs}" && exit 1
+	fi
 fi
 
 ##### exports of variables which are created here #####

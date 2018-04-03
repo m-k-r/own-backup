@@ -1,38 +1,59 @@
 #!/bin/bash
 
 # For output the script uses pv which has to be between send and receive
-if [ "${show_progress}" == "set" ] && [ ! "${show_commands}" == "set" ]
-	then	progress=" | pv"
+if [[ "${show_progress}" == "set" ]] && [[ ! "${show_commands}" == "set" ]]; then
+	progress=" | pv"
 fi
 
-# btrfs copies the subvolume to a directory. for that reason the actual subvolname has to be cut off
-current_snap_set_target=$(echo ${current_snap_set_target} | rev | cut -d "/" -f 2- | rev)
+# btrfs copies the subvolume into a directory. so the actual subvolname has to be cut off
+current_snap_set_target=$(echo "${current_snap_set_target}" | rev | cut -d "/" -f 2- | rev)
 
 # btrfs send does not need snap_common_sourde, btrfs send incremental does
-if [ -n "${snap_common_source}" ] && [ ! "${snap_common_source}" == "unset" ]
-	then	# incremental send/receive
-		if [ -n "${elem_server_source}" ]
-			then	command1="ssh ${ssh_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""
-			else	command1="btrfs send -p ${snap_common_source} ${snap_new_source}${progress}"
-		fi
+if [[ -n "${snap_common_source}" ]] && [[ ! "${snap_common_source}" == "unset" ]]; then
+	# incremental send/receive
+	if [[ "${show_commands}" == "set" ]]; then
+		if [[ -n "${elem_server_source}" ]]; then
+			command1="ssh ${ssh_source} \"btrfs send -p ${snap_common_source} ${snap_new_source}${progress}\""; else
+			command1="btrfs send -p ${snap_common_source} ${snap_new_source}${progress}"
+		fi; else
 
-	else	# zfs send in case syncname does not exist on targetpool
-		if [ -n "${elem_server_source}" ]
-			then	command1="ssh ${ssh_source} \"btrfs send ${snap_new_source}${progress}\""
-			else	command1="btrfs send ${snap_new_source}${progress}"
+		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" "btrfs send -p ${snap_common_source} ${snap_new_source}""${progress}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" "btrfs send -p ${snap_common_source} ${snap_new_source}""${progress}" | btrfs receive "${current_snap_set_target}"/
+		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			btrfs send -p "${snap_common_source}" "${snap_new_source}""${progress}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			btrfs send -p "${snap_common_source}" "${snap_new_source}""${progress}" | btrfs receive "${current_snap_set_target}"/
 		fi
+	fi; else
+
+	# if no snap_common_source exists
+	if [[ "${show_commands}" == "set" ]]; then
+		if [[ -n "${elem_server_source}" ]]; then
+			command1="ssh ${ssh_source} \"btrfs send ${snap_new_source}\"${progress}"; else
+			command1="btrfs send ${snap_new_source}${progress}"
+		fi; else
+
+		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" "btrfs send ${snap_new_source}""${progress}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			ssh "${ssh_source}" "btrfs send ${snap_new_source}""${progress}" | btrfs receive "${current_snap_set_target}"/
+		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
+			btrfs send "${snap_new_source}""${progress}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
+			btrfs send "${snap_new_source}""${progress}" | btrfs receive "${current_snap_set_target}"/
+		fi
+	fi
 fi
 
-if [ -n "${elem_server_target}" ]
-	then	command2="ssh ${ssh_target} \"btrfs receive ${current_snap_set_target}/\""
-	else	command2="btrfs receive ${current_snap_set_target}/"
-fi
-
-if [ "${show_commands}" == "set" ]
-	then	echo "${command1} | ${command2}"
-	else	eval ${command1} | eval ${command2}
+if [[ "${show_commands}" == "set" ]]; then
+	if [[ -n "${elem_server_target}" ]]; then
+		echo "${command1} | ssh ${ssh_target} \"btrfs receive ${current_snap_set_target}/\""; else
+		echo "${command1} | btrfs receive ${current_snap_set_target}/"
+	fi
 fi
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = show_progress show_commands elem_server_source elem_server_target ssh_source ssh_target current_snap_set_target snap_new_source snap_common_source
-# export_fields = command1 command2
+# export_fields = command1
