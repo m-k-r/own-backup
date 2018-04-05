@@ -33,6 +33,7 @@ usage_debug="usage: own-backup -d [parameter]
  -h	this page"
 dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
+dir_conf=/etc/own-backup
 supported_mode="file kvm mysql pgsql rsync"
 supported_fs="btrfs zfs file"
 supported_snap_location="server ssh local direct"
@@ -84,8 +85,9 @@ done
 
 # --------------------------------- Config -------------------------------------
 
+# backup IFS and declare associative array for deleting redundant snap_sets
 IFSBAK=${IFS}
-dir_conf=/etc/own-backup
+declare -A unique_elements
 
 if [[ -n "${arg_config}" ]]; then
 	export dir_conf arg_config
@@ -158,6 +160,21 @@ function check-exit {
 		export -n arg_element dir_conf module_current exit_code
 		unset name_current oss_parameter
 	fi
+}
+
+function find-uniques () {
+	if [[ -n "${unique_elements[${2}]}" ]]; then
+		if [[ "${1}" == "snap_root_source" ]]; then
+			unset snap_root_source[${unique_elements[${2}]}];
+		elif [[ "${1}" == "snap_set_source" ]]; then
+			unset snap_set_source[${unique_elements[${2}]}];
+		elif [[ "${1}" == "snap_root_target" ]]; then
+			unset snap_root_target[${unique_elements[${2}]}];
+		elif [[ "${1}" == "snap_set_target" ]]; then
+			unset snap_set_target[${unique_elements[${2}]}]
+		fi
+	fi
+	unique_elements[${2}]=${aa}
 }
 
 # ------------------- Get element and check for syntax error -------------------
@@ -272,7 +289,11 @@ do	##### set current global variables #####
 		snap_set_source[aa]=$(echo ${current_snap_set} | cut -d "~" -f 2)
 		if [[ "${mode_snapshot}" == "file" ]]; then
 			snap_file_type[aa]=$(echo ${current_snap_set} | cut -d "~" -f 3)
-			mode_override[aa]=$(echo ${current_snap_set} | cut -d "~" -f 4)
+			mode_override[aa]=$(echo ${current_snap_set} | cut -d "~" -f 4);
+		# for btrfs/zfs if rsync is used sync_name is not always a subvolume. for file this is of no consequence
+		elif [[ "${mode_transfer}" == "rsync" ]]; then
+			find-uniques snap_root_source ${snap_root_source[aa]}
+			find-uniques snap_set_source ${snap_set_source[aa]}
 		fi
 		unset current_snap_set
 	fi
@@ -302,6 +323,11 @@ do	##### set current global variables #####
 		check-exit
 		snap_root_target[aa]=$(echo ${current_snap_set} | cut -d "~" -f 1)
 		snap_set_target[aa]=$(echo ${current_snap_set} | cut -d "~" -f 2)
+
+		if [[ ! "${mode_snapshot}" == "file" ]] && [[ "${mode_transfer}" == "rsync" ]]; then
+			find-uniques snap_root_target ${snap_root_target[aa]}
+			find-uniques snap_set_target ${snap_set_target[aa]}
+		fi
 		unset current_snap_set
 	fi
 
@@ -343,7 +369,12 @@ if [[ "${snap_limit_source}"  -ge 1 ]]; then
 	module_current="own-snapshot"
 	aa="0"
 	while [[ "${sync_name_number}" -gt "${aa}" ]]
-	do	source ${dir_modules}/arg-osss
+	do	# if snap_set_source was deleted reset the loop
+		if [[ ! -n "${snap_set_source[aa]}" ]]; then
+			aa=$((${aa} + 1))
+			continue
+		fi
+		source ${dir_modules}/arg-osss
 		if [[ "${snap_location_source}" == "ssh" ]]; then
 			ssh ${ssh_source} "own-snapshot${oss_parameter}"; else
 			own-snapshot ${oss_parameter}
@@ -373,43 +404,47 @@ if [[ -n "${mode_snapshot}" ]]; then
 		current_snap_file_type=${snap_file_type[aa]}
 		export current_snap_file_type
 
-		##### set current source variable #####
-		current_side=source
-		current_server=${elem_server_source}
-		current_ssh=${ssh_source}
-		current_snap_set=${snap_set_source[aa]}
-		current_snap_root=${snap_root_source[aa]}
-		export current_side current_server current_ssh current_snap_set current_snap_root
+		if [[ -n "${snap_set_source[aa]}" ]]; then
+			##### set current source variable #####
+			current_side=source
+			current_server=${elem_server_source}
+			current_ssh=${ssh_source}
+			current_snap_set=${snap_set_source[aa]}
+			current_snap_root=${snap_root_source[aa]}
+			export current_side current_server current_ssh current_snap_set current_snap_root
 
-		# get snapshots on source
-		module_current=get-snapshots
-		snap_shots_source[aa]=$(${dir_modules}/${module_current})
-		check-exit
+			# get snapshots on source
+			module_current=get-snapshots
+			snap_shots_source[aa]=$(${dir_modules}/${module_current})
+			check-exit
 
-		snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $2 }')
-		snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $1 }')
-		snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
-		snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
-		snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+			snap_shots_source_ts[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $2 }')
+			snap_shots_source[aa]=$(echo "${snap_shots_source[aa]}" | awk -F '~' '{ print $1 }')
+			snap_number_source[aa]=$(echo "${snap_shots_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+			snap_shots_strict_source[aa]=$(echo "${snap_shots_source[aa]}" | grep ${snap_name} || true)
+			snap_number_strict_source[aa]=$(echo "${snap_shots_strict_source[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+		fi
 
-		##### set current target variable #####
-		current_side=target
-		current_server=${elem_server_target}
-		current_ssh=${ssh_target}
-		current_snap_set=${snap_set_target[aa]}
-		current_snap_root=${snap_root_target[aa]}
-		export current_side current_server current_ssh current_snap_set current_snap_root
+		if [[ -n "${snap_set_target[aa]}" ]]; then
+			##### set current target variable #####
+			current_side=target
+			current_server=${elem_server_target}
+			current_ssh=${ssh_target}
+			current_snap_set=${snap_set_target[aa]}
+			current_snap_root=${snap_root_target[aa]}
+			export current_side current_server current_ssh current_snap_set current_snap_root
 
-		# get snapshots on target
-		module_current=get-snapshots
-		snap_shots_target[aa]=$(${dir_modules}/${module_current})
-		check-exit
+			# get snapshots on target
+			module_current=get-snapshots
+			snap_shots_target[aa]=$(${dir_modules}/${module_current})
+			check-exit
 
-		snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $2 }')
-		snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $1 }')
-		snap_number_target[aa]=$(echo "${snap_shots_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
-		snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
-		snap_number_strict_target[aa]=$(echo "${snap_shots_strict_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+			snap_shots_target_ts[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $2 }')
+			snap_shots_target[aa]=$(echo "${snap_shots_target[aa]}" | awk -F '~' '{ print $1 }')
+			snap_number_target[aa]=$(echo "${snap_shots_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+			snap_shots_strict_target[aa]=$(echo "${snap_shots_target[aa]}" | grep ${snap_name} || true)
+			snap_number_strict_target[aa]=$(echo "${snap_shots_strict_target[aa]}" | sed '/^\s*$/d' | awk 'END{print NR}')
+		fi
 
 		if [[ "${show_snapshots}" == "set" ]]; then
 			printf -- "\n--------------- ${sync_name_source[aa]} ---------------\n\n"
@@ -509,7 +544,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 			${dir_modules}/${module_current}
 			check-exit
 
-			if [[ "${snap_limit_target}" -gt 0 ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
+			if [[ -n "${snap_set_target[aa]}" ]] && [[ "${snap_limit_target}" -gt 0 ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
 				module_current=own-snapshot
 				source ${dir_modules}/arg-osst
 				if [[ "${snap_location_target}" == "ssh" ]]; then
@@ -558,7 +593,12 @@ fi
 if [[ "${snap_limit_source}" -gt 0 ]]; then
 	aa="0"
 	while [[ "${sync_name_number}" -gt "${aa}" ]]
-	do	##### set current source variable #####
+	do	# if snap_set_source was deleted reset the loop
+		if [[ ! -n "${snap_set_source[aa]}" ]]; then
+			aa=$((${aa} + 1))
+			continue
+		fi
+		##### set current source variable #####
 		current_side=source
 		current_server=${elem_server_source}
 		current_ssh=${ssh_source}
@@ -579,7 +619,12 @@ fi
 if [[ "${snap_limit_target}" -gt 0 ]]; then
 	aa="0"
 	while [[ "${sync_name_number}" -gt "${aa}" ]]
-	do	##### set current target variable #####
+	do	# if snap_set_target was deleted reset the loop
+		if [[ ! -n "${snap_set_target[aa]}" ]]; then
+			aa=$((${aa} + 1))
+			continue
+		fi
+		##### set current target variable #####
 		current_side=target
 		current_server=${elem_server_target}
 		current_ssh=${ssh_target}
