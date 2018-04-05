@@ -9,8 +9,10 @@ if [[ "${mode_snapshot}" == "file" ]]; then
 fi
 
 if [[ -n "${show_commands}" ]]; then
+	# necessary because of some weird behaviour with variable expansion if string contains spaces
+	current_snap_rsync_source=$(echo "${current_snap_rsync_source}" | sed 's/ /\\ /g')
 	echo "rsync ${elem_options_rsync} ${ssh_source_transfer}${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/"; else
-	rsync ${elem_options_rsync} ${ssh_source_transfer}${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/
+	rsync ${elem_options_rsync} "${ssh_source_transfer}""${current_snap_rsync_source}" "${ssh_target_transfer}""${current_snap_rsync_target}"/
 fi
 
 ##### variable list. these will be picked up by debug #####

@@ -20,7 +20,7 @@ if [ ! "${mode_snapshot}" == "file" ]
 		fi
 
 		if [ "${probe}" == "1" ]
-			then	snap_rsync=$(echo "${probe_snap_rsync}" | sed 's/ /\\ /g')
+			then	snap_rsync=${probe_snap_rsync}
 			else	exit 81
 		fi
 
