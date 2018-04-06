@@ -163,7 +163,7 @@ function check-exit {
 }
 
 function find-uniques () {
-	if [[ -n "${unique_elements[${2}]}" ]]; then
+	if [[ -n "${unique_elements[${2}]}" ]] && [[ ! "${unique_elements[${2}]}" == "unset" ]]; then
 		if [[ "${1}" == "snap_root_source" ]]; then
 			unset snap_root_source[${unique_elements[${2}]}];
 		elif [[ "${1}" == "snap_set_source" ]]; then
@@ -172,6 +172,8 @@ function find-uniques () {
 			unset snap_root_target[${unique_elements[${2}]}];
 		elif [[ "${1}" == "snap_set_target" ]]; then
 			unset snap_set_target[${unique_elements[${2}]}]
+		elif [[ "${1}" == "sync_vmid" ]]; then
+			unset sync_vmid[${unique_elements[${2}]}]
 		fi
 	fi
 	unique_elements[${2}]=${aa}
@@ -232,8 +234,11 @@ do	if [[ -z "${sync_name_new[aa]}" ]]; then
 		sync_name_new_suffix[aa]=${sync_name_new_suffix[aa_old]}
 	fi
 
-	if [ "${mode_create}" == "kvm" ] && [ -z "${sync_vmid[aa]}" ]; then
-		sync_vmid[aa]=${sync_vmid[aa_old]}
+	if [ "${mode_create}" == "kvm" ]; then
+		if [ -z "${sync_vmid[aa]}" ]; then
+			sync_vmid[aa]=${sync_vmid[aa_old]}
+		fi
+		find-uniques sync_vmid ${sync_vmid[aa]}
 	fi
 
 	##### define sync_name_source and sync_name_target #####
@@ -275,10 +280,12 @@ do	##### set current global variables #####
 
 	# check all ${mode}. this is only necessary on source
 	if [[ ! "${mode_create}" == "${mode_snapshot}" ]]; then
-		module_current=check-create
-		${dir_modules}/${module_current}
-		check-exit
-		unset current_snap_location current_snap_location_remote
+		if [[ ! "${mode_create}" == "kvm" ]] || ([[ "${mode_create}" == "kvm" ]] && [[ -n "${sync_vmid[aa]}" ]]); then
+			module_current=check-create
+			${dir_modules}/${module_current}
+			check-exit
+			unset current_snap_location current_snap_location_remote
+		fi
 	fi
 
 	if [[ -n "${mode_snapshot}" ]]; then
@@ -356,7 +363,8 @@ done
 
 # if output = datasets the script ends here
 if [[ "${show_datasets}" == "set" ]] && [[ ! "${show_commands}" == "set" ]]; then
-	exit 0
+	exit 0; else
+	unset unique_elements
 fi
 
 # ------------------ THIRD LOOP: create source snapshots -----------------------
@@ -369,8 +377,8 @@ if [[ "${snap_limit_source}"  -ge 1 ]]; then
 	module_current="own-snapshot"
 	aa="0"
 	while [[ "${sync_name_number}" -gt "${aa}" ]]
-	do	# if snap_set_source was deleted reset the loop
-		if [[ ! -n "${snap_set_source[aa]}" ]]; then
+	do	# if snap_set_source or sync_vmid was deleted reset the loop
+		if [[ ! -n "${snap_set_source[aa]}" ]] || ([[ "${mode_create}" == "kvm" ]] && [[ ! -n "${sync_vmid[aa]}" ]]); then
 			aa=$((${aa} + 1))
 			continue
 		fi
@@ -593,8 +601,8 @@ fi
 if [[ "${snap_limit_source}" -gt 0 ]]; then
 	aa="0"
 	while [[ "${sync_name_number}" -gt "${aa}" ]]
-	do	# if snap_set_source was deleted reset the loop
-		if [[ ! -n "${snap_set_source[aa]}" ]]; then
+	do	# if snap_set_source or sync_vmid was deleted reset the loop
+		if [[ ! -n "${snap_set_source[aa]}" ]] || ([[ "${mode_create}" == "kvm" ]] && [[ ! -n "${sync_vmid[aa]}" ]]); then
 			aa=$((${aa} + 1))
 			continue
 		fi
