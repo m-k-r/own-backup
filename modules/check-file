@@ -4,49 +4,49 @@
 # snap has to exist on source and target
 # if snapshots on source shouldn't be used use own-snapshot instead
 
-if [ "${current_side}" == "target" ] || [ -n "${current_snap_list}" ]
-	then	snap_root=unset
+if [[ "${current_side}" == "target" ]] || [[ -n "${current_snap_list}" ]]; then
+	snap_root=unset
 fi
 
 # check if path_root/sync exists
-if [ ! "${snap_root}" == "unset" ]
-	then	if [ "${mode_create}" == "file" ]
-			then	if [ -n "${current_server}" ] || [ -n "${snap_location_remote_source}" ]
-					then	snap_root=$(ssh ${current_ssh} "find \"${current_path_root}\"\"${current_path_offset}\"/\"${current_sync_name_source}\" -maxdepth 0 2> /dev/null")
-					else	snap_root=$(find "${current_path_root}""${current_path_offset}"/"${current_sync_name_source}" -maxdepth 0 2> /dev/null)
-				fi
-
-				if [ "${snap_root}" == "${current_path_root}${current_path_offset}/${current_sync_name_source}" ]
-					then	# if snap_root is a directory the mode for own-snapshot gets overwritten so rsync doesn't create snap_set and copy root_set into it
-						if [ -d "${snap_root}" ]
-							then	mode_override=directory
-						fi
-					else	exit 96
-				fi
-
-			elif [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-				then	snap_root=${current_sync_name_source}
+if [[ ! "${snap_root}" == "unset" ]]; then
+	if [[ "${mode_create}" == "file" ]]; then
+		if [[ -n "${current_server}" ]] || [[ -n "${snap_location_remote_source}" ]]; then
+			snap_root=$(ssh ${current_ssh} "find \"${current_path_root}\"\"${current_path_offset}\"/\"${current_sync_name_source}\" -maxdepth 0 2> /dev/null"); else
+			snap_root=$(find "${current_path_root}""${current_path_offset}"/"${current_sync_name_source}" -maxdepth 0 2> /dev/null)
 		fi
+
+		if [[ "${snap_root}" == "${current_path_root}${current_path_offset}/${current_sync_name_source}" ]]; then
+			# if snap_root is a directory the mode for own-snapshot gets overwritten so rsync doesn't create snap_set and copy root_set into it
+			if [[ -d "${snap_root}" ]]; then
+				mode_override=directory
+			fi; else
+			exit 96
+		fi;
+
+	elif [[ "${mode_create}" == "mysql" ]] || [[ "${mode_create}" == "pgsql" ]]; then
+		snap_root=${current_sync_name_source}
+	fi
 fi
 
 # check if dataset exists
-if [ -n "${current_server}" ]
-	then	probe_snap_set=$(ssh ${current_ssh} "find \"${current_path_snap}\" -maxdepth 0 2> /dev/null")
-	else	probe_snap_set=$(find "${current_path_snap}" -maxdepth 0 2> /dev/null)
+if [[ -n "${current_server}" ]]; then
+	probe_snap_set=$(ssh ${current_ssh} "find \"${current_path_snap}\" -maxdepth 0 2> /dev/null"); else
+	probe_snap_set=$(find "${current_path_snap}" -maxdepth 0 2> /dev/null)
 fi
 
-if [ "${probe_snap_set}" == "${current_path_snap}" ]
-	then	probe=$(echo "${current_sync_name_target}" | grep "\.")
+if [[ "${probe_snap_set}" == "${current_path_snap}" ]]; then
+	probe=$(echo "${current_sync_name_target}" | grep "\.")
 
-		# if current_sync_name_target contains a dot, all after that is considered as filetype and put after the snapstring so that the fileextension stays at the end
-		if [ -n "${probe}" ]
-			then	snap_file_type=.$(echo "${current_sync_name_target}" | cut -d "." -f 2-)
-				snap_file=$(echo "${current_sync_name_target}" | cut -d "." -f 1)
-			else	snap_file=${current_sync_name_target}
-		fi
+	# if current_sync_name_target contains a dot, all after that is considered as filetype and put after the snapstring so that the fileextension stays at the end
+	if [[ -n "${probe}" ]]; then
+		snap_file_type=.$(echo "${current_sync_name_target}" | cut -d "." -f 2-)
+		snap_file=$(echo "${current_sync_name_target}" | cut -d "." -f 1); else
+		snap_file=${current_sync_name_target}
+	fi
 
-		snap_set=${current_path_snap}${current_path_offset}/${snap_file}
-	else	exit 87
+	snap_set=${current_path_snap}${current_path_offset}/${snap_file}; else
+	exit 87
 fi
 
 echo "${snap_root}~${snap_set}~${snap_file_type}~${mode_override}"

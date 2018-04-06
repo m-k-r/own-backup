@@ -5,22 +5,22 @@
 # if exit returns a non-zero value, show the apropriate error message and exit
 function check-exit {
 	exit_code=${?}
-	if [ ! "${exit_code}" == "0" ]
-		then	export exit_code module_current
-			${dir_modules}/do-exit
-			if [ ! "${?}" == "0" ]
-				then	exit 1
-			fi
+	if [[ ! "${exit_code}" == "0" ]]; then
+		export exit_code module_current
+		${dir_modules}/do-exit
+		if [[ ! "${?}" == "0" ]]; then
+			exit 1
+		fi
 	fi
 }
 
 function get-fields {
-	if [ "${module_current}" == "own-snapshot" ]
-		then	import_fields=oss_parameter
-			export_fields=
-		else	# get the fields from the module
-			import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
-			export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+	if [[ "${module_current}" == "own-snapshot" ]]; then
+		import_fields=oss_parameter
+		export_fields=; else
+		# get the fields from the module
+		import_fields=$(awk -v condition1="import_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
+		export_fields=$(awk -v condition1="export_fields" '$2 == condition1 { print $0 }' ${dir_modules}/${module_current} | cut -d " " -f 4-)
 	fi
 }
 
@@ -29,7 +29,6 @@ function create-dump {
 	debug_file=${dir_conf}/debug/${arg_element}_${name_current}_${current_side}_${module_current}.dump
 	debug_dir=$(echo "${debug_file}" | rev | cut -d "/" -f 2- | rev)
 	get-fields
-
 
 	# print header to dump
 	dump="element=\"${arg_element}\""$'\n'
@@ -58,10 +57,10 @@ function get-import {
 	source ${element}
 
 	# -t (target) parameter is in main script override_snap_date
-	if [ "${override_snap_date}" == "deb" ]
-		then	dir_modules=/usr/lib/own-backup/modules
-		elif [ "${override_snap_date}" == "git" ]
-			then dir_modules=/usr/local/own-backup/modules
+	if [[ "${override_snap_date}" == "deb" ]]; then
+		dir_modules=/usr/lib/own-backup/modules;
+	elif [[ "${override_snap_date}" == "git" ]]; then
+		dir_modules=/usr/local/own-backup/modules
 	fi
 	show_commands=set
 	export show_commands
@@ -70,19 +69,19 @@ function get-import {
 }
 
 function check-module {
-	if [ "${module_current}" == "own-snapshot" ]
-		then	own-snapshot${oss_parameter}
-		else	${dir_modules}/${module_current}
+	if [[ "${module_current}" == "own-snapshot" ]]; then
+		own-snapshot${oss_parameter}; else
+		${dir_modules}/${module_current}
 	fi
 	check-exit
 }
 
 function export-variables {
 	get-fields
-	if [ "${module_current}" == "own-snapshot" ]
-		then	unset element
-			. own-snapshot${oss_parameter} > /dev/null
-		else	. ${dir_modules}/${module_current} > /dev/null
+	if [[ "${module_current}" == "own-snapshot" ]]; then
+		unset element
+		. own-snapshot${oss_parameter} > /dev/null; else
+		. ${dir_modules}/${module_current} > /dev/null
 	fi
 
 	for export_field in ${export_fields}
@@ -99,20 +98,20 @@ function import-variables {
 
 # ------------------------------ Main Script -----------------------------------
 
-if [ "${debug_mode}" == "${module_current}" ] || [ "${debug_mode}" == "all" ]
-	then	create-dump
-	else	if [ "${debug_mode}" == "check" ]
-		 	then	get-import
-				check-module
-			elif [ "${debug_mode}" == "show" ]
-				then	cat "${element}"
-			elif [ "${debug_mode}" == "export" ]
-				then	get-import
-					export-variables
-			elif [ "${debug_mode}" == "import" ]
-				then	get-import
-					import-variables
-		fi
+if [[ "${debug_mode}" == "${module_current}" ]] || [[ "${debug_mode}" == "all" ]]; then
+	create-dump; else
+	if [[ "${debug_mode}" == "check" ]]; then
+	 	get-import
+		check-module;
+	elif [[ "${debug_mode}" == "show" ]]; then
+		cat "${element}";
+	elif [[ "${debug_mode}" == "export" ]]; then
+		get-import
+		export-variables;
+	elif [[ "${debug_mode}" == "import" ]]; then
+		get-import
+		import-variables
+	fi
 fi
 
 ##### variable list. these will be picked up by debug #####

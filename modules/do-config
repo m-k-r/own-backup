@@ -22,15 +22,15 @@ function do-backup {
 	# check if the element has already be backuped by this script (for example if more then one version is upgraded)
 	probe=$(echo "${elements_backuped}" | grep ${element_matching})
 
-	if [ -z "${probe}" ]; then
+	if [[ -z "${probe}" ]]; then
 		# check if the element is in a subdirectory
 		probe=$(echo "${element_matching}" | grep "/")
 
-		if [ -n "${probe}" ]; then
+		if [[ -n "${probe}" ]]; then
 			mkdir -p ${dir_upgrade}/$(echo "${element_matching}" | rev | cut -d "/" -f 2- | rev)
 		fi
 
-		if [ "${version_upgrade}" == "1.0" ]; then
+		if [[ "${version_upgrade}" == "1.0" ]]; then
 			rsync -a ${dir_conf}/"${element_matching}".conf ${dir_upgrade}/"${element_matching}".conf; else
 			rsync -a ${dir_element}/"${element_matching}".bak ${dir_upgrade}/"${element_matching}".bak
 		fi
@@ -46,18 +46,18 @@ function upgrade-framework {
 	do	echo "----------------------- search for version ${version_upgrade} ------------------------"
 
 		bb_next=$((${bb} + 1))
-		if [ -n ${version_list[${bb_next}]} ]; then
+		if [[ -n ${version_list[${bb_next}]} ]]; then
 			version_next=${version_list[${bb_next}]}
 		fi
 
-		if [ "${version_upgrade}" == "1.0"  ]; then
+		if [[ "${version_upgrade}" == "1.0"  ]]; then
 			elements=$(find ${dir_conf}/ | grep ".conf" | egrep -v "${dir_conf}/debug/" | egrep -v "${dir_conf}/templates" | egrep -v "${dir_element}" | egrep -v "${dir_upgrade}")
 			offset=${dir_conf_offset}; else
 			elements=$(find ${dir_element}/ | grep ".bak")
 			offset=${dir_element_offset}
 		fi
 
-		if [ -n "${elements}" ]; then
+		if [[ -n "${elements}" ]]; then
 			for element in ${elements}
 			do	version_element=$(awk -v condition1="version" '$1 == condition1 { print $3 }' ${element})
 
@@ -67,12 +67,12 @@ function upgrade-framework {
 				fi
 			done
 
-			if [ -n "${elements_matching}" ]; then
+			if [[ -n "${elements_matching}" ]]; then
 				elements_matching=$(echo "${elements_matching}" | grep -v '^$')
 				elements_matching_number=$(echo "${elements_matching}"| awk 'END{print NR}')
 				echo "found ${elements_matching_number} elements with version ${version_upgrade}"
 
-				if [ -n "${version_next}" ]; then
+				if [[ -n "${version_next}" ]]; then
 					# make actual changes to the element
 					eval upgrade${version_next}
 					echo "${elements_matching_number} elements upgraded to version ${version_next}:"
@@ -93,7 +93,7 @@ function upgrade1.1 {
 	do	do-backup
 
 		# probe is set by do-backup
-		if [ -n "${probe}" ]; then
+		if [[ -n "${probe}" ]]; then
 			mkdir -p ${dir_element}/$(echo "${element_matching}" | rev | cut -d "/" -f 2- | rev)
 		fi
 
@@ -110,7 +110,7 @@ function upgrade1.1 {
 	# prior to version 1.0 there were no versions. so very old elements may not be parsed to new versions
 	elements_nonmatching=$(echo "${elements_nonmatching}" | grep -v '^$')
 	elements_nonmatching_number=$(echo "${elements_nonmatching}"| awk 'END{print NR}')
-	if [ -n "${elements_nonmatching}" ]; then
+	if [[ -n "${elements_nonmatching}" ]]; then
 		echo "${elements_matching_number} elements upgraded to version ${version_next}:"
 		echo "${elements_matching}"
 		echo "please check the remaining ${elements_nonmatching_number} invalid elements:"
@@ -135,9 +135,9 @@ function upgrade1.2 {
 
 # ------------------------------ Main Script -----------------------------------
 
-if [ "${arg_config}" == "upgrade" ]; then
-	upgrade-framework
-elif [ "${arg_config}" == "initial" ]; then
+if [[ "${arg_config}" == "upgrade" ]]; then
+	upgrade-framework;
+elif [[ "${arg_config}" == "initial" ]]; then
 	do-initial; else
 	echo "nothing to do" && exit 0
 fi

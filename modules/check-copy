@@ -1,36 +1,36 @@
 #!/bin/bash
 
 # check if all prerequisits for rsync are met
-if [ ! "${mode_snapshot}" == "file" ]
-	then	# not yet implemented
-		#if [ "${current_snap_limit}" -gt "0" ] || [ -n "${current_snap_list}" ]
-		#	then	probe_snap_rsync=${current_path_snap}${current_path_offset}
-		#	else	probe_snap_rsync=${current_path_root}${current_path_offset}
-		#fi
+if [[ ! "${mode_snapshot}" == "file" ]]; then
+	# not yet implemented
+	#if [ "${current_snap_limit}" -gt "0" ] || [ -n "${current_snap_list}" ]
+	#	then	probe_snap_rsync=${current_path_snap}${current_path_offset}
+	#	else	probe_snap_rsync=${current_path_root}${current_path_offset}
+	#fi
 
-		if [ "${current_side}" == "source" ]
-			then	probe_snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}
-			else	probe_snap_rsync=${current_path_root}${current_path_offset}
-		fi
+	if [[ "${current_side}" == "source" ]]; then
+		probe_snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}; else
+		probe_snap_rsync=${current_path_root}${current_path_offset}
+	fi
 
-		# check if directory exists
-		if [ -n "${current_server}" ]
-			then	probe=$(ssh ${current_ssh} "if [ -e \"${probe_snap_rsync}\" ]; then echo 1; else echo 0; fi")
-			else	probe=$(if [ -e "${probe_snap_rsync}" ]; then echo 1; else echo 0; fi)
-		fi
+	# check if directory exists
+	if [[ -n "${current_server}" ]]; then
+		probe=$(ssh ${current_ssh} "if [ -e \"${probe_snap_rsync}\" ]; then echo 1; else echo 0; fi"); else
+		probe=$(if [ -e "${probe_snap_rsync}" ]; then echo 1; else echo 0; fi)
+	fi
 
-		if [ "${probe}" == "1" ]
-			then	snap_rsync=${probe_snap_rsync}
-			else	exit 81
-		fi
+	if [[ "${probe}" == "1" ]]; then
+		snap_rsync=${probe_snap_rsync}; else
+		exit 81
+	fi;
 
-	elif	[ "${mode_snapshot}" == "file" ]
-		then	if [ "${current_side}" == "source" ] && [ "${current_snap_limit}" == "0" ]
-				then	snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}
-				elif [ "${current_side}" == "target" ]
-					then	snap_rsync=${current_path_root}${current_path_offset}
-			fi
-	else	:
+elif [[ "${mode_snapshot}" == "file" ]]; then
+	if [[ "${current_side}" == "source" ]] && [[ "${current_snap_limit}" == "0" ]]; then
+		snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source};
+	elif [[ "${current_side}" == "target" ]]; then
+		snap_rsync=${current_path_root}${current_path_offset}
+	fi; else
+	:
 fi
 
 echo "${snap_rsync}"

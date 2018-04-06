@@ -1,38 +1,38 @@
 #!/bin/bash
 
 # get snapshots for source  and target
-if [ "${mode_snapshot}" == "zfs" ]
-	then	if [ ! "${current_snap_root}" == "unset" ]
-			then	# if the dataset is mounted, the unix tools can be used
-				# this doesn't wake other disks if they are in spindown
-				if [ -n "${current_server}" ]
-					then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_root}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null")
-					else	snap_shots=$(find "${current_snap_root}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
-				fi
-
-				if [ -n "${snap_shots}" ]
-					then	snap_shots=$(echo "${snap_shots}" | sed "s;^;${current_snap_set}${snap_string_separator};g" 2> /dev/null)
-				fi
-
-			else	# if the dataset is not mounted or a zvol the zfs-tools are used
-				# this wakes all disks in the server if they are in spindown
-				if [ -n "${current_server}" ]
-					then	snap_shots=$(ssh ${current_ssh} "zfs list -t snapshot" 2> /dev/null | grep \"${current_snap_set}\"${snap_string_separator} | awk '{ print $1 }')
-					else	snap_shots=$(zfs list -t snapshot 2> /dev/null | grep "${current_snap_set}"${snap_string_separator} | awk '{ print $1 }')
-				fi
+if [[ "${mode_snapshot}" == "zfs" ]]; then
+	if [[ ! "${current_snap_root}" == "unset" ]]; then
+		# if the dataset is mounted, the unix tools can be used
+		# this doesn't wake other disks if they are in spindown
+		if [[ -n "${current_server}" ]]; then
+			snap_shots=$(ssh ${current_ssh} "find \"${current_snap_root}\"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null"); else
+			snap_shots=$(find "${current_snap_root}"/.zfs/snapshot/* -maxdepth 0 -printf '%f\n' 2> /dev/null)
 		fi
 
-	elif [ "${mode_snapshot}" == "btrfs" ]
-		then	if [ -n "${current_server}" ]
-				then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_* -maxdepth 0 2> /dev/null")
-				else	snap_shots=$(find "${current_snap_set}"_* -maxdepth 0 2> /dev/null)
-			fi
+		if [[ -n "${snap_shots}" ]]; then
+			snap_shots=$(echo "${snap_shots}" | sed "s;^;${current_snap_set}${snap_string_separator};g" 2> /dev/null)
+		fi; else
 
-	elif [ "${mode_snapshot}" == "file" ]
-		then	if [ -n "${current_server}" ]
-				then	snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_*${current_snap_file_type} -maxdepth 0 2> /dev/null")
-				else	snap_shots=$(find "${current_snap_set}"_*${current_snap_file_type} -maxdepth 0 2> /dev/null)
-			fi
+		# if the dataset is not mounted or a zvol the zfs-tools are used
+		# this wakes all disks in the server if they are in spindown
+		if [[ -n "${current_server}" ]]; then
+			snap_shots=$(ssh ${current_ssh} "zfs list -t snapshot" 2> /dev/null | grep \"${current_snap_set}\"${snap_string_separator} | awk '{ print $1 }'); else
+			snap_shots=$(zfs list -t snapshot 2> /dev/null | grep "${current_snap_set}"${snap_string_separator} | awk '{ print $1 }')
+		fi
+	fi;
+
+elif [[ "${mode_snapshot}" == "btrfs" ]]; then
+	if [[ -n "${current_server}" ]]; then
+		snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_* -maxdepth 0 2> /dev/null"); else
+		snap_shots=$(find "${current_snap_set}"_* -maxdepth 0 2> /dev/null)
+	fi;
+
+elif [[ "${mode_snapshot}" == "file" ]]; then
+	if [[ -n "${current_server}" ]]; then
+		snap_shots=$(ssh ${current_ssh} "find \"${current_snap_set}\"_*${current_snap_file_type} -maxdepth 0 2> /dev/null"); else
+		snap_shots=$(find "${current_snap_set}"_*${current_snap_file_type} -maxdepth 0 2> /dev/null)
+	fi
 fi
 
 # sorting snapshots is a more complicated topic. there are two ways to order the snapshots with their specific drawbacks:
@@ -47,35 +47,35 @@ fi
 # despite that, snapshots are sorted by their creation time in unix epoche
 # because snapshots not created by this script can be copied by set-multisnap or used as snap_common_source
 for snap_shot in ${snap_shots}
-do	if [ "${mode_snapshot}" == "zfs" ]
-		then	if [ -n "${current_server}" ]
-				then	snap_shot_timestamp=$(ssh ${current_ssh} "LC_TIME="C" zfs get creation \"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11)
-				else	snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
-			fi
-			snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
+do	if [[ "${mode_snapshot}" == "zfs" ]]; then
+		if [[ -n "${current_server}" ]]; then
+			snap_shot_timestamp=$(ssh ${current_ssh} "LC_TIME="C" zfs get creation \"${snap_shot}\"" | tail -n +2 | cut -d " " -f 5-11); else
+			snap_shot_timestamp=$(LC_TIME="C" zfs get creation "${snap_shot}" | tail -n +2 | cut -d " " -f 5-11)
+		fi
+		snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s');
 
-		elif [ "${mode_snapshot}" == "btrfs" ]
-			then	if [ -n "${current_server}" ]
-					then	snap_shot_timestamp=$(ssh ${current_ssh} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
-					else	snap_shot_timestamp=$(btrfs subvolume show "${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
-				fi
-				snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s')
+	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
+		if [[ -n "${current_server}" ]]; then
+			snap_shot_timestamp=$(ssh ${current_ssh} "btrfs subvolume show \"${snap_shot}\"" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } '); else
+			snap_shot_timestamp=$(btrfs subvolume show "${snap_shot}" | grep -i "Creation Time" | awk ' { $1=$2="" ; print } ')
+		fi
+		snap_shot_timestamp=$(date --date="${snap_shot_timestamp}" +'%s');
 
-		elif [ "${mode_snapshot}" == "file" ]
-			then	if [ -n "${current_server}" ]
-					then	snap_shot_timestamp=$(ssh ${current_ssh} "stat -c %Z \"${snap_shot}\"")
-					else	snap_shot_timestamp=$(stat -c %Z "${snap_shot}")
-				fi
+	elif [[ "${mode_snapshot}" == "file" ]]; then
+		if [[ -n "${current_server}" ]]; then
+			snap_shot_timestamp=$(ssh ${current_ssh} "stat -c %Z \"${snap_shot}\""); else
+			snap_shot_timestamp=$(stat -c %Z "${snap_shot}")
+		fi
 	fi
 	snap_shots=$(echo "${snap_shots}" | sed "s;"${snap_shot}";&~${snap_shot_timestamp};g" 2> /dev/null)
 done
 snap_shots=$(echo "${snap_shots}" | sort -t '~' -k2)
 
 # if output is set, there is no current snapshot, for that a virtual snapshot has to be created
-if [ "${show_snapvars}" == "set" ] || [ "${show_commands}" == "set" ]
-	then	if ([ "${current_side}" == "source" ] && [ "${snap_limit_source}"  -ge 1 ]) || ([ "${current_side}" == "source" ] && [ -n "${snap_list_source}" ])
-			then	snap_shots=$(echo -e "${snap_shots}\n${current_snap_set}${snap_string_separator}${snap_string}${current_snap_file_type}~$(date +'%s')")
-		fi
+if [[ "${show_snapvars}" == "set" ]] || [[ "${show_commands}" == "set" ]]; then
+	if ([[ "${current_side}" == "source" ]] && [[ "${snap_limit_source}"  -ge 1 ]]) || ([[ "${current_side}" == "source" ]] && [[ -n "${snap_list_source}" ]]); then
+		snap_shots=$(echo -e "${snap_shots}\n${current_snap_set}${snap_string_separator}${snap_string}${current_snap_file_type}~$(date +'%s')")
+	fi
 fi
 
 echo "${snap_shots}"

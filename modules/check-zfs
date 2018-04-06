@@ -1,37 +1,37 @@
 #!/bin/bash
 
 # check if dataset/sync on sourcepool exists
-if [ -n "${current_server}" ]
-	then	probe=$(ssh ${current_ssh} "zfs list -o name \"${current_path_snap}\"/\"${current_sync_name}\" 2> /dev/null | tail -n +2")
-	else	probe=$(zfs list -o name "${current_path_snap}"/"${current_sync_name}"  2> /dev/null | tail -n +2)
+if [[ -n "${current_server}" ]]; then
+	probe=$(ssh ${current_ssh} "zfs list -o name \"${current_path_snap}\"/\"${current_sync_name}\" 2> /dev/null | tail -n +2"); else
+	probe=$(zfs list -o name "${current_path_snap}"/"${current_sync_name}"  2> /dev/null | tail -n +2)
 fi
 
-if [ "${probe}" == "${current_path_snap}/${current_sync_name}" ]
-	then	snap_set=${probe}
+if [[ "${probe}" == "${current_path_snap}/${current_sync_name}" ]]; then
+	snap_set=${probe}; else
 
-		# sync_name_source is sent from source to current, so it has to exist in source but not on target
-	else	if [ "${current_side}" == "source" ] && [ "${mode_transfer}" == "zfs" ]
-			then	exit 85
+	# sync_name_source is sent from source to current, so it has to exist in source but not on target
+	if [[ "${current_side}" == "source" ]] && [[ "${mode_transfer}" == "zfs" ]]; then
+		exit 85
+	fi
+
+	if [[ -n "${current_server}" ]]; then
+		probe=$(ssh ${current_ssh} "zfs list -o name ${current_path_snap}" | tail -n +2); else
+		probe=$(zfs list -o name ${current_path_snap} | tail -n +2)
+	fi
+
+	# in all cases current_path_snap has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
+	# if mode transfer is rsync then current_sync_name will not be a zfs dataset and current_path_snap will be snapshotted.
+	if [[ "${probe}" == "${current_path_snap}" ]]; then
+		if [[ "${current_side}" == "target" ]] && [[ "${mode_transfer}" == "zfs" ]]; then
+			snap_set=${current_path_snap}/${current_sync_name}; else
+			snap_set=${current_path_snap}
+		fi; else
+
+		if [[ "${current_snap_limit}" == "0" ]]; then
+			snap_set=unset; else
+			exit 86
 		fi
-
-		if [ -n "${current_server}" ]
-			then	probe=$(ssh ${current_ssh} "zfs list -o name ${current_path_snap}" | tail -n +2)
-			else	probe=$(zfs list -o name ${current_path_snap} | tail -n +2)
-		fi
-
-		# in all cases current_path_snap has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
-		# if mode transfer is rsync then current_sync_name will not be a zfs dataset and current_path_snap will be snapshotted.
-		if [ "${probe}" == "${current_path_snap}" ]
-			then	if [ "${current_side}" == "target" ] && [ "${mode_transfer}" == "zfs" ]
-					then	snap_set=${current_path_snap}/${current_sync_name}
-					else	snap_set=${current_path_snap}
-				fi
-
-			else	if [ "${current_snap_limit}" == "0" ]
-					then	snap_set=unset
-					else	exit 86
-				fi
-		fi
+	fi
 fi
 
 if [ ! "${snap_set}" == "unset" ]

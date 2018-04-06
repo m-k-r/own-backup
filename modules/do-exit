@@ -1,58 +1,58 @@
 #!/bin/bash
 
 # start with 80 to 113 to be compliant with c
-if  [ "${exit_code}" == "0" ]
-	then	:
-	elif [ "${exit_code}" == "80" ]
-		then	echo "${module_current}: The VM ${current_sync_vmid} does not exist" && exit 1
+if  [[ "${exit_code}" == "0" ]]; then
+	:;
+elif [[ "${exit_code}" == "80" ]]; then
+	echo "${module_current}: The VM ${current_sync_vmid} does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "81" ]
-		then	echo "${current_path_root}${current_path_offset}/${current_sync_name_source} does not exist" && exit 1
+elif [[ "${exit_code}" == "81" ]]; then
+	echo "${current_path_root}${current_path_offset}/${current_sync_name_source} does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "82" ]
-		then	echo "${module_current}: btrfs send does not work if the source ${current_path_root}/${current_sync_name} does not exist or is no subvolume" && exit 1
+elif [[ "${exit_code}" == "82" ]]; then
+	echo "${module_current}: btrfs send does not work if the source ${current_path_root}/${current_sync_name} does not exist or is no subvolume" && exit 1;
 
-	elif [ "${exit_code}" == "83" ]
-		then	echo "${module_current}: btrfs should be used for snapshots but neither ${current_path_root} nor ${current_path_root}/${current_sync_name} is a btrfs subvolume" && exit 1
+elif [[ "${exit_code}" == "83" ]]; then
+	echo "${module_current}: btrfs should be used for snapshots but neither ${current_path_root} nor ${current_path_root}/${current_sync_name} is a btrfs subvolume" && exit 1;
 
-	elif [ "${exit_code}" == "84" ]
-		then	echo "${module_current}: no subvolume has been found under snapshot-path ${current_snap_set}" && exit 1
+elif [[ "${exit_code}" == "84" ]]; then
+	echo "${module_current}: no subvolume has been found under snapshot-path ${current_snap_set}" && exit 1;
 
-	elif [ "${exit_code}" == "85" ]
-		then	echo "${module_current}: zfs send does not work if the source ${current_path_snap}/${current_sync_name} does not exist" && exit 1
+elif [[ "${exit_code}" == "85" ]]; then
+	echo "${module_current}: zfs send does not work if the source ${current_path_snap}/${current_sync_name} does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "86" ]
-		then	echo "${module_current}: zfs should be used for snapshots but neither ${current_path_snap} nor ${current_path_snap}/${current_sync_name} is a zfs dataset" && exit 1
+elif [[ "${exit_code}" == "86" ]]; then
+	echo "${module_current}: zfs should be used for snapshots but neither ${current_path_snap} nor ${current_path_snap}/${current_sync_name} is a zfs dataset" && exit 1;
 
-	elif [ "${exit_code}" == "87" ]
-		then	echo "${module_current}: current_snap_set does not exist" && exit 1
+elif [[ "${exit_code}" == "87" ]]; then
+	echo "${module_current}: current_snap_set does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "88" ]
-		then	echo "${module_current}: For source are no snapshots available" && exit 1
+elif [[ "${exit_code}" == "88" ]]; then
+	echo "${module_current}: For source are no snapshots available" && exit 1;
 
-	elif [ "${exit_code}" == "89" ]
-		then	echo "${module_current}: no common snapshot on source and target was found" && exit 1
+elif [[ "${exit_code}" == "89" ]]; then
+	echo "${module_current}: no common snapshot on source and target was found" && exit 1;
 
-	elif [ "${exit_code}" == "90" ]
-		then	echo "${module_current}: mode_snapshot is file but snap_new_source does not exist" && exit 1
+elif [[ "${exit_code}" == "90" ]]; then
+	echo "${module_current}: mode_snapshot is file but snap_new_source does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "91" ]
-		then	echo "${module_current}: The credential-file ${elem_options_sql} does not exist" && exit 1
+elif [[ "${exit_code}" == "91" ]]; then
+	echo "${module_current}: The credential-file ${elem_options_sql} does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "92" ]
-		then	echo "${module_current}: a certificate is set: ${elem_certificate} but it does not exist" && exit 1
+elif [[ "${exit_code}" == "92" ]]; then
+	echo "${module_current}: a certificate is set: ${elem_certificate} but it does not exist" && exit 1;
 
-	elif [ "${exit_code}" == "93" ]
-		then	echo "${module_current}: the database ${current_sync_name_source} does not exist" && exit 1
+elif [[ "${exit_code}" == "93" ]]; then
+	echo "${module_current}: the database ${current_sync_name_source} does not exist" && exit 1;
 
-	# 94 was: "set-multisnap: there are no snapshots to copy matching your pattern ${arg_snap_multi}"
+# 94 was: "set-multisnap: there are no snapshots to copy matching your pattern ${arg_snap_multi}"
 
-	# prepared but not used at the moment because check-config and the main script are in the same shell
-	elif [ "${exit_code}" == "95" ]
-		then	echo "${module_current}: no supported output found: ${arg_output}" && exit 1
+# prepared but not used at the moment because check-config and the main script are in the same shell
+elif [ "${exit_code}" == "95" ]]; then
+	echo "${module_current}: no supported output found: ${arg_output}" && exit 1;
 
-	elif [ "${exit_code}" == "96" ]
-		then	echo "${module_current}: root-set ${current_path_root}${current_path_offset}/${current_sync_name_source} does not exist" && exit 1
+elif [ "${exit_code}" == "96" ]]; then
+	echo "${module_current}: root-set ${current_path_root}${current_path_offset}/${current_sync_name_source} does not exist" && exit 1; else
 
-	else	echo "${module_current}: an undefined error has occured: ${?}" && exit 1
+	echo "${module_current}: an undefined error has occured: ${?}" && exit 1
 fi

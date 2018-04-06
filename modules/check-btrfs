@@ -1,38 +1,39 @@
 #!/bin/bash
 
 # check if dataroot/sync exists
-if [ -n "${current_server}" ]
-	then	probe_snap_root=$(ssh ${current_ssh} "btrfs subvolume show \"${current_path_root}\"/\"${current_sync_name_source}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
-	else	probe_snap_root=$(btrfs subvolume show "${current_path_root}"/"${current_sync_name_source}" 2> /dev/null | head -1 | awk '{ print $1 }')
+if [[ -n "${current_server}" ]]; then
+	probe_snap_root=$(ssh ${current_ssh} "btrfs subvolume show \"${current_path_root}\"/\"${current_sync_name_source}\" 2> /dev/null" | head -1 | awk '{ print $1 }'); else
+	probe_snap_root=$(btrfs subvolume show "${current_path_root}"/"${current_sync_name_source}" 2> /dev/null | head -1 | awk '{ print $1 }')
 fi
 
-if [ "${probe_snap_root}" == "${current_path_root}/${current_sync_name_source}" ]
-	then	snap_root=${current_path_root}/${current_sync_name_source}
-		snap_set=${current_path_snap}/${current_sync_name_target}
-	else	if [ -n "${current_snap_list}" ] || [ "${mode_transfer}" == "btrfs" ]
-			then	snap_root=unset
-				snap_set=${current_path_snap}/${current_sync_name_target}
-			elif [ "${current_side}" == "source" ] && [ "${mode_transfer}" == "btrfs" ] && [ ! "${arg_snap_rollback}" == "set" ] && [ -n "${current_snap_list}" ]
-				then	exit 82
+if [[ "${probe_snap_root}" == "${current_path_root}/${current_sync_name_source}" ]]; then
+	snap_root=${current_path_root}/${current_sync_name_source}
+	snap_set=${current_path_snap}/${current_sync_name_target}; else
 
-			else	if [ -n "${current_server}" ]
-					then	probe_snap_root=$(ssh ${current_ssh} "btrfs subvolume show \"${current_path_root}\" 2> /dev/null" | head -1 | awk '{ print $1 }')
-					else	probe_snap_root=$(btrfs subvolume show "${current_path_root}" 2> /dev/null | head -1 | awk '{ print $1 }')
-				fi
+	if [[ -n "${current_snap_list}" ]] || [[ "${mode_transfer}" == "btrfs" ]]; then
+		snap_root=unset
+		snap_set=${current_path_snap}/${current_sync_name_target};
+	elif [[ "${current_side}" == "source" ]] && [[ "${mode_transfer}" == "btrfs" ]] && [[ ! "${arg_snap_rollback}" == "set" ]] && [[ -n "${current_snap_list}" ]]; then
+		exit 82; else
 
-				if [ "${probe_snap_root}" == "${current_path_root}" ]
-					then	snap_root=${current_path_root}
-						if [ "${current_path_snap}" == "${snap_set}" ]
-							then	snap_set=${current_path_snap}/$(echo "${current_path_root}" | rev | cut -d "/" -f 1 | rev)
-							else	snap_set=${current_path_snap}/${current_sync_name_target}
-						fi
-
-					else	if [ "${current_snap_limit}" == "0" ]
-							then	snap_root=unset
-							else	exit 83
-						fi
-				fi
+		if [[ -n "${current_server}" ]]; then
+			probe_snap_root=$(ssh ${current_ssh} "btrfs subvolume show \"${current_path_root}\" 2> /dev/null" | head -1 | awk '{ print $1 }'); else
+			probe_snap_root=$(btrfs subvolume show "${current_path_root}" 2> /dev/null | head -1 | awk '{ print $1 }')
 		fi
+
+		if [[ "${probe_snap_root}" == "${current_path_root}" ]]; then
+			snap_root=${current_path_root}
+			if [[ "${current_path_snap}" == "${snap_set}" ]]; then
+				snap_set=${current_path_snap}/$(echo "${current_path_root}" | rev | cut -d "/" -f 1 | rev); else
+				snap_set=${current_path_snap}/${current_sync_name_target}
+			fi; else
+
+			if [[ "${current_snap_limit}" == "0" ]]; then
+				snap_root=unset; else
+				exit 83
+			fi
+		fi
+	fi
 fi
 
 if [ ! "${current_path_snap}" == "${current_path_root}" ]

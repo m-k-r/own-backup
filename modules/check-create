@@ -1,79 +1,77 @@
 #!/bin/bash
 
-if [ "${current_side}" == "source" ] && [ -n "${current_snap_location_remote}" ]
-	then	current_server=${current_snap_location_remote}
+if [[ "${current_side}" == "source" ]] && [[ -n "${current_snap_location_remote}" ]]; then
+	current_server=${current_snap_location_remote}
 fi
 
-if [ "${mode_create}" == "kvm" ]
-	then	if [ -n "${current_server}" ]
-			then	probe=$(ssh ${current_ssh} "qm list | grep ${current_sync_vmid}")
-			else	probe=$(qm list | grep ${current_sync_vmid})
+if [[ "${mode_create}" == "kvm" ]]; then
+	if [[ -n "${current_server}" ]]; then
+		probe=$(ssh ${current_ssh} "qm list | grep ${current_sync_vmid}"); else
+		probe=$(qm list | grep ${current_sync_vmid})
+	fi
+
+	if [[ ! -n "${probe}" ]]; then
+		exit 80
+	fi;
+
+elif [[ "${mode_create}" == "mysql" ]] || [[ "${mode_create}" == "pgsql" ]]; then
+	if [[ "${current_snap_location}" == "direct" ]]; then
+		if [[ -n "${current_snap_location_remote}" ]]; then
+			elem_sql_server=${current_snap_location_remote}; else
+			elem_sql_server=localhost
+		fi
+	fi
+
+	if [[ "${mode_create}" == "mysql" ]]; then
+		if [[ -n "${current_server}" ]] && [[ ! "${current_snap_location}" == "direct" ]]; then
+			probe=$(ssh ${current_ssh} "find ${elem_options_sql} -maxdepth 0 2> /dev/null"); else
+			probe=$(find ${elem_options_sql} -maxdepth 0 2> /dev/null)
 		fi
 
-		if [ ! -n "${probe}" ]
-			then	exit 80
+		if [[ ! "${probe}" == "${elem_options_sql}" ]]; then
+			exit 91
 		fi
 
-	elif [ "${mode_create}" == "mysql" ] || [ "${mode_create}" == "pgsql" ]
-		then	if [ "${current_snap_location}" == "direct" ]
-				then	if [ -n "${current_snap_location_remote}" ]
-						then	elem_sql_server=${current_snap_location_remote}
-						else	elem_sql_server=localhost
-					fi
-			fi
+		if [[ -n "${current_server}" ]] && [[ ! "${current_snap_location}" == "direct" ]]; then
+			probe=$(ssh ${current_ssh} "mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $2 }'); else
+			probe=$(mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}| grep ${current_sync_name_source} | awk '{ print $2 }')
+		fi
 
-			if [ "${mode_create}" == "mysql" ]
-				then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
-						then	probe=$(ssh ${current_ssh} "find ${elem_options_sql} -maxdepth 0 2> /dev/null")
-						else	probe=$(find ${elem_options_sql} -maxdepth 0 2> /dev/null)
-					fi
+		if [[ ! "${probe}" == "${current_sync_name_source}" ]]; then
+			exit 93
+		fi;
 
-					if [ ! "${probe}" == "${elem_options_sql}" ]
-						then	exit 91
-					fi
+	elif [[ "${mode_create}" == "pgsql" ]]; then
+		if [[ -n "${current_server}" ]] && [[ ! "${current_snap_location}" == "direct" ]]; then
+			probe=$(ssh ${current_ssh} "find /root/.pgpass -maxdepth 0 2> /dev/null"); else
+			probe=$(find /root/.pgpass -maxdepth 0 2> /dev/null)
+		fi
 
-					if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
-						then	probe=$(ssh ${current_ssh} "mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $2 }')
-						else	probe=$(mysqlshow --defaults-extra-file=${elem_options_sql} -h ${elem_sql_server}| grep ${current_sync_name_source} | awk '{ print $2 }')
-					fi
+		if [[ ! "${probe}" == "/root/.pgpass" ]]; then
+			exit 91
+		fi
 
-					if [ ! "${probe}" == "${current_sync_name_source}" ]
-						then	exit 93
-					fi
+		if [[ -n "${current_server}" ]] && [[ ! "${current_snap_location}" == "direct" ]]; then
+			probe=$(ssh ${current_ssh} "psql -l -U ${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $1 }'); else
+			probe=$(psql -l -U ${elem_options_sql} -h ${elem_sql_server} | grep ${current_sync_name_source} | awk '{ print $1 }')
+		fi
 
-				elif [ "${mode_create}" == "pgsql" ]
-					then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
-							then	probe=$(ssh ${current_ssh} "find /root/.pgpass -maxdepth 0 2> /dev/null")
-							else	probe=$(find /root/.pgpass -maxdepth 0 2> /dev/null)
-						fi
+		if [[ ! "${probe}" == "${current_sync_name_source}" ]]; then
+			exit 93
+		fi
+	fi
 
-					if [ ! "${probe}" == "/root/.pgpass" ]
-						then	exit 91
-					fi
+	if [[ -n "${elem_certificate}" ]]; then
+		if [[ -n "${current_server}" ]] && [[ ! "${current_snap_location}" == "direct" ]]; then
+			probe=$(ssh ${current_ssh} "find ${elem_certificate} -maxdepth 0 2> /dev/null"); else
+			probe=$(find ${elem_certificate} -maxdepth 0 2> /dev/null)
+		fi
 
-					if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
-						then	probe=$(ssh ${current_ssh} "psql -l -U ${elem_options_sql} -h ${elem_sql_server}" | grep ${current_sync_name_source} | awk '{ print $1 }')
-						else	probe=$(psql -l -U ${elem_options_sql} -h ${elem_sql_server} | grep ${current_sync_name_source} | awk '{ print $1 }')
-					fi
-
-					if [ ! "${probe}" == "${current_sync_name_source}" ]
-						then	exit 93
-					fi
-			fi
-
-			if [ -n "${elem_certificate}" ]
-				then	if [ -n "${current_server}" ] && [ ! "${current_snap_location}" == "direct" ]
-						then	probe=$(ssh ${current_ssh} "find ${elem_certificate} -maxdepth 0 2> /dev/null")
-						else	probe=$(find ${elem_certificate} -maxdepth 0 2> /dev/null)
-					fi
-
-					if [ ! -n "${probe}" ]
-						then	exit 92
-					fi
-			fi
-
-
-	else	:
+		if [[ ! -n "${probe}" ]]; then
+			exit 92
+		fi
+	fi; else
+	:
 fi
 
 ##### variable list. these will be picked up by debug #####
