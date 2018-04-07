@@ -6,7 +6,7 @@ IFS=$'\n'
 snap_new_list_source=(${current_snap_shots_source})
 snap_new_list_source_ts=(${current_snap_shots_source_ts})
 snap_old_list_target_ts=(${current_snap_shots_target_ts})
-snap_old_target_ts=${snap_old_list_target_ts[-1]}
+snap_old_target_ts=${current_snap_shots_target_ts##*$'\n'}
 
 # snap_old_target is always the last snpashot on target. so if not unset all snapshots up to snap_old_target are cut off
 if [[ ! -z "${snap_new_list_source[*]}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then

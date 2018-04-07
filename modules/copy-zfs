@@ -16,14 +16,14 @@ if [[ -n "${snap_old_target}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; the
 		fi; else
 
 		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			ssh "${ssh_target}" "zfs rollback ${snap_old_target}"
-			ssh "${ssh_source}" zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+			ssh ${ssh_target} "zfs rollback ${snap_old_target}"
+			ssh ${ssh_source} zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | ssh ${ssh_target} zfs recv "${current_snap_set_target}";
 		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 			zfs rollback "${snap_old_target}"
-			ssh "${ssh_source}" zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | zfs recv "${current_snap_set_target}";
+			ssh ${ssh_source} zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | zfs recv "${current_snap_set_target}";
 		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			ssh "${ssh_target}" "zfs rollback ${snap_old_target}"
-			zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+			ssh ${ssh_target} "zfs rollback ${snap_old_target}"
+			zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | ssh ${ssh_target} zfs recv "${current_snap_set_target}";
 		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 			zfs rollback "${snap_old_target}"
 			zfs send ${progress}-i "${snap_common_source}" "${snap_new_source}" | zfs recv "${current_snap_set_target}"
@@ -38,11 +38,11 @@ if [[ -n "${snap_old_target}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; the
 		fi; else
 
 		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" zfs send ${progress}"${snap_new_source}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+			ssh ${ssh_source} zfs send ${progress}"${snap_new_source}" | ssh ${ssh_target} zfs recv "${current_snap_set_target}";
 		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" zfs send ${progress}"${snap_new_source}" | zfs recv "${current_snap_set_target}";
+			ssh ${ssh_source} zfs send ${progress}"${snap_new_source}" | zfs recv "${current_snap_set_target}";
 		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			zfs send ${progress}"${snap_new_source}" | ssh "${ssh_target}" zfs recv "${current_snap_set_target}";
+			zfs send ${progress}"${snap_new_source}" | ssh ${ssh_target} zfs recv "${current_snap_set_target}";
 		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 			zfs send ${progress}"${snap_new_source}" | zfs recv "${current_snap_set_target}"
 		fi

@@ -19,11 +19,11 @@ if [[ -n "${snap_common_source}" ]] && [[ ! "${snap_common_source}" == "unset" ]
 		fi; else
 
 		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" "btrfs send -p ${snap_common_source} ${snap_new_source}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+			ssh ${ssh_source} "btrfs send -p ${snap_common_source} ${snap_new_source}" | ssh ${ssh_target} "btrfs receive ${current_snap_set_target}/"
 		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" "btrfs send -p ${snap_common_source} ${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
+			ssh ${ssh_source} "btrfs send -p ${snap_common_source} ${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
 		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			btrfs send -p "${snap_common_source}" "${snap_new_source}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+			btrfs send -p "${snap_common_source}" "${snap_new_source}" | ssh ${ssh_target} "btrfs receive ${current_snap_set_target}/"
 		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 			btrfs send -p "${snap_common_source}" "${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
 		fi
@@ -37,11 +37,11 @@ if [[ -n "${snap_common_source}" ]] && [[ ! "${snap_common_source}" == "unset" ]
 		fi; else
 
 		if [[ -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" "btrfs send ${snap_new_source}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+			ssh ${ssh_source} "btrfs send ${snap_new_source}" | ssh ${ssh_target} "btrfs receive ${current_snap_set_target}/"
 		elif [[ -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
-			ssh "${ssh_source}" "btrfs send ${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
+			ssh ${ssh_source} "btrfs send ${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
 		elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${elem_server_target}" ]]; then
-			btrfs send "${snap_new_source}" | ssh "${ssh_target}" "btrfs receive ${current_snap_set_target}/"
+			btrfs send "${snap_new_source}" | ssh ${ssh_target} "btrfs receive ${current_snap_set_target}/"
 		elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 			btrfs send "${snap_new_source}" | btrfs receive "${current_snap_set_target}"/
 		fi
