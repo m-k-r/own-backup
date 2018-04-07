@@ -206,7 +206,11 @@ fi
 ##### logging #####
 
 if [[ -n "${log_dir}" ]]; then
-	log_file=${log_dir}/${mode_snapshot}_diff-${current_sync_name_source}-${snap_date}.txt
+	probe=$(echo ${log_dir} | rev | cut -c 1)
+	if [[ "${probe}" == "/" ]]; then
+		log_dir=$(echo ${log_dir} | rev | cut -c 2- | rev)
+	fi
+	log_file=${log_dir}/${mode_snapshot}_diff-current_sync_name_source-${snap_date}.txt
 	if [[ -n "${log_usr}" ]]; then
 		if [[ -n "${log_server}" ]]; then
 			log_usr="${log_usr}@"; else
@@ -216,6 +220,15 @@ if [[ -n "${log_dir}" ]]; then
 			fi
 		fi
 		export log_usr
+	fi
+
+	if [[ -n "${log_server}" ]]; then
+		if [[ ! -n "${log_server_port}" ]]; then
+			log_server_port=22
+		fi
+		log_server="${log_server} -p ${log_server_port}"
+		export logserver
+		unset log_server_port
 	fi
 	export log_file
 	unset probe log_dir

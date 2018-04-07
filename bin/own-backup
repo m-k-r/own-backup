@@ -564,7 +564,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 		fi
 	fi
 
-	if [[ -n "${log_dir}" ]] && [[ ! -n "${arg_snap_multi}" ]] && [[ ! -n "${arg_snap_rollback}" ]]; then
+	if [[ -n "${log_file}" ]] && [[ ! -n "${arg_snap_multi}" ]] && [[ ! -n "${arg_snap_rollback}" ]]; then
 		mode_override_current=${mode_override[aa]}
 		current_sync_name_source=${sync_name_source[aa]}
 		snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}

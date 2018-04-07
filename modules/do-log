@@ -3,6 +3,7 @@
 if [[ ! -n "${snap_old_target}" ]] || [[ "${snap_old_target}" == "unset" ]]; then
 	exit 0
 fi
+log_file=$(echo "${log_file}" | sed "s;current_sync_name_source;${current_sync_name_source};g")
 
 # ------------------------------- Functions ------------------------------------
 
@@ -26,41 +27,49 @@ function output-modify () {
 
 if [[ "${mode_snapshot}" == "zfs" ]]; then
 	if [[ -n "${elem_server_target}" ]]; then
-		output_raw="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""; else
-		output_raw="zfs diff ${snap_old_target}"
+		output_raw=$(ssh ${ssh_target} "zfs diff ${snap_old_target}")
+		command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""; else
+		output_raw=$(zfs diff ${snap_old_target})
+		command1="zfs diff ${snap_old_target}"
 	fi;
 
-elif [[ "${mode_snapshot}" == "btrfs" ]]
+elif [[ "${mode_snapshot}" == "btrfs" ]]; then
 	if [[ -n "${elem_server_target}" ]]; then
-		output_raw="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"; else
-		output_raw="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
+		output_raw=$(ssh ${ssh_target} "btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')" | rev | awk ' { print \$1 } ' | rev | sort -u)
+		command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"; else
+		output_raw=$(btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u)
+		command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
 	fi;
 
 # unlike diff rsync can use checksums
 elif [[ "${mode_snapshot}" == "file" ]]; then
 	if [[ -n "${elem_server_target}" ]]; then
-		output_raw="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\""; else
-		output_raw="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"
+		output_raw=$(ssh ${ssh_target} "rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}")
+		command1="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\""; else
+		output_raw=$(rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target})
+		command1="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"
 	fi
 fi
 
-output-modify
+if [[ ! "${show_commands}" == "set" ]]; then
+	output-modify
+fi
 
 if [[ -n "${log_server}" ]]; then
 	if [[ "${show_commands}" == "set" ]]; then
-		echo "${output} | ssh ${log_usr}${log_server}${log_server_port} \"cat > ${log_file}\""; else
-		echo "${output}" | ssh "${log_usr}""${log_server}""${log_server_port}" cat > "${log_file}"
+		echo "${command1} | ssh ${log_usr}${log_server} \"cat > ${log_file}\""; else
+		echo "${output}" | ssh "${log_usr}"${log_server} "cat > ${log_file}"
 	fi; else
 
 	if [[ "${show_commands}" == "set" ]]; then
-		echo "${output} | cat > ${log_file}"
+		echo "${command1} | cat > ${log_file}"
 		echo "chown ${log_usr} ${log_file}"; else
 
-		echo "${output}" | cat > "${log_file}"
+		echo "${command1}" | cat > "${log_file}"
 		chown "${log_usr}" "${log_file}"
 	fi
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot mode_override_current show_commands elem_server_target ssh_target log_server log_server_port log_usr snap_old_target snap_new_target
-# export_fields =
+# import_fields = mode_snapshot mode_override_current show_commands elem_server_target ssh_target log_file log_server log_usr current_sync_name_source snap_old_target snap_new_target
+# export_fields = command1
