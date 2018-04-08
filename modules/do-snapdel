@@ -11,7 +11,7 @@ fi
 while [[ "${snap_del_number}" -gt "${current_snap_limit}" ]]
 do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
-	if [[ -n "${current_sync_vmid}" ]]; then
+	if [[ -n "${current_sync_vmid}" ]] && [[ "${side_current}" == "source" ]]; then
 		snap_del_vm=$(echo "${snap_del}" | rev | cut -d "@" -f 1 | rev)
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			ssh "${current_ssh}" "qm delsnapshot ${current_sync_vmid} ${snap_del_vm}";
