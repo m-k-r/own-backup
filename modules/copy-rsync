@@ -30,5 +30,5 @@ if [[ -n "${show_commands}" ]]; then
 fi
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot show_commands elem_server_source elem_server_target elem_options_rsync ssh_source_transfer ssh_target_transfer current_snap_rsync_source current_snap_rsync_target snap_new_source current_snap_set_target
+# import_fields = mode_snapshot show_commands elem_server_source elem_server_target elem_options_rsync elem_port_source elem_port_target current_snap_rsync_source current_snap_rsync_target snap_new_source current_snap_set_target
 # export_fields =
