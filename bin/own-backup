@@ -567,14 +567,12 @@ while [[ "${sync_name_number}" -gt "${aa}" ]]
 do	for current_side in ${sides}
 	do	if [[ "${current_side}" == "source" ]]; then
 			# if snap_set_source or sync_vmid was deleted reset the loop
-			if [[ ! -n "${snap_set_source[aa]}" ]] || ([[ "${mode_create}" == "kvm" ]] && [[ ! -n "${sync_vmid[aa]}" ]]); then
-				aa=$((${aa} + 1))
+			if [[ "${snap_limit_source}" -eq 0 ]] || [[ ! -n "${snap_set_source[aa]}" ]] || ([[ "${mode_create}" == "kvm" ]] && [[ ! -n "${sync_vmid[aa]}" ]]); then
 				continue
 			fi;
 		elif [[ "${current_side}" == "target" ]]; then
 			# if snap_set_target was deleted reset the loop
-			if [[ ! -n "${snap_set_target[aa]}" ]]; then
-				aa=$((${aa} + 1))
+			if [[ "${snap_limit_target}" -eq 0 ]] || [[ ! -n "${snap_set_target[aa]}" ]]; then
 				continue
 			fi
 		fi

@@ -11,7 +11,7 @@ fi
 while [[ "${snap_del_number}" -gt "${current_snap_limit}" ]]
 do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
-	if [[ -n "${current_sync_vmid}" ]] && [[ "${side_current}" == "source" ]]; then
+	if [[ -n "${current_sync_vmid}" ]] && [[ "${current_side}" == "source" ]]; then
 		snap_del_vm=$(echo "${snap_del}" | rev | cut -d "@" -f 1 | rev)
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			ssh "${current_ssh}" "qm delsnapshot ${current_sync_vmid} ${snap_del_vm}";
@@ -51,5 +51,5 @@ do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 done
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_snapshot current_server current_ssh current_snap_limit current_sync_vmid current_snap_shots current_snap_number
+# import_fields = mode_snapshot current_server current_ssh current_side current_snap_limit current_sync_vmid current_snap_shots current_snap_number
 # export_fields =
