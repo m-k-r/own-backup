@@ -3,18 +3,20 @@
 if [[ ! -n "${snap_old_target}" ]] || [[ "${snap_old_target}" == "unset" ]]; then
 	exit 0
 fi
+# in set-element current_sync_name_source didn't exist. so this has to be set here
 log_file=$(echo "${log_file}" | sed "s;current_sync_name_source;${current_sync_name_source};g")
 
 # ------------------------------- Functions ------------------------------------
 
 function output-modify () {
+	unset output
 	if [[ "${mode_snapshot}" == "zfs" ]]; then
 		# replace 0040 with space
 		output+=$(echo "${output_raw}" | sed 's;\\\0040; ;g');
 	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
-		# cut of leading generation
+		# cut of transid marker
 		header=2
-		output+=$(echo "${output_raw}" | tail -n +"${header}");
+		output+=$(echo "${output_raw}" | tail -n +"${header}" | awk -F "flags" '{ print $2 }' | awk -F " " '{ print $2 }' | sort -u);
 	elif [[ "${mode_snapshot}" == "file" ]]; then
 		if [[ "${mode_override_current}" == "directory" ]]; then
 			header=3; else
@@ -25,46 +27,58 @@ function output-modify () {
 	fi
 }
 
-if [[ "${mode_snapshot}" == "zfs" ]]; then
-	if [[ -n "${elem_server_target}" ]]; then
-		output_raw=$(ssh ${ssh_target} "zfs diff ${snap_old_target}")
-		command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""; else
-		output_raw=$(zfs diff ${snap_old_target})
-		command1="zfs diff ${snap_old_target}"
-	fi;
+if [[ "${show_commands}" == "set" ]]; then
+	# show commands has to be split up because snap_new_target does exist in the filesystem
+	if [[ "${mode_snapshot}" == "zfs" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""; else
+			command1="zfs diff ${snap_old_target}"
+		fi;
 
-elif [[ "${mode_snapshot}" == "btrfs" ]]; then
-	if [[ -n "${elem_server_target}" ]]; then
-		output_raw=$(ssh ${ssh_target} "btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')" | rev | awk ' { print \$1 } ' | rev | sort -u)
-		command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\" | rev | awk ' { print \$1 } ' | rev | sort -u"; else
-		output_raw=$(btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u)
-		command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }') | rev | awk ' { print \$1 } ' | rev | sort -u"
-	fi;
+	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			command1="ssh ${ssh_target} \"btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')\""; else
+			command1="btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')"
+		fi;
 
-# unlike diff rsync can use checksums
-elif [[ "${mode_snapshot}" == "file" ]]; then
-	if [[ -n "${elem_server_target}" ]]; then
-		output_raw=$(ssh ${ssh_target} "rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}")
-		command1="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\""; else
-		output_raw=$(rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target})
-		command1="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"
+	# unlike diff rsync can use checksums
+	elif [[ "${mode_snapshot}" == "file" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			command1="ssh ${ssh_target} \"rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}\""; else
+			command1="rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"
+		fi
 	fi
-fi
 
-if [[ ! "${show_commands}" == "set" ]]; then
-	output-modify
-fi
-
-if [[ -n "${log_server}" ]]; then
-	if [[ "${show_commands}" == "set" ]]; then
+	if [[ -n "${log_server}" ]]; then
 		echo "${command1} | ssh ${log_usr}${log_server} \"cat > ${log_file}\""; else
-		echo "${output}" | ssh "${log_usr}"${log_server} "cat > ${log_file}"
+		echo "${command1} | cat > ${log_file}"
+		echo "chown ${log_usr} ${log_file}"
 	fi; else
 
-	if [[ "${show_commands}" == "set" ]]; then
-		echo "${command1} | cat > ${log_file}"
-		echo "chown ${log_usr} ${log_file}"; else
+	if [[ "${mode_snapshot}" == "zfs" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			output_raw=$(ssh ${ssh_target} "zfs diff ${snap_old_target}"); else
+			output_raw=$(zfs diff ${snap_old_target})
+		fi;
 
+	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			output_raw=$(ssh ${ssh_target} "btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }')"); else
+			output_raw=$(btrfs subvolume find-new ${snap_new_target} $(btrfs subvolume show ${snap_old_target} | awk -v condition1="Generation:" '$1 == condition1 { print $2 }'))
+		fi;
+
+	# unlike diff rsync can use checksums
+	elif [[ "${mode_snapshot}" == "file" ]]; then
+		if [[ -n "${elem_server_target}" ]]; then
+			output_raw=$(ssh ${ssh_target} "rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"); else
+			output_raw=$(rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target})
+		fi
+	fi
+
+	output-modify
+
+	if [[ -n "${log_server}" ]]; then
+		echo "${output}" | ssh "${log_usr}"${log_server} "cat > ${log_file}"; else
 		echo "${command1}" | cat > "${log_file}"
 		chown "${log_usr}" "${log_file}"
 	fi
