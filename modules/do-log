@@ -4,7 +4,7 @@ if [[ ! -n "${snap_old_target}" ]] || [[ "${snap_old_target}" == "unset" ]]; the
 	exit 0
 fi
 # in set-element current_sync_name_source didn't exist. so this has to be set here
-log_file=$(echo "${log_file}" | sed "s;current_sync_name_source;${current_sync_name_source};g")
+log_file=$(echo "${log_file}" | sed "s;CURRENT_SYNC_NAME_SOURCE;${current_sync_name_source};g")
 
 # ------------------------------- Functions ------------------------------------
 

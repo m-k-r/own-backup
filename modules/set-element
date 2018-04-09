@@ -1,5 +1,43 @@
 #!/bin/bash
 
+# ------------------------------- Functions ------------------------------------
+
+function check-path () {
+	if [[ "${1}" == "escape_space" ]]; then
+		probe=$(echo "${!2}" | grep " " | egrep -v '\\ ')
+		if [[ -n "${probe}" ]]; then
+			probe=$(echo "${!2}" | sed 's/ /\\ /g')
+			export ${2}="${probe}"
+		fi;
+	elif [[ "${1}" == "unescape_space" ]]; then
+		probe=$(echo "${!2}" | grep '\\ ')
+		if [[ -n "${probe}" ]]; then
+			probe=$(echo "${!2}" | sed 's/\\ / /g')
+			export ${2}="${probe}"
+		fi;
+	elif [[ "${1}" == "add_slash_start" ]]; then
+		probe=$(echo "${!2}" | cut -c 1)
+		if [[ ! "${probe}" == "/" ]]; then
+			probe="/${!2}"
+			export ${2}="${probe}"
+		fi;
+	elif [[ "${1}" == "rm_slash_end" ]]; then
+		probe=$(echo "${!2}" | rev | cut -c 1)
+		if [[ "${probe}" == "/" ]]; then
+			probe=$(echo "${!2}" | rev | cut -c 2- | rev)
+			export ${2}="${probe}"
+		fi
+	fi
+	unset probe
+}
+
+function swap-rollback () {
+	swap_var=${!1}
+	export ${1}="${!2}"
+	export ${2}="${swap_var}"
+	unset swap_var
+}
+
 ##### translate mode and fs to the internal modi
 
 # translation matrix for mode and fs from frontend to mode{create|snapshot|transfer}
@@ -22,104 +60,53 @@ fi
 
 # if rollback is set the source- and targetvariables have to be swapped
 if [[ "${arg_snap_rollback}" == "set" ]]; then
-	swap_var=${path_snap_source}
-	path_snap_source=${path_snap_target}
-	path_snap_target=${swap_var}
+	swap-rollback path_snap_source path_snap_target
+	swap-rollback path_root_source path_root_target
 
-	swap_var=${path_root_source}
-	path_root_source=${path_root_target}
-	path_root_target=${swap_var}
 
 	if [[ -n "${path_offset_source}" ]] || [[ -n "${path_offset_target}" ]]; then
-		swap_var=${path_offset_source}
-		path_offset_source=${path_offset_target}
-		path_offset_target=${swap_var}
-		export path_offset_source path_offset_target
+		swap-rollback path_offset_source path_offset_target
 	fi
 
 	if [[ -n "${elem_server_source}" ]] ||  [[ -n "${elem_server_target}" ]]; then
-		swap_var=${elem_server_source}
-		elem_server_source=${elem_server_target}
-		elem_server_target=${swap_var}
-
-		swap_var=${snap_location_source}
-		snap_location_source=${snap_location_target}
-		snap_location_target=${swap_var}
-		export elem_server_source elem_server_target snap_location_source snap_location_target
+		swap-rollback elem_server_source elem_server_target
+		swap-rollback snap_location_source snap_location_target
 
 		if [[ -n "${elem_port_source}" ]] ||  [[ -n "${elem_port_target}" ]]; then
-			swap_var=${elem_port_source}
-			elem_port_source=${elem_port_target}
-			elem_server_target=${swap_var}
+			swap-rollback elem_port_source elem_port_target
 		fi
 	fi
-	unset swap_var
 fi
 
 
 ##### path conventions #####
 
 # spaces in the directories are allowed but have to be escaped
-probe=$(echo ${path_root_source} | grep " " | egrep -v "\\ ")
-if [[ -n "${probe}" ]]; then
-	path_root_source=$(echo ${path_root_source} | sed 's/ /\\ /g')
-fi
+check-path escape_space path_root_source
+check-path escape_space path_root_target
+check-path escape_space path_snap_source
+check-path escape_space path_snap_target
+# path_root needs to start with a slash and end without
+check-path add_slash_start path_root_source
+check-path rm_slash_end path_root_source
+check-path add_slash_start path_root_target
+check-path rm_slash_end path_root_target
+# path_snap needs to end without slash
+check-path rm_slash_end path_snap_source
+check-path rm_slash_end path_snap_target
 
-probe=$(echo ${path_root_target} | grep " " | egrep -v "\\ ")
-if [[ -n "${probe}" ]]; then
-	path_root_target=$(echo ${path_root_target} | sed 's/ /\\ /g')
-fi
-
-probe=$(echo ${path_snap_source} | grep " " | egrep -v "\\ ")
-if [[ -n "${probe}" ]]; then
-	path_snap_source=$(echo ${path_snap_source} | sed 's/ /\\ /g')
-fi
-
-probe=$(echo ${path_snap_target} | grep " " | egrep -v "\\ ")
-if [[ -n "${probe}" ]]; then
-	path_snap_targete=$(echo ${path_snap_target} | sed 's/ /\\ /g')
-fi
-unset probe
-
-# if set, path_offset needs to start with a / and end without
+# if set, path_offset needs to start with a slash and end without
 if [[ -n "${path_offset_source}" ]]; then
-	probe=$(echo ${path_offset_source} | cut -c 1)
-	if [[ ! "${probe}" == "/" ]]; then
-		path_offset_source="/${path_offset_source}"
-	fi
-
-	probe=$(echo ${path_offset_source} | rev | cut -c 1)
-	if [[ "${probe}" == "/" ]]; then
-		path_offset_source=$(echo ${path_offset_source} | rev | cut -c 2- | rev)
-	fi
-
-	probe=$(echo ${path_offset_source} | grep " " | egrep -v "\\ ")
-	if [[ -n "${probe}" ]]; then
-		path_offset_source=$(echo ${path_offset_source} | sed 's/ /\\ /g')
-	fi
-	unset probe
-	export path_offset_source
+	check-path escape_space path_offset_source
+	check-path add_slash_start path_offset_source
+	check-path rm_slash_end path_offset_source
 fi
 
 if [[ -n "${path_offset_target}" ]]; then
-	probe=$(echo ${path_offset_target} | cut -c 1)
-	if [[ ! "${probe}" == "/" ]]; then
-		path_offset_target="/${path_offset_target}"
-	fi
-
-	probe=$(echo ${path_offset_target} | rev | cut -c 1)
-	if [[ "${probe}" == "/" ]]; then
-		path_offset_target=$(echo ${path_offset_target} | rev | cut -c 2- | rev)
-	fi
-
-	probe=$(echo ${path_offset_target} | grep " " | egrep -v "\\ ")
-	if [[ -n "${probe}" ]]; then
-		path_offset_target=$(echo ${path_offset_target} | sed 's/ /\\ /g')
-	fi
-	unset probe
-	export path_offset_target
+	check-path escape_space path_offset_target
+	check-path add_slash_start path_offset_target
+	check-path rm_slash_end path_offset_target
 fi
-
 
 ##### ports for rsync and ssh #####
 
@@ -166,14 +153,52 @@ fi
 # in these cases no snapshots should be created. so snap_limit has to be 0 and snap_list has to be unset
 if [[ -n "${show_snapshots}" ]] || [[ -n "${arg_snap_rollback}" ]] || [[ -n "${arg_snap_multi}" ]]; then
 	snap_limit_source=0
-	unset snap_list_source
-	export snap_limit_source
+	snap_limit_target=0
+	unset snap_list_source snap_list_target
+	export snap_limit_source snap_limit_target
 fi
 
-if [[ -n "${show_snapshots}" ]] || [[ -n "${arg_snap_rollback}" ]] || [[ -n "${arg_snap_multi}" ]]; then
-	snap_limit_target=0
-	unset snap_list_target
-	export snap_limit_target
+
+##### logging #####
+
+if [[ -n "${arg_snap_rollback}" ]] || [[ -n "${arg_snap_multi}" ]]; then
+	unset  log_dir log_server log_server_port log_usr
+fi
+
+if [[ -n "${log_dir}" ]]; then
+	# log_dir has the same conventions as the paths
+	check-path escape_space log_dir
+	check-path add_slash_start log_dir
+	check-path rm_slash_end log_dir
+
+	log_file=${log_dir}/${mode_snapshot}_diff-CURRENT_SYNC_NAME_SOURCE-${snap_date}.txt
+
+	if [[ -n "${log_usr}" ]]; then
+		probe=$(echo "${log_usr}" | grep ":" || true)
+
+		if [[ -n "${probe}" ]]; then
+			if [[ -n "${log_server}" ]]; then
+				echo "for remote logging the loguser mustn't contain the group" && exit 1
+			fi; else
+
+			if [[ -n "${log_server}" ]]; then
+				log_usr="${log_usr}@"; else
+				log_usr="${log_usr}:${log_usr}"
+			fi
+			export log_usr
+		fi
+	fi
+
+	if [[ -n "${log_server}" ]]; then
+		if [[ ! -n "${log_server_port}" ]]; then
+			log_server_port=22
+		fi
+		log_server="${log_server} -p ${log_server_port}"
+		export log_server
+		unset log_server_port
+	fi
+	export log_file
+	unset probe log_dir
 fi
 
 
@@ -190,37 +215,6 @@ elif [[ "${mode_snapshot}" == "zfs" ]] || [[ "${mode_snapshot}" == "kvm" ]]; the
 	snap_string_separator="@"
 fi
 
-
-##### logging #####
-
-if [[ -n "${log_dir}" ]]; then
-	probe=$(echo ${log_dir} | rev | cut -c 1)
-	if [[ "${probe}" == "/" ]]; then
-		log_dir=$(echo ${log_dir} | rev | cut -c 2- | rev)
-	fi
-	log_file=${log_dir}/${mode_snapshot}_diff-current_sync_name_source-${snap_date}.txt
-	if [[ -n "${log_usr}" ]]; then
-		if [[ -n "${log_server}" ]]; then
-			log_usr="${log_usr}@"; else
-			probe=$(echo "${log_usr}" | grep ":" || true)
-			if [[ ! -n "${probe}" ]]; then
-				log_usr="${log_usr}:${log_usr}"
-			fi
-		fi
-		export log_usr
-	fi
-
-	if [[ -n "${log_server}" ]]; then
-		if [[ ! -n "${log_server_port}" ]]; then
-			log_server_port=22
-		fi
-		log_server="${log_server} -p ${log_server_port}"
-		export logserver
-		unset log_server_port
-	fi
-	export log_file
-	unset probe log_dir
-fi
 
 ##### exports of variables which are created here #####
 export mode_create mode_snapshot mode_transfer snap_date_offset snap_string snap_string_separator path_snap_source path_snap_target path_root_source path_root_target

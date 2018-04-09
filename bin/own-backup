@@ -524,7 +524,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 		fi
 	fi
 
-	if [[ -n "${log_file}" ]] && [[ ! -n "${arg_snap_multi}" ]] && [[ ! -n "${arg_snap_rollback}" ]]; then
+	if [[ -n "${log_file}" ]]; then
 		mode_override_current=${mode_override[aa]}
 		current_sync_name_source=${sync_name_source[aa]}
 		snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}
@@ -552,7 +552,7 @@ if [[ "${show_snapvars}" == "set" ]] && [[ ! "${show_commands}" == "set" ]]; the
 	exit 0
 fi
 
-# ------------------ SIXTH/SEVENTH LOOP: delete snapshots ----------------------
+# ---------------------- SIXTH LOOP: delete snapshots --------------------------
 
 if [[ "${snap_limit_source}" -eq 0 ]] && [[ "${snap_limit_target}" -eq 0 ]]; then
 	exit 0
