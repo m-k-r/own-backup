@@ -9,17 +9,17 @@ if [[ ! "${mode_snapshot}" == "file" ]]; then
 	#fi
 
 	if [[ "${current_side}" == "source" ]]; then
-		probe_snap_rsync=${current_path_root}${current_path_offset}/${current_sync_name_source}; else
-		probe_snap_rsync=${current_path_root}${current_path_offset}
+		probe_snap_rsync=$(echo "${current_path_root}${current_path_offset}/${current_sync_name_source}" | sed 's/\\ / /g'); else
+		probe_snap_rsync=$(echo "${current_path_root}${current_path_offset}" | sed 's/\\ / /g')
 	fi
 
 	# check if directory exists
 	if [[ -n "${current_server}" ]]; then
-		probe=$(ssh ${current_ssh} "if [ -e \"${probe_snap_rsync}\" ]; then echo 1; else echo 0; fi"); else
-		probe=$(if [ -e "${probe_snap_rsync}" ]; then echo 1; else echo 0; fi)
+		probe=$(ssh ${current_ssh} "find \"${probe_snap_rsync}\" -maxdepth 0 2> /dev/null"); else
+		probe=$(find "${probe_snap_rsync}" -maxdepth 0 2> /dev/null)
 	fi
 
-	if [[ "${probe}" == "1" ]]; then
+	if [[ "${probe}" == "${probe_snap_rsync}" ]]; then
 		snap_rsync=${probe_snap_rsync}; else
 		exit 81
 	fi;

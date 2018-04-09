@@ -317,7 +317,7 @@ do	##### set current global variables #####
 		# check all ${mode_transfer}. this is not necessary for fs=file and mode=rsync
 		if [[ "${mode_transfer}" == "rsync" ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
 			module_current=check-copy
-			snap_rsync_source[aa]=$(${dir_modules}/${module_current})
+			declare snap_rsync_${current_side}[aa]="$(${dir_modules}/${module_current})"
 			check-exit
 		fi
 	done

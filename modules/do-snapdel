@@ -14,7 +14,7 @@ do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 	if [[ -n "${current_sync_vmid}" ]] && [[ "${current_side}" == "source" ]]; then
 		snap_del_vm=$(echo "${snap_del}" | rev | cut -d "@" -f 1 | rev)
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
-			ssh "${current_ssh}" "qm delsnapshot ${current_sync_vmid} ${snap_del_vm}";
+			ssh ${current_ssh} "qm delsnapshot ${current_sync_vmid} ${snap_del_vm}";
 		elif [[ ! -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			qm delsnapshot "${current_sync_vmid}" "${snap_del_vm}"; else
 			echo "${show_commands_part1}qm delsnapshot ${current_sync_vmid} ${snap_del_vm}${show_commands_part2}"
@@ -22,7 +22,7 @@ do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
 	elif [[ "${mode_snapshot}" == "zfs" ]]; then
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
-			ssh "${current_ssh}" "zfs destroy ${snap_del}";
+			ssh ${current_ssh} "zfs destroy ${snap_del}";
 		elif [[ ! -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			zfs destroy "${snap_del}"; else
 			echo "${show_commands_part1}zfs destroy ${snap_del}${show_commands_part2}"
@@ -30,7 +30,7 @@ do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
 	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
-			ssh "${current_ssh}" "btrfs subvolume delete ${snap_del}";
+			ssh ${current_ssh} "btrfs subvolume delete ${snap_del}";
 		elif [[ ! -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			btrfs subvolume delete "${snap_del}"; else
 			echo "${show_commands_part1}btrfs subvolume delete ${snap_del}${show_commands_part2}"
@@ -38,7 +38,7 @@ do	snap_del=$(echo "${list_snap_del}" | awk 'NR==1{print $0}')
 
 	elif [[ "${mode_snapshot}" == "file" ]]; then
 		if [[ -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
-			ssh "${current_ssh}" "rm -rf ${snap_del}";
+			ssh ${current_ssh} "rm -rf ${snap_del}";
 		elif [[ ! -n "${current_server}" ]] && [[ ! "${show_commands}" == "set" ]]; then
 			rm -rf "${snap_del}"; else
 			echo "${show_commands_part1}rm -rf ${snap_del}${show_commands_part2}"
