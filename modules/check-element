@@ -37,9 +37,8 @@ if [[ -n "${arg_output}" ]]; then
 		show_progress=set
 		show_commands=set
 		show_datasets=set
-		show_snapshots=set
 		show_snapvars=set
-		export show_progress show_commands show_datasets show_snapshots show_snapvars; else
+		export show_progress show_commands show_datasets show_snapvars; else
 
 		echo "no supported output-level found: ${arg_output}" && exit 1
 	fi

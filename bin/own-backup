@@ -402,6 +402,10 @@ if [[ -n "${mode_snapshot}" ]]; then
 
 				result_modified=$(echo "${result}" | awk -F '~' '{ print $2 }')
 				declare snap_shots_${current_side}_ts[aa]="${result_modified}"
+				if [[ -n "$(echo "${result}" | awk -F '~' '{ print $3 }' | grep 'timestamp')" ]]; then
+					declare snap_shots_quality_${current_side}[aa]=timestamp; else
+					declare snap_shots_quality_${current_side}[aa]=datestring
+				fi
 				result=$(echo "${result}" | awk -F '~' '{ print $1 }')
 				declare snap_shots_${current_side}[aa]="${result}"
 				result_modified=$(echo "${result}" | sed '/^\s*$/d' | awk 'END{print NR}')
@@ -412,13 +416,13 @@ if [[ -n "${mode_snapshot}" ]]; then
 				declare snap_number_strict_${current_side}[aa]="${result_modified}"
 			fi
 		done
-		unset result
+		unset result result_modified
 
 		if [[ "${show_snapshots}" == "set" ]]; then
 			printf -- "\n--------------- ${sync_name_source[aa]} ---------------\n\n"
 			echo "-------------------------"
-			printf "The Snapshotnumber for source is ${snap_number_source[aa]}:\n${snap_shots_source[aa]}\nThe Snapshotnumber for source with the name ${snap_name} is ${snap_number_strict_source[aa]}:\n${snap_shots_strict_source[aa]}\n"
-			printf "The Snapshotnumber for for target is ${snap_number_target[aa]}:\n${snap_shots_target[aa]}\nThe Snapshotnumber for target with the name ${snap_name} is ${snap_number_strict_target[aa]}:\n${snap_shots_strict_target[aa]}\n"
+			printf "The Snapshotnumber for source is ${snap_number_source[aa]}:\n${snap_shots_source[aa]}\nThe Snapshotnumber for source with the name ${snap_name} is ${snap_number_strict_source[aa]}:\n${snap_shots_strict_source[aa]}\nThe Quality is ${snap_shots_quality_source[aa]}\n"
+			printf "The Snapshotnumber for target is ${snap_number_target[aa]}:\n${snap_shots_target[aa]}\nThe Snapshotnumber for target with the name ${snap_name} is ${snap_number_strict_target[aa]}:\n${snap_shots_strict_target[aa]}\nThe Quality is ${snap_shots_quality_target[aa]}\n"
 			echo "-------------------------"
 		fi
 		aa=$((${aa} + 1))
@@ -444,29 +448,29 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 		##### set current source variable #####
 		current_snap_shots_source=${snap_shots_source[aa]}
 		current_snap_shots_source_ts=${snap_shots_source_ts[aa]}
+		current_snap_shots_quality_source=${snap_shots_quality_source[aa]}
 		current_snap_number_source=${snap_number_source[aa]}
-		export current_snap_shots_source current_snap_shots_source_ts current_snap_number_source
+		current_snap_shots_strict_source=${snap_shots_strict_source[aa]}
+		export current_snap_shots_source current_snap_shots_source_ts current_snap_shots_quality_source current_snap_number_source current_snap_shots_strict_source
 
 		##### set current target variable #####
 		current_snap_shots_target=${snap_shots_target[aa]}
 		current_snap_shots_target_ts=${snap_shots_target_ts[aa]}
+		current_snap_shots_quality_target=${snap_shots_quality_target[aa]}
 		current_snap_number_target=${snap_number_target[aa]}
 		current_snap_set_target=${snap_set_target[aa]}
-		export current_snap_shots_target current_snap_shots_target_ts current_snap_number_target current_snap_set_target
+		export current_snap_shots_target current_snap_shots_target_ts current_snap_shots_quality_target current_snap_number_target current_snap_set_target
 
 		# get snapvars
 		module_current=set-snapvars
-		snap_new_source=$(${dir_modules}/${module_current})
+		result=$(${dir_modules}/${module_current})
 		check-exit
 
-		snap_common_source=$(echo "${snap_new_source}" | cut -d "~" -f 1)
-		snap_old_target=$(echo "${snap_new_source}" | cut -d "~" -f 2)
-		snap_new_source=${snap_shots_strict_source[aa]##*$'\n'}
+		snap_new_source=$(echo "${result}" | cut -d "~" -f 1)
+		snap_common_source=$(echo "${result}" | cut -d "~" -f 2)
+		snap_old_target=$(echo "${result}" | cut -d "~" -f 3)
+		unset result
 		export snap_new_source snap_common_source snap_old_target
-		# when the snapshots are read, the snapshot on target wasn't created yet.
-		#so a dummy has to be created in order to delete the right amount of snapshots and diff
-		snap_shots_strict_target[aa]="${snap_shots_strict_target[aa]}"$'\n'"${current_snap_set_target}"${snap_string_separator}${snap_string}
-		snap_number_strict_target[aa]=$((${snap_number_strict_target[aa]} + 1))
 	fi
 
 	if [[ "${mode_transfer}" == "rsync" ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
@@ -483,6 +487,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 		printf "sourcesnapsnew is:\n${snap_new_source}\nsourcesnapsold is:\n${snap_common_source}\ntargetsnapsold is:\n${snap_old_target}\n"
 		if [[ ! "${show_commands}" == "set" ]]; then
 			# if only snapvars should be shown this loop resets here
+			aa=$((${aa} + 1))
 			continue
 		fi
 	fi
@@ -512,7 +517,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 			${dir_modules}/${module_current}
 			check-exit
 
-			if [[ -n "${snap_set_target[aa]}" ]] && [[ "${snap_limit_target}" -gt 0 ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
+			if [[ -n "${snap_set_target[aa]}" ]] && [[ "${snap_limit_target}" -ge 1 ]] && [[ ! "${mode_snapshot}" == "file" ]]; then
 				module_current=own-snapshot
 				source ${dir_modules}/arg-osst
 				if [[ "${snap_location_target}" == "ssh" ]]; then
@@ -535,7 +540,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] ||
 		unset mode_override_current current_sync_name_source snap_new_target
 	fi
 	aa=$((${aa} + 1))
-	unset current_snap_shots_source current_snap_shots_source_ts current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_number_target current_snap_rsync_source current_snap_rsync_target snap_new_source snap_common_source snap_old_target snap_exist_offset
+	unset current_snap_shots_source current_snap_shots_source_ts current_snap_shots_quality_source current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_shots_quality_target current_snap_number_target current_snap_rsync_source current_snap_rsync_target snap_new_source snap_common_source snap_old_target snap_exist_offset
 done
 
 if [[ -n "${snap_list_target}" ]]; then

@@ -28,7 +28,7 @@ elif [[ "${exit_code}" == "87" ]]; then
 	echo "${module_current}: current_snap_set does not exist" && exit 1;
 
 elif [[ "${exit_code}" == "88" ]]; then
-	echo "${module_current}: For source are no snapshots available" && exit 1;
+	echo "${module_current}: There is no newer snapshot on source with the name: ${snap_name}" && exit 1;
 
 elif [[ "${exit_code}" == "89" ]]; then
 	echo "${module_current}: no common snapshot on source and target was found" && exit 1;

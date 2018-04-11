@@ -4,19 +4,26 @@
 # snap_new_source - this is always the newest snapshot on source
 # snap_common_source - this is the last common snapshot on source and target. It is needed for btrfs and zfs send and file for copying multiple snapshots
 # snap_old_target - this is always the newest snapshot on target. It is needed for zfs rollback and log
+snap_new_source=${current_snap_shots_strict_source##*$'\n'}
 
 if [[ "${mode_transfer}" == "zfs" ]] || [[ "${mode_transfer}" == "btrfs" ]] || ([[ "${mode_transfer}" == "rsync" ]] && [[ -n "${arg_snap_multi}" ]]); then
 	# if mode_transfer is either zfs or btrfs snapshots on source have to exist
-	if [[ ! -n "${current_snap_shots_source}" ]]; then
+	if [[ ! -n "${snap_new_source}" ]]; then
 		exit 88
 	fi
 
-	# if snapshots on source are <2 or on target <1 the loop would fail
-	if [[  "${current_snap_number_target}" -lt 1 ]] || [[ "${current_snap_number_source}" -lt 2 ]]; then
+	# if snapshots are each <2 the loop would fail. one snapshot on target is virtual and has to be omitted
+	# the exception is if multisnap or rollback is set. then the snapshots on target have to be at least 1
+	if ([[  "${current_snap_number_target}" -lt 2 ]] && [[ "${add_snapshot_target}" == "set" ]]) || [[  "${current_snap_number_target}" -lt 1 ]] || [[ "${current_snap_number_source}" -lt 2 ]]; then
 		snap_common_source=unset
+	fi
+
+	# if mode_transfer=zfs or the timestamp derives from the datestring, the timestamp can be trusted
+	if [[ "${mode_transfer}" == "zfs" ]] || ([[ "${current_snap_shots_quality_source}" == "datestring" ]] && [[ "${current_snap_shots_quality_target}" == "datestring" ]]); then
+		timestamp_required=set
 	fi; else
 
-	# if mode_snapshot is zfs/btrfs and mode_transfer differs a snap_common_source wouldn't necessarily exist
+	# if mode_snapshot is zfs/btrfs and mode_transfer differs a snap_common_source wouldn't necessarily exist and isn't required
 	snap_common_source=unset
 fi
 
@@ -26,54 +33,33 @@ if [[ ! "${snap_common_source}" == "unset" ]]; then
 	IFSBAK=$IFS
 	IFS=$'\n'
 	snap_shots_source=(${current_snap_shots_source})
-	snap_shots_target=(${current_snap_shots_target})
 	snap_shots_source_ts=(${current_snap_shots_source_ts})
+	snap_shots_target_ts=(${current_snap_shots_target_ts})
 	IFS=$IFSBAK
 	bb=$((${current_snap_number_source} - 1))
 
+	# the last snapshot on target could be virtual. this is filtered out by checking if it contains the current snap_string
 	while [[ "${bb}" -ge 0 ]]
-	do	# for zfs timestamps on source and target are the same
-		# for now timestamps are not applicable for btrfs, since there is now way to preserve the actual creation time of a snapshot
-		# a relationship between source and target snapshots could be established with the received uuid, but this wouldn't work
-		# if another fs like a cold backup is used or if the snapshot on source is snapshotted
-		# the current workaround is to ignore the timestamp and use the newest snapshot with the same name
-		if [[ "${mode_transfer}" == "zfs" ]]; then
-			timestamps_matching=$(echo "${current_snap_shots_target_ts}" | grep -n "${snap_shots_source_ts[${bb}]}" | grep -Eo '^[^:]+');
-		elif [[ "${mode_transfer}" == "btrfs" ]] || [[ "${mode_transfer}" == "rsync" ]]; then
-			timestamps_matching=set
+	do	if [[ "${mode_transfer}" == "zfs" ]]; then
+			probe_string=$(echo "${snap_shots_source[bb]}" | rev | cut -d "@" -f 1 | rev); else
+			probe_string=$(echo "${snap_shots_source[bb]}" | rev | cut -d "/" -f 1 | rev)
 		fi
-		# snap_common_source is determined through matching timestamp and matching snapstring
-		if [[ -n "${timestamps_matching}" ]]; then
-			# get snapstring for source. for zfs source and target can differ in snapname, for btrfs and file it is the same
-			if [[ "${mode_transfer}" == "zfs" ]]; then
-				snap_string_source=$(echo "${snap_shots_source[${bb}]}" | rev | cut -d "@" -f 1 | rev); else
-				snap_string_source=$(echo "${snap_shots_source[${bb}]}" | rev | cut -d "/" -f 1 | rev)
+		string_matching=$(echo "${current_snap_shots_target}" | grep -n "${probe_string}" | grep -Eo '^[^:]+')
+
+		if [[ -n "${string_matching}" ]]; then
+			if [[ -n "$(echo ${probe_string} | grep ${snap_string})" ]]; then
+				snap_common_source=newest
+				bb=$((${bb} - 1))
+				continue
 			fi
-			# there could be multiple timestamps with the same value
-			for timestamp_matching in ${timestamps_matching}
-			do	timestamp_matching=$((${timestamp_matching} - 1))
-				if [[ "${mode_transfer}" == "zfs" ]]; then
-					snap_string_target=$(echo "${snap_shots_target[${timestamp_matching}]}" | rev | cut -d "@" -f 1 | rev); else
-					snap_string_target=$(echo "${snap_shots_target[${timestamp_matching}]}" | rev | cut -d "/" -f 1 | rev)
-				fi
-
-				if [[ "${snap_string_source}" == "${snap_string_target}" ]]; then
-					snap_common_source=${snap_shots_source[${bb}]}
-					break
-				fi
-			done
+			# for all modi there can only be one snapshot with the same name. so this case don't has to be dealt with
+			if [[ "${snap_shots_source_ts[bb]}" == "${snap_shots_target_ts[$((${string_matching} - 1))]}" ]] || [[ ! "${timestamp_required}" == "set" ]]; then
+				snap_common_source=${snap_shots_source[bb]}
+				break
+			fi
 		fi
-
-		if [[ -n "${snap_common_source}" ]]; then
-			break; else
-			bb=$((${bb} - 1))
-		fi
+		bb=$((${bb} - 1))
 	done
-
-	if [[ "${current_snap_number_source}" -eq "$((${bb} + 1))" ]]; then
-		# if this is true the common snapshot is the newest on source and send would fail
-		snap_common_source=newest
-	fi
 fi
 
 # if at this point snap_common_source does not exist, there is no common snapshot and source and target
@@ -81,14 +67,16 @@ if [[ ! -n "${snap_common_source}" ]]; then
 	exit 89
 fi
 
-# if no snapshots on target exist, snap_old_target hast to be unset
-if [[ -n "${current_snap_shots_target}" ]]; then
-	snap_old_target=${current_snap_shots_target##*$'\n'}; else
+# snapold target is the last snapshot if no virtual snapshot exists, else it it the second last
+if [[ ! "${add_snapshot_target}" == "set" ]] && [[ "${current_snap_number_target}" -ge 1 ]]; then
+	snap_old_target=${current_snap_shots_target##*$'\n'};
+elif [[ "${current_snap_number_target}" -ge 2 ]]; then
+	snap_old_target=$(echo "${current_snap_shots_target}" | sed -n '${x;p};h'); else
 	snap_old_target=unset
 fi
 
-echo "${snap_common_source}~${snap_old_target}"
+echo "${snap_new_source}~${snap_common_source}~${snap_old_target}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = mode_transfer arg_snap_multi current_snap_shots_source current_snap_shots_source_ts current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_number_target
-# export_fields = snap_common_source snap_old_target
+# import_fields = mode_transfer arg_snap_multi add_snapshot_target current_snap_shots_source current_snap_shots_source_ts current_snap_shots_quality_source current_snap_number_source current_snap_shots_strict_source current_snap_shots_target current_snap_shots_target_ts current_snap_shots_quality_target current_snap_number_target snap_string
+# export_fields = snap_new_source snap_common_source snap_old_target

@@ -8,10 +8,14 @@ snap_new_list_source_ts=(${current_snap_shots_source_ts})
 snap_old_list_target_ts=(${current_snap_shots_target_ts})
 snap_old_target_ts=${current_snap_shots_target_ts##*$'\n'}
 
+if [[ "${mode_transfer}" == "zfs" ]] || ([[ "${current_snap_shots_quality_source}" == "datestring" ]] && [[ "${current_snap_shots_quality_target}" == "datestring" ]]); then
+	timestamp_required=set
+fi
+
 # snap_old_target is always the last snpashot on target. so if not unset all snapshots up to snap_old_target are cut off
-if [[ ! -z "${snap_new_list_source[*]}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then
+if [[ ! -z "${current_snap_shots_source}" ]] && [[ ! "${snap_old_target}" == "unset" ]]; then
 	bb="0"
-	if [[ "${mode_transfer}" == "zfs" ]]; then
+	if [[ "${timestamp_required}" == "set" ]]; then
 		# to prevent an endless loop check if source_snap_new is newer then source_snap_old
 		if [[ "${snap_new_list_source_ts[-1]}" -le "${snap_old_target_ts}" ]]; then
 			exit 0
@@ -22,13 +26,12 @@ if [[ ! -z "${snap_new_list_source[*]}" ]] && [[ ! "${snap_old_target}" == "unse
 		while [[ "${snap_new_list_source_ts[${bb}]}" -le "${snap_old_target_ts}" ]]
 		do	unset snap_new_list_source[${bb}]
 			bb=$((${bb} + 1))
-		done;
+		done; else
 
-	# for now timestamps are not applicable for btrfs, since there is now way to preserve the actual creation time of a snapshot
-	# while it works fine under certain circumstances, it doesn't if snapshots are deleted, rolled back or copied in bulk
-	# file has the limitation that there is no way to get an actual filelock
-	# as a workaround instead of snap_old_target, snap_common_source is used as a reference point
-	elif [[ "${mode_transfer}" == "btrfs" ]] || [[ "${mode_transfer}" == "rsync" ]]; then
+		# for now timestamps are not applicable for btrfs, since there is now way to preserve the actual creation time of a snapshot
+		# while it works fine under certain circumstances, it doesn't if snapshots are deleted, rolled back or copied in bulk
+		# file has the limitation that there is no way to get an actual filelock
+		# as a workaround instead of snap_old_target, snap_common_source is used as a reference point
 		until [[ "${snap_new_list_source[${bb}]}" == "${snap_common_source}" ]]
 		do	unset snap_new_list_source[${bb}]
 			bb=$((${bb} + 1))
@@ -72,8 +75,8 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 		# this is strictly not necessary because the creation of snapshots is documented, but if something is going wrong, this prevents errors
 		if [[ "${mode_transfer}" == "zfs" ]]; then
 			if [[ -n "${elem_server_target}" ]]; then
-				probe=$(ssh ${ssh_target} "zfs list \"${snap_old_target}\" 2> /dev/null" | tail -n +2 | awk '{ print $1 }'); else
-				probe=$(zfs list "${snap_old_target}" 2> /dev/null | tail -n +2 | awk '{ print $1 }')
+				probe=$(ssh ${ssh_target} "zfs get -Ho value name \"${snap_old_target}\" 2> /dev/null"); else
+				probe=$(zfs get -Ho value name "${snap_old_target}" 2> /dev/null)
 			fi;
 
 		elif [[ "${mode_transfer}" == "btrfs" ]]; then
