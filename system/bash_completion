@@ -41,7 +41,7 @@ _own-backup() {
 				__get_element_name
 
 				if [[ "$(awk -v condition1='filesystem' '$1 == condition1 { print $3 }' ${file_element})" == "zfs" ]]; then
-					list=$(zfs list | awk '{ print $1 }' | tail -n +2); else
+					list=$(zfs list -Ho name); else
 					list=$(awk -v condition1="snapshot-path" -v condition2="(target)" '$1 == condition1 && $2 == condition2 { print $4 }' ${file_element})
 				fi
 			fi

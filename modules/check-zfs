@@ -2,8 +2,8 @@
 
 # check if dataset/sync on sourcepool exists
 if [[ -n "${current_server}" ]]; then
-	probe=$(ssh ${current_ssh} "zfs list -o name \"${current_path_snap}\"/\"${current_sync_name}\" 2> /dev/null | tail -n +2"); else
-	probe=$(zfs list -o name "${current_path_snap}"/"${current_sync_name}"  2> /dev/null | tail -n +2)
+	probe=$(ssh ${current_ssh} "zfs list -Ho name \"${current_path_snap}\"/\"${current_sync_name}\" 2> /dev/null"); else
+	probe=$(zfs list -Ho name "${current_path_snap}"/"${current_sync_name}"  2> /dev/null)
 fi
 
 if [[ "${probe}" == "${current_path_snap}/${current_sync_name}" ]]; then
@@ -15,8 +15,8 @@ if [[ "${probe}" == "${current_path_snap}/${current_sync_name}" ]]; then
 	fi
 
 	if [[ -n "${current_server}" ]]; then
-		probe=$(ssh ${current_ssh} "zfs list -o name ${current_path_snap}" | tail -n +2); else
-		probe=$(zfs list -o name ${current_path_snap} | tail -n +2)
+		probe=$(ssh ${current_ssh} "zfs list -Ho name ${current_path_snap}"); else
+		probe=$(zfs list -Ho name ${current_path_snap})
 	fi
 
 	# in all cases current_path_snap has to exist on target. if mode_transfer is zfs sync_name_curret will be existing after this script
@@ -34,18 +34,18 @@ if [[ "${probe}" == "${current_path_snap}/${current_sync_name}" ]]; then
 	fi
 fi
 
-if [ ! "${snap_set}" == "unset" ]
-	then	if [ -n "${current_server}" ]
-			then	snap_root=$(ssh ${current_ssh} "zfs list -o mountpoint \"${snap_set}\" 2> /dev/null | tail -n +2")
-			else	snap_root=$(zfs list -o mountpoint "${snap_set}"  2> /dev/null | tail -n +2)
-		fi
+if [[ ! "${snap_set}" == "unset" ]]; then
+	if [[ -n "${current_server}" ]]; then
+		snap_root=$(ssh ${current_ssh} "zfs list -Ho mountpoint \"${snap_set}\" 2> /dev/null"); else
+		snap_root=$(zfs list -Ho mountpoint "${snap_set}"  2> /dev/null)
+	fi
 
-		# if snap_set doesn't exist yet on target, snap_root is zero, if it has no mountpoint snap_root is "-"
-		if [ -z "${snap_root}" ] ||  [ "${snap_root}" == "-" ]
-			then	snap_root=unset
-		fi
-		# if snap_set is unset snap_root is unset too
-	else	snap_root=unset
+	# if snap_set doesn't exist yet on target, snap_root is zero, if it has no mountpoint snap_root is "-"
+	if [[ -z "${snap_root}" ]] ||  [[ "${snap_root}" == "-" ]]; then
+		snap_root=unset
+	fi; else
+	# if snap_set is unset snap_root is unset too
+	snap_root=unset
 fi
 
 echo "${snap_root}~${snap_set}"
