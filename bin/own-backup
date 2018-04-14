@@ -444,7 +444,7 @@ fi
 aa="0"
 # Loop for actual copy, snapshots and log
 while [[ "${sync_name_number}" -gt "${aa}" ]]
-do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_dir}" ]] || ([[ "${mode_snapshot}" == "file" ]] && [[ "${snap_number_strict_source[aa]}" -ge "1" ]]); then
+do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_file}" ]] || ([[ "${mode_snapshot}" == "file" ]] && [[ "${snap_number_strict_source[aa]}" -ge "1" ]]); then
 		##### set current source variable #####
 		current_snap_shots_source=${snap_shots_source[aa]}
 		current_snap_shots_source_ts=${snap_shots_source_ts[aa]}

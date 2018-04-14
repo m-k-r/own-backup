@@ -59,7 +59,7 @@ function get-timestamp () {
 # get snapshots for source  and target
 if [[ "${mode_snapshot}" == "zfs" ]]; then
 	if [[ -n "${current_server}" ]]; then
-		snap_shots=$(ssh ${current_ssh} "zfs get -Ho value -r name \"{current_snap_set}\"" | tail -n +2); else
+		snap_shots=$(ssh ${current_ssh} "zfs get -Ho value -r name \"${current_snap_set}\"" | tail -n +2); else
 		snap_shots=$(zfs get -Ho value -r name "${current_snap_set}" | tail -n +2)
 	fi;
 
