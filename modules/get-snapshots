@@ -22,7 +22,7 @@
 #
 # this circumvents another problem:
 # for zfs timestamps on source and target are the same
-# for btrfs there is now way to preserve the actual creation time of a snapshot
+# for btrfs there is no way to preserve the actual creation time of a snapshot
 # a relationship between source and target snapshots could be established with the received uuid, but this wouldn't work
 # if another fs like a cold backup is used or if the snapshot on source is snapshotted
 # if the script assumes that a parsable datestring exists and it is on both source and target the same, the derived timestamps
@@ -59,8 +59,8 @@ function get-timestamp () {
 # get snapshots for source  and target
 if [[ "${mode_snapshot}" == "zfs" ]]; then
 	if [[ -n "${current_server}" ]]; then
-		snap_shots=$(ssh ${current_ssh} "zfs get -Ho value -r name \"${current_snap_set}\"" | tail -n +2); else
-		snap_shots=$(zfs get -Ho value -r name "${current_snap_set}" | tail -n +2)
+		snap_shots=$(ssh ${current_ssh} "zfs get -Ho value -r name \"${current_snap_set}\"" 2> /dev/null | tail -n +2); else
+		snap_shots=$(zfs get -Ho value -r name "${current_snap_set}" 2> /dev/null | tail -n +2)
 	fi;
 
 elif [[ "${mode_snapshot}" == "btrfs" ]]; then
