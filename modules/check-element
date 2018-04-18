@@ -122,9 +122,26 @@ if [[ -n "${snap_location_target}" ]]; then
 	fi
 fi
 
+if [[ -n "${log_mode}" ]]; then
+	if [[ "${log_mode}" == "file" ]] && [[ ! -n "${log_dir}" ]]; then
+		echo "for logmode=file logpath has to be set" && exit 1
+	fi
+
+	if [[ -n "${log_form}" ]]; then
+		check_log_form=$(echo ${supported_log_form} | grep "\b${log_form}\b")
+
+		if [[ ! -n "${check_log_form}" ]]; then
+			echo "${log_form} is not a viable logform" && exit 1
+		fi
+		unset check_log_form; else
+		log_form=list
+	fi
+	export log_form
+fi
+
 ##### exports of variables which are created here #####
 export path_root_source path_snap_source path_root_target path_snap_target
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = supported_element_version supported_mode supported_fs supported_snap_location element_version arg_output elem_mode elem_fs path_snap_source path_snap_target path_root_source path_root_target snap_list_source snap_list_frequency_source snap_list_target snap_list_frequency_target snap_location_source snap_location_target
-# export_fields = show_progress show_commands show_datasets show_snapshots show_snapvars path_snap_source path_snap_target path_root_source path_root_target
+# import_fields = supported_element_version supported_mode supported_fs supported_snap_location supported_log_form element_version arg_output elem_mode elem_fs path_snap_source path_snap_target path_root_source path_root_target snap_list_source snap_list_frequency_source snap_list_target snap_list_frequency_target snap_location_source snap_location_target log_mode log_dir log_form
+# export_fields = show_progress show_commands show_datasets show_snapshots show_snapvars path_snap_source path_snap_target path_root_source path_root_target log_form

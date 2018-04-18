@@ -2,7 +2,7 @@
 
 # ----------------------------- Global Variables -------------------------------
 
-version_list=(1.0 1.1 1.2)
+version_list=(1.0 1.1 1.2 1.3)
 dir_element=${dir_conf}/backup
 dir_upgrade=${dir_conf}/upgrade
 dir_job=${dir_conf}/job
@@ -10,12 +10,87 @@ dir_debug=${dir_conf}/debug
 dir_conf_offset=$(($(echo "${dir_conf}" | awk -F '/' '{print NF}') + 1))
 dir_element_offset=$(($(echo "${dir_element}" | awk -F '/' '{print NF}') + 1))
 
-# ------------------------------- functions ------------------------------------
+# --------------------------------- Upgrades -----------------------------------
+
+function upgrade1.3 {
+	for element_matching in ${elements_matching}
+	do	do-backup
+		# save custom settings
+		log_server=$(sed -n '/logserver =/p' ${dir_element}/"${element_matching}".bak 2> /dev/null)
+		log_path=$(sed -n '/logpath =/p' ${dir_element}/"${element_matching}".bak 2> /dev/null)
+		log_usr=$(sed -n '/loguser =/p' ${dir_element}/"${element_matching}".bak 2> /dev/null)
+
+		# delete old settings
+		sed -i '/logserver =/d' ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i '/logpath =/d' ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i '/loguser =/d' ${dir_element}/"${element_matching}".bak 2> /dev/null
+
+		# get new settings
+		if [[ ! "${log_path}" == "logpath =" ]]; then
+			log_form="logform = list"
+			log_mode="logmode = file"; else
+			log_form="logform ="
+			log_mode="logmode ="
+		fi
+
+		# write new settings to element
+		sed -i "s;# Logoptions;# Logoptions\n${log_form}\n${log_mode}\n${log_usr}\n${log_path}\n${log_server};g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;version = 1.2;version = 1.3;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+	done
+}
+
+function upgrade1.2 {
+	for element_matching in ${elements_matching}
+	do	do-backup
+		sed -i "s;logdirectory =;logpath =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;snapshot-directory (source) =;snapshot-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;snapshot-directory (target) =;snapshot-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;root-directory (source) =;root-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;root-directory (target) =;root-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;offset-directory (source) =;offset-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;offset-directory (target) =;offset-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;version = 1.1;version = 1.2;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+	done
+}
+
+function upgrade1.1 {
+	do-initial
+	for element_matching in ${elements_matching}
+	do	do-backup
+
+		# probe is set by do-backup
+		if [[ -n "${probe}" ]]; then
+			mkdir -p ${dir_element}/$(echo "${element_matching}" | rev | cut -d "/" -f 2- | rev)
+		fi
+
+		# copy the elements to the new directory
+		rsync -a ${dir_conf}/"${element_matching}".conf ${dir_element}/"${element_matching}".bak
+		sed -i "s;Source-, Targetserver, Ports, Mode, Filesystem and general Options;General Options, Source- and Targetserver, Ports, Mode and Filesystem;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;Source- and Targetdirectories/datastets and specific options for modes and filesystems;Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won't work if snapshots are not handled by another script;Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;Syncdataoptions like Synclist, Names, Su- and Prefixes and VMID. Each is treated like an array;Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		sed -i "s;version = 1.0;version = 1.1;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
+		rm -f ${dir_conf}/"${element_matching}".conf
+	done
+
+	# prior to version 1.0 there were no versions. so very old elements may not be parsed to new versions
+	elements_nonmatching=$(echo "${elements_nonmatching}" | grep -v '^$')
+	elements_nonmatching_number=$(echo "${elements_nonmatching}"| awk 'END{print NR}')
+	if [[ -n "${elements_nonmatching}" ]]; then
+		echo "${elements_matching_number} elements upgraded to version ${version_next}:"
+		echo "${elements_matching}"
+		echo "please check the remaining ${elements_nonmatching_number} invalid elements:"
+		echo "${elements_nonmatching}"
+		exit 0
+	fi
+}
+
+# ------------------------------- Functions ------------------------------------
 
 function do-initial {
 	echo "create initial structure in ${dir_conf}"
 	mkdir -p ${dir_upgrade} ${dir_element} ${dir_job} ${dir_debug}
-	chmod 400 ${dir_upgrade} ${dir_element} ${dir_job} ${dir_debug}
+	chmod 700 ${dir_upgrade} ${dir_element} ${dir_job} ${dir_debug}
 }
 
 function do-backup {
@@ -84,52 +159,6 @@ function upgrade-framework {
 		fi
 		unset version_next elements elements_matching elements_nonmatching
 		bb=$((${bb} + 1))
-	done
-}
-
-function upgrade1.1 {
-	do-initial
-	for element_matching in ${elements_matching}
-	do	do-backup
-
-		# probe is set by do-backup
-		if [[ -n "${probe}" ]]; then
-			mkdir -p ${dir_element}/$(echo "${element_matching}" | rev | cut -d "/" -f 2- | rev)
-		fi
-
-		# copy the elements to the new directory
-		rsync -a ${dir_conf}/"${element_matching}".conf ${dir_element}/"${element_matching}".bak
-		sed -i "s;Source-, Targetserver, Ports, Mode, Filesystem and general Options;General Options, Source- and Targetserver, Ports, Mode and Filesystem;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;Source- and Targetdirectories/datastets and specific options for modes and filesystems;Source- and Targetpaths. ZFS doesn't read Root and Offset is Optional;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;Snapshot Name, Dateformat, Name of the Snapshotlist and Number to keep. If one is 0, inkremential send/receive won't work if snapshots are not handled by another script;Snapshot Name, Dateformat, Name of the Snapshotlist or Number to keep and Remote Options;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;Syncdataoptions like Synclist, Names, Su- and Prefixes and VMID. Each is treated like an array;Syncoptions like Synclist or Name, Su- and Prefixes and VMID. Each is treated like an array;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;version = 1.0;version = 1.1;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		rm -f ${dir_conf}/"${element_matching}".conf
-	done
-
-	# prior to version 1.0 there were no versions. so very old elements may not be parsed to new versions
-	elements_nonmatching=$(echo "${elements_nonmatching}" | grep -v '^$')
-	elements_nonmatching_number=$(echo "${elements_nonmatching}"| awk 'END{print NR}')
-	if [[ -n "${elements_nonmatching}" ]]; then
-		echo "${elements_matching_number} elements upgraded to version ${version_next}:"
-		echo "${elements_matching}"
-		echo "please check the remaining ${elements_nonmatching_number} invalid elements:"
-		echo "${elements_nonmatching}"
-		exit 0
-	fi
-}
-
-function upgrade1.2 {
-	for element_matching in ${elements_matching}
-	do	do-backup
-		sed -i "s;logdirectory =;logpath =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;snapshot-directory (source) =;snapshot-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;snapshot-directory (target) =;snapshot-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;root-directory (source) =;root-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;root-directory (target) =;root-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;offset-directory (source) =;offset-path (source) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;offset-directory (target) =;offset-path (target) =;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
-		sed -i "s;version = 1.1;version = 1.2;g" ${dir_element}/"${element_matching}".bak 2> /dev/null
 	done
 }
 

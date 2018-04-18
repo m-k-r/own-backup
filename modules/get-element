@@ -4,10 +4,12 @@
 element_version=$(awk -v condition1="version" '$1 == condition1 { print $3 }' ${element})
 
 # Logoptions
+log_form=$(awk -v condition1="logform" '$1 == condition1 { print $3 }' ${element})
+log_mode=$(awk -v condition1="logmode" '$1 == condition1 { print $3 }' ${element})
+log_usr=$(awk -v condition1="loguser" '$1 == condition1 { print $3 }' ${element})
+log_dir=$(awk -v condition1="logpath" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)
 log_server=$(awk -v condition1="logserver" '$1 == condition1 { print $3 }' ${element})
 log_server_port=$(awk -v condition1="logserver" '$1 == condition1 { print $4 }' ${element})
-log_dir=$(awk -v condition1="logpath" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-)
-log_usr=$(awk -v condition1="loguser" '$1 == condition1 { print $3 }' ${element})
 
 # General Options, Source- and Targetserver, Ports, Mode and Filesystem
 elem_server_source=$(awk -v condition1="sourceserver" '$1 == condition1 { print $3 }' ${element})
@@ -68,7 +70,7 @@ sync_name_new_prefix=($(awk -v condition1="syncnameprefix" '$1 == condition1 { p
 sync_vmid=($(awk -v condition1="VM-ID" '$1 == condition1 { print $0 }' ${element} | cut -d " " -f 3-))
 
 export element_version
-export log_server log_server_port log_dir log_usr
+export log_form log_mode log_usr log_dir log_server log_server_port
 export elem_server_source elem_port_source elem_server_target elem_port_target elem_mode elem_fs elem_user elem_certificate elem_options_rsync elem_options_sql
 export path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target
 export snap_name snap_date snap_list_source snap_list_frequency_source snap_location_source snap_limit_source snap_list_target snap_list_frequency_target snap_location_target snap_limit_target
@@ -77,4 +79,4 @@ export sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_pref
 
 ##### variable list. these will be picked up by debug #####
 # import_fields = element override_path_snap_target override_snap_name override_snap_date override_snap_list_frequency override_snap_limit
-# export_fields = log_server log_server_port log_dir log_usr elem_server_source elem_port_source elem_server_target elem_port_target elem_mode elem_fs elem_user elem_certificate elem_options_rsync elem_options_sql path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_name snap_date snap_list_source snap_list_frequency_source snap_location_source snap_list_target snap_list_frequency_target snap_location_target snap_limit_source snap_limit_target sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
+# export_fields = log_form log_mode log_usr log_dir log_server log_server_port elem_server_source elem_port_source elem_server_target elem_port_target elem_mode elem_fs elem_user elem_certificate elem_options_rsync elem_options_sql path_snap_source path_snap_target path_root_source path_root_target path_offset_source path_offset_target snap_name snap_date snap_list_source snap_list_frequency_source snap_location_source snap_list_target snap_list_frequency_target snap_location_target snap_limit_source snap_limit_target sync_list sync_name sync_name_new sync_name_new_suffix sync_name_new_prefix sync_vmid
