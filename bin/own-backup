@@ -37,8 +37,9 @@ dir_conf=/etc/own-backup
 supported_mode="file kvm mysql pgsql rsync"
 supported_fs="btrfs zfs file"
 supported_snap_location="server ssh local direct"
+supported_log_form="raw list report"
 supported_debug="create check show import export"
-supported_element_version=1.2
+supported_element_version=1.3
 
 # ------------------------------- Parameter ------------------------------------
 
@@ -119,7 +120,7 @@ probe=$(find ${element} 2>&1)
 if [[ ! "${probe}" == "${element}" ]]; then
 	echo "the element: ${arg_element} does not exist" && exit 1
 fi
-export supported_mode supported_fs supported_snap_location supported_element_version element arg_output arg_snap_multi arg_snap_rollback override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name
+export supported_mode supported_fs supported_snap_location supported_log_form supported_element_version element arg_output arg_snap_multi arg_snap_rollback override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name
 
 # --------------------------------- Debug --------------------------------------
 
@@ -208,7 +209,7 @@ check-exit
 module_current=set-element
 . ${dir_modules}/${module_current}
 check-exit
-unset supported_mode supported_fs supported_snap_location supported_element_version element override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name elem_mode elem_fs
+unset supported_mode supported_fs supported_snap_location supported_log_form supported_element_version element override_path_snap_target override_snap_date override_snap_limit override_snap_list_frequency override_snap_name elem_mode elem_fs
 
 # get-synclist can return spaces. so the ifs has to be by newline
 IFS=$'\n'
@@ -444,7 +445,7 @@ fi
 aa="0"
 # Loop for actual copy, snapshots and log
 while [[ "${sync_name_number}" -gt "${aa}" ]]
-do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_file}" ]] || ([[ "${mode_snapshot}" == "file" ]] && [[ "${snap_number_strict_source[aa]}" -ge "1" ]]); then
+do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_mode}" ]] || ([[ "${mode_snapshot}" == "file" ]] && [[ "${snap_number_strict_source[aa]}" -ge "1" ]]); then
 		##### set current source variable #####
 		current_snap_shots_source=${snap_shots_source[aa]}
 		current_snap_shots_source_ts=${snap_shots_source_ts[aa]}
@@ -529,7 +530,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_file}" ]] |
 		fi
 	fi
 
-	if [[ -n "${log_file}" ]]; then
+	if [[ -n "${log_mode}" ]]; then
 		mode_override_current=${mode_override[aa]}
 		current_sync_name_source=${sync_name_source[aa]}
 		snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}

@@ -8,21 +8,55 @@ log_file=$(echo "${log_file}" | sed "s;CURRENT_SYNC_NAME_SOURCE;${current_sync_n
 
 # ------------------------------- Functions ------------------------------------
 
+function output-report () {
+	if [[ "${1}" == "header" ]]; then
+		# print header
+		printf '%*s\n' 100 '' | tr ' ' '-'
+		printf "%-8s" "Action"
+		printf "%-92s" "Filename"
+		printf "\n"
+		printf '%*s\n' 100 '' | tr ' ' '-';
+	elif [[ "${1}" == "footer" ]]; then
+		local added deleted modified total
+		# get changes
+		added=$(echo "${2}" | grep -c "^\+")
+		deleted=$(echo "${2}" | grep -c "^-")
+		modified=$(echo "${2}" | grep -ic "^m")
+		total=$(echo "${2}" | awk 'END{print NR}')
+
+		# print footer
+		printf '%*s\n' 100 '' | tr ' ' '-'
+		printf "%-20s" "total: ${total}"
+		printf "%-80s" "added: ${added}, deleted: ${deleted}, modified: ${modified}"
+		printf "\n"
+		printf '%*s\n' 100 '' | tr ' ' '-'
+	fi
+}
+
 function output-modify () {
-	unset output
-	if [[ "${mode_snapshot}" == "zfs" ]]; then
-		# replace 0040 with space
-		output+=$(echo "${output_raw}" | sed 's;\\\0040; ;g' | sort -k 2);
-	elif [[ "${mode_snapshot}" == "btrfs" ]]; then
-		# only print actual paths
-		output+=$(echo "${output_raw}" | awk -F "flags" '{ print $2 }' | awk -F " " '{ print $2 }' | grep -v '^$' | sort -u);
-	elif [[ "${mode_snapshot}" == "file" ]]; then
-		if [[ "${mode_override_current}" == "directory" ]]; then
-			header=3; else
-			header=2
+	local output_clean output_report cut_header cut_footer
+	if [[ "${2}" == "zfs" ]]; then
+		# cut off path up to current_sync_name_source, replace 0040 with space and sort
+		output_clean=$(echo "${3}" |  sed -e "s;\t.*${current_sync_name_source}/;\t;g" | sed 's;\\\0040; ;g' | sort -k 2);
+	elif [[ "${2}" == "btrfs" ]]; then
+		# only print the actual paths and since only added files are shown, add a "+" at the beginning of each line
+		output_clean=$(echo "${3}" | awk -F "flags" '{ print $2 }' | awk -F " " '{ print $2 }' | grep -v '^$' | sort -u | sed 's;^;+\t;g');
+	elif [[ "${2}" == "file" ]]; then
+		# cut off the output from rsync and add a "+" for all added or modified files and a "-" for all deleted ones
+		if [[ "${4}" == "directory" ]]; then
+			cut_header=3; else
+			cut_header=2
 		fi
-		footer=3
-		output+=$(echo "${output_raw}" | tail -n +"${header}" | head -n -${footer} | sed 's;^;+ ;g' | sed 's;+ deleting;-;g')
+		cut_footer=3
+		output_clean=$(echo "${3}" | tail -n +"${cut_header}" | head -n -${cut_footer} | sed 's;^;+\t;g' | sed 's;+\tdeleting ;-\t;g')
+	fi
+
+	if [[ "${1}" == "list" ]]; then
+		echo "${output_clean}";
+	elif [[ "${1}" == "report" ]]; then
+		output-report header
+		echo "${output_clean}"
+		output-report footer "${output_clean}"
 	fi
 }
 
@@ -41,9 +75,14 @@ function get-raw () {
 
 	# unlike diff rsync can use checksums
 	elif [[ "${1}" == "file" ]]; then
+		local add_slash
+		if [[ "${3}" == "directory" ]]; then
+			add_slash="/"
+		fi
+
 		if [[ -n "${2}" ]]; then
-			ssh ${ssh_target} "rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}"; else
-			rsync -avcn --delete-after ${snap_new_target}  ${snap_old_target}
+			ssh ${ssh_target} "rsync -avcn --delete-after ${snap_new_target}${add_slash}  ${snap_old_target}${add_slash}"; else
+			rsync -avcn --delete-after ${snap_new_target}${add_slash}  ${snap_old_target}${add_slash}
 		fi
 	fi
 }
@@ -85,12 +124,13 @@ function show-commands () {
 
 if [[ "${show_commands}" == "set" ]]; then
 	show-commands; else
-	output_raw=$(get-raw "${mode_snapshot}" "${elem_server_target}")
+	output_raw=$(get-raw "${mode_snapshot}" "${elem_server_target}" "${mode_override_current}")
 
 	if [[ "${log_form}" == "raw" ]]; then
 		output=${output_raw}; else
-		output-modify
+		output=$(output-modify "${log_form}" "${mode_snapshot}" "${output_raw}" "${mode_override_current}")
 	fi
+	unset output_raw
 
 	if [[ "${log_mode}" == "file" ]]; then
 		if [[ -n "${log_server}" ]]; then
