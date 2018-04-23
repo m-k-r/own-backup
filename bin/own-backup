@@ -363,7 +363,7 @@ if [[ "${snap_limit_source}"  -ge 1 ]]; then
 		source ${dir_modules}/arg-osss
 		if [[ "${snap_location_source}" == "ssh" ]]; then
 			ssh ${ssh_source} "own-snapshot${oss_parameter}"; else
-			own-snapshot ${oss_parameter}
+			env -i PATH="$PATH" own-snapshot ${oss_parameter}
 		fi
 		check-exit
 		aa=$((${aa} + 1))
@@ -372,7 +372,7 @@ elif  [[ -n "${snap_list_source}" ]]; then
 	source ${dir_modules}/arg-osss
 	if [[ "${snap_location_source}" == "ssh" ]]; then
 		ssh ${ssh_source} "own-snapshot${oss_parameter}"; else
-		own-snapshot ${oss_parameter}
+		env -i PATH="$PATH" own-snapshot ${oss_parameter}
 	fi
 	check-exit
 fi
@@ -523,7 +523,7 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_mode}" ]] |
 				source ${dir_modules}/arg-osst
 				if [[ "${snap_location_target}" == "ssh" ]]; then
 					ssh ${ssh_target} "own-snapshot${oss_parameter}"; else
-					own-snapshot ${oss_parameter}
+					env -i PATH="$PATH" own-snapshot ${oss_parameter}
 				fi
 				check-exit
 			fi
@@ -549,7 +549,7 @@ if [[ -n "${snap_list_target}" ]]; then
 	source ${dir_modules}/arg-osst
 	if [[ "${snap_location_target}" == "ssh" ]]; then
 		ssh ${ssh_target} "own-snapshot${oss_parameter}"; else
-		own-snapshot ${oss_parameter}
+		env -i PATH="$PATH" own-snapshot ${oss_parameter}
 	fi
 		check-exit
 fi
