@@ -181,7 +181,7 @@ fi
 ##### logging #####
 
 if [[ -n "${arg_snap_rollback}" ]] || [[ -n "${arg_snap_multi}" ]]; then
-	unset  log_dir log_server log_server_port log_usr
+	unset  log_form log_mode log_usr log_dir log_server log_server_port
 fi
 
 if [[ -n "${log_mode}" ]]; then
