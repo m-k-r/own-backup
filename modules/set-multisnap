@@ -87,7 +87,7 @@ do	snap_new_source=${snap_new_list_source[${bb}]}
 		fi
 	fi
 
-	if [[ "${probe}" == "${snap_old_target}" ]]; then
+	if [[ "${probe}" == "${snap_old_target}" ]] || [[ "${probe}" == "$(echo ${snap_old_target} | rev | cut -d '/' -f 1 | rev)" ]]; then
 		if [[ "${mode_transfer}" == "zfs" ]]; then
 			${dir_modules}/copy-zfs;
 
