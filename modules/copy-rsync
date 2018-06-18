@@ -13,17 +13,17 @@ if [[ -n "${show_commands}" ]]; then
 	current_snap_rsync_source=$(echo "${current_snap_rsync_source}" | sed 's/ /\\ /g')
 	current_snap_rsync_target=$(echo "${current_snap_rsync_target}" | sed 's/ /\\ /g')
 	if [[ -n "${elem_server_source}" ]]; then
-		echo "rsync ${elem_options_rsync} -e \"ssh -p ${elem_port_source}\" ${elem_server_source}:${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/";
+		echo "rsync ${elem_options_rsync} -e \"ssh -S ~/.ssh/%C -p ${elem_port_source}\" ${elem_server_source}:${current_snap_rsync_source} ${ssh_target_transfer}${current_snap_rsync_target}/";
 	elif [[ -n ${elem_server_target} ]]; then
-		echo "rsync ${elem_options_rsync} ${current_snap_rsync_source} -e \"ssh -p ${elem_port_target}\" ${elem_server_target}:${current_snap_rsync_target}/";
+		echo "rsync ${elem_options_rsync} ${current_snap_rsync_source} -e \"ssh -S ~/.ssh/%C -p ${elem_port_target}\" ${elem_server_target}:${current_snap_rsync_target}/";
 	elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 		echo "rsync ${elem_options_rsync} ${current_snap_rsync_source} ${current_snap_rsync_target}/";
 	fi; else
 
 	if [[ -n "${elem_server_source}" ]]; then
-		rsync ${elem_options_rsync} -e "ssh -p ${elem_port_source}" "${elem_server_source}":"${current_snap_rsync_source}" "${ssh_target_transfer}""${current_snap_rsync_target}"/;
+		rsync ${elem_options_rsync} -e "ssh -S ~/.ssh/%C -p ${elem_port_source}" "${elem_server_source}":"${current_snap_rsync_source}" "${ssh_target_transfer}""${current_snap_rsync_target}"/;
 	elif [[ -n ${elem_server_target} ]]; then
-		rsync ${elem_options_rsync} "${current_snap_rsync_source}" -e "ssh -p ${elem_port_target}" "${elem_server_target}":"${current_snap_rsync_target}"/;
+		rsync ${elem_options_rsync} "${current_snap_rsync_source}" -e "ssh -S ~/.ssh/%C -p ${elem_port_target}" "${elem_server_target}":"${current_snap_rsync_target}"/;
 	elif [[ ! -n "${elem_server_source}" ]] && [[ ! -n "${elem_server_target}" ]]; then
 		rsync ${elem_options_rsync} "${current_snap_rsync_source}" "${current_snap_rsync_target}"/;
 	fi

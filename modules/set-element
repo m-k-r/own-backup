@@ -122,7 +122,9 @@ if [[ -n "${elem_server_source}" ]]; then
 	if [[ ! -n "${elem_port_source}" ]]; then
 		elem_port_source=22
 	fi
-	ssh_source="${elem_server_source} -p ${elem_port_source}"
+	# establish master connection for ssh on source. this will automatically close 1 minute after the script
+	ssh -Nf -p "${elem_port_source}" "${elem_server_source}" -o ControlMaster=auto -o ControlPath=~/.ssh/%C -o ControlPersist=1m
+	ssh_source="-S ~/.ssh/%C ${elem_server_source} -p ${elem_port_source}"
 	export ssh_source elem_port_source
 
 	if [[ "${snap_location_source}" == "direct" ]] || [[ "${snap_location_source}" == "local" ]]; then
@@ -136,7 +138,9 @@ if [[ -n "${elem_server_target}" ]]; then
 	if [[ ! -n "${elem_port_target}" ]]; then
 		elem_port_target=22
 	fi
-	ssh_target="${elem_server_target} -p ${elem_port_target}"
+	# establish master connection for ssh on target. this will automatically close 1 minute after the script
+	ssh -Nf -p "${elem_port_target}" "${elem_server_target}" -o ControlMaster=auto -o ControlPath=~/.ssh/%C -o ControlPersist=1m
+	ssh_target="-S ~/.ssh/%C ${elem_server_target} -p ${elem_port_target}"
 	export ssh_target elem_port_target
 
 	if [[ "${snap_location_target}" == "direct" ]] || [[ "${snap_location_target}" == "local" ]]; then

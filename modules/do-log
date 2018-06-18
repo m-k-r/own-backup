@@ -91,7 +91,7 @@ function show-commands () {
 	# show commands has to be split up because snap_new_target does exist in the filesystem
 	if [[ "${mode_snapshot}" == "zfs" ]]; then
 		if [[ -n "${elem_server_target}" ]]; then
-			command1="ssh ${ssh__target} \"zfs diff ${snap_old_target}\""; else
+			command1="ssh ${ssh_target} \"zfs diff ${snap_old_target}\""; else
 			command1="zfs diff ${snap_old_target}"
 		fi;
 
