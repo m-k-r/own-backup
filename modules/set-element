@@ -44,6 +44,15 @@ function swap-rollback () {
 	unset swap_var
 }
 
+function ssh-connect () {
+	# check if a socket already exists
+	probe=$(ssh -O check -S ~/.ssh/%C  -p "${1}" "${2}" 2>&1 | grep 'No such file or directory')
+
+	if [[ -n "${probe}" ]]; then
+		ssh -Nf -p "${1}" "${2}" -o ControlMaster=auto -o ControlPath=~/.ssh/%C -o ControlPersist=1m
+	fi
+}
+
 # ------------------------------ Main Script -----------------------------------
 
 ##### translate mode and fs to the internal modi
@@ -123,7 +132,7 @@ if [[ -n "${elem_server_source}" ]]; then
 		elem_port_source=22
 	fi
 	# establish master connection for ssh on source. this will automatically close 1 minute after the script
-	ssh -Nf -p "${elem_port_source}" "${elem_server_source}" -o ControlMaster=auto -o ControlPath=~/.ssh/%C -o ControlPersist=1m
+	ssh-connect "${elem_port_source}" "${elem_server_source}"
 	ssh_source="-S ~/.ssh/%C ${elem_server_source} -p ${elem_port_source}"
 	export ssh_source elem_port_source
 
@@ -139,7 +148,7 @@ if [[ -n "${elem_server_target}" ]]; then
 		elem_port_target=22
 	fi
 	# establish master connection for ssh on target. this will automatically close 1 minute after the script
-	ssh -Nf -p "${elem_port_target}" "${elem_server_target}" -o ControlMaster=auto -o ControlPath=~/.ssh/%C -o ControlPersist=1m
+	ssh-connect "${elem_port_target}" "${elem_server_target}"
 	ssh_target="-S ~/.ssh/%C ${elem_server_target} -p ${elem_port_target}"
 	export ssh_target elem_port_target
 
