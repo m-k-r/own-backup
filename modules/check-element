@@ -4,7 +4,7 @@
 
 # check if the element has the correct version
 if [[ ! "${element_version}" == "${supported_element_version}" ]]; then
-	echo "the element has not the requiered version. please update the elements with own-backup -u" && exit 1
+	echo "the element has not the requiered version. please update the elements with own-backup -c upgrade" && exit 1
 fi
 
 # checks if a valid debuglevel is set

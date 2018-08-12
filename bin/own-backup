@@ -8,7 +8,7 @@
 #
 # ----------------------------- Global Variables -------------------------------
 
-version=1.0
+version=1.1
 usage_main="usage: own-backup [parameter]
 
  -c	create initial config-directories, upgrade elements, create and change elements and jobs (not yet implemented)
@@ -95,7 +95,8 @@ pairs_delete="current_server:elem_server_SIDE current_ssh:ssh_SIDE current_snap_
 declare -A unique_elements
 
 if [[ -n "${arg_config}" ]]; then
-	export dir_conf arg_config
+	backend=backup
+	export dir_conf arg_config backend
 	${dir_modules}/do-config
 	exit 0
 fi

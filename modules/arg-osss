@@ -14,7 +14,7 @@ elif [[ ! -n "${elem_server_source}" ]] && [[ -n "${snap_location_source}" ]]; t
 fi
 
 if [[ -n "${snap_list_source}" ]]; then
-	oss_parameter+=" -c ${snap_list_source}"
+	oss_parameter+=" -e ${snap_list_source}"
 	oss_parameter+=" -f ${snap_list_frequency_source}"
 	oss_parameter+=" -l ${snap_date}"; else
 
