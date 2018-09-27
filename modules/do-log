@@ -36,8 +36,8 @@ function output-report () {
 function output-modify () {
 	local output_clean output_report cut_header cut_footer
 	if [[ "${2}" == "zfs" ]]; then
-		# cut off path up to current_sync_name_source, replace 0040 with space and sort
-		output_clean=$(echo "${3}" |  sed -e "s;\t.*${current_sync_name_source}/;\t;g" | sed 's;\\\0040; ;g' | sort -k 2);
+		# cut off path up to current_sync_name_source, replace all escaped characters and sort
+		output_clean=$(printf %b "${3}" |  sed -e "s;\t.*${current_sync_name_source}/;\t;g" | sort -k 2);
 	elif [[ "${2}" == "btrfs" ]]; then
 		# only print the actual paths and since only added files are shown, add a "+" at the beginning of each line
 		output_clean=$(echo "${3}" | awk -F "flags" '{ print $2 }' | awk -F " " '{ print $2 }' | grep -v '^$' | sort -u | sed 's;^;+\t;g');
