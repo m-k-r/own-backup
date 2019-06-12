@@ -117,12 +117,24 @@ if [[ -n "${path_offset_source}" ]]; then
 	check-path escape_space path_offset_source
 	check-path add_slash_start path_offset_source
 	check-path rm_slash_end path_offset_source
+
+	# if mode_transfer is btrfs or zfs path_offset_source will be used as part of path_snap_source
+	if [[ "${mode_transfer}" == "btrfs" ]] || [[ "${mode_transfer}" == "zfs" ]]; then
+		path_snap_source="${path_snap_source}""${path_offset_source}"
+		unset path_offset_source
+	fi
 fi
 
 if [[ -n "${path_offset_target}" ]]; then
 	check-path escape_space path_offset_target
 	check-path add_slash_start path_offset_target
 	check-path rm_slash_end path_offset_target
+
+	# if mode_transfer is btrfs or zfs path_offset_target will be used as part of path_snap_target
+	if [[ "${mode_transfer}" == "btrfs" ]] || [[ "${mode_transfer}" == "zfs" ]]; then
+		path_snap_target="${path_snap_target}""${path_offset_target}"
+		unset path_offset_target
+	fi
 fi
 
 ##### ports for rsync and ssh #####
