@@ -27,8 +27,8 @@ if [[ -n "${snap_list_source}" ]]; then
 	oss_parameter+=" -n $(echo ${snap_set_source[aa]}${snap_file_type[aa]} | tr ' ' '~')"
 
 	if [[ -n "${sync_vmid[aa]}" ]]; then
-		oss_parameter+=" -r ${sync_vmid[aa]}"; else
-		oss_parameter+=" -r $(echo ${snap_root_source[aa]} | tr ' ' '~')"
+		oss_parameter+=" -t ${sync_vmid[aa]}"; else
+		oss_parameter+=" -t $(echo ${snap_root_source[aa]} | tr ' ' '~')"
 	fi
 
 	if [[ -n "${elem_options_sql}" ]]; then

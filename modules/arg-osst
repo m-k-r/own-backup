@@ -25,5 +25,5 @@ if [[ -n "${snap_list_target}" ]]; then
 
 	oss_parameter+=" -l ${snap_string}"
 	oss_parameter+=" -n $(echo ${snap_set_target[aa]}${snap_file_type[aa]} | tr ' ' '~')"
-	oss_parameter+=" -r $(echo ${snap_root_target[aa]} | tr ' ' '~')"
+	oss_parameter+=" -t $(echo ${snap_root_target[aa]} | tr ' ' '~')"
 fi
