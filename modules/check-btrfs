@@ -10,7 +10,10 @@ if [[ "${probe_snap_root}" == "${current_path_root}/${current_sync_name_source}"
 	snap_root=${current_path_root}/${current_sync_name_source}
 	snap_set=${current_path_snap}/${current_sync_name_target}; else
 
-	if [[ -n "${current_snap_list}" ]] || [[ "${mode_transfer}" == "btrfs" ]]; then
+	if [[ -n "${current_snap_list}" ]] && [[ "${mode_create}" == "lxd" ]]; then
+		snap_root=unset
+		snap_set=${current_path_snap}/${current_sync_name_source};
+	elif [[ -n "${current_snap_list}" ]] || [[ "${mode_transfer}" == "btrfs" ]]; then
 		snap_root=unset
 		snap_set=${current_path_snap}/${current_sync_name_target};
 	elif [[ "${current_side}" == "source" ]] && [[ "${mode_transfer}" == "btrfs" ]] && [[ ! "${arg_snap_rollback}" == "set" ]] && [[ -n "${current_snap_list}" ]]; then
@@ -66,5 +69,5 @@ fi
 echo "${snap_root}~${snap_set}"
 
 ##### variable list. these will be picked up by debug #####
-# import_fields = current_side mode_transfer arg_snap_rollback current_snap_limit current_snap_list current_server current_ssh current_path_root current_path_snap current_sync_name_source current_sync_name_target
+# import_fields = current_side mode_create mode_transfer arg_snap_rollback current_snap_limit current_snap_list current_server current_ssh current_path_root current_path_snap current_sync_name_source current_sync_name_target
 # export_fields = snap_set snap_root

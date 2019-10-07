@@ -66,7 +66,7 @@ fi
 
 mode_snapshot=${elem_fs}
 
-if [[ ! -n "${elem_mode}" ]] && [[ ! "${elem_fs}" == "file" ]] || [[ "${elem_mode}" == "kvm" ]]; then
+if [[ ! -n "${elem_mode}" ]] && [[ ! "${elem_fs}" == "file" ]] || [[ "${elem_mode}" == "kvm" ]] || [[ "${elem_mode}" == "lxd" ]]; then
 	mode_transfer=${elem_fs};
 elif [[ "${elem_mode}" == "rsync" ]] || [[ "${elem_fs}" == "file" ]]; then
 	mode_transfer=rsync
