@@ -248,7 +248,7 @@ if [[ -n "${log_mode}" ]]; then
 		export log_usr
 	fi
 
-	log_file=${log_dir}${mode_snapshot}_diff-CURRENT_SYNC_NAME_SOURCE-${snap_date}${log_file_type}
+	log_file=${log_dir}${mode_snapshot}_diff-CURRENT_SYNC_NAME_TARGET-${snap_date}${log_file_type}
 
 	export log_file
 	unset probe log_dir log_file_type

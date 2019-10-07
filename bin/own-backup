@@ -34,7 +34,7 @@ usage_debug="usage: own-backup -d [parameter]
 dir_root=/usr/local/own-backup
 dir_modules=${dir_root}/modules
 dir_conf=/etc/own-backup
-supported_mode="file git kvm mysql pgsql rsync"
+supported_mode="file lxd kvm mysql pgsql rsync"
 supported_fs="btrfs zfs file"
 supported_snap_location="server ssh local direct"
 supported_log_form="raw list report"
@@ -533,13 +533,13 @@ do	if [[ "${mode_transfer}" == "${mode_snapshot}" ]] || [[ -n "${log_mode}" ]] |
 
 	if [[ -n "${log_mode}" ]]; then
 		mode_override_current=${mode_override[aa]}
-		current_sync_name_source=${sync_name_source[aa]}
+		current_sync_name_target=${sync_name_target[aa]}
 		snap_new_target=${snap_shots_strict_target[aa]##*$'\n'}
-		export mode_override_current current_sync_name_source snap_new_target
+		export mode_override_current current_sync_name_target snap_new_target
 		module_current=do-log
 		${dir_modules}/${module_current}
 		check-exit
-		unset mode_override_current current_sync_name_source snap_new_target
+		unset mode_override_current current_sync_name_target snap_new_target
 	fi
 	aa=$((${aa} + 1))
 	unset current_snap_shots_source current_snap_shots_source_ts current_snap_shots_quality_source current_snap_number_source current_snap_shots_target current_snap_shots_target_ts current_snap_shots_quality_target current_snap_number_target current_snap_rsync_source current_snap_rsync_target snap_new_source snap_common_source snap_old_target snap_exist_offset
