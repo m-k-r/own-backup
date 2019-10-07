@@ -46,7 +46,7 @@ function create-dump {
 	dump+="export ${import_fields}"$'\n'
 
 	# copy dump to file
-	mkdir -p ${debug_dir} && chmod 400 ${debug_dir}
+	mkdir -p ${debug_dir} && chmod 700 ${debug_dir}
 	echo "${dump}" | grep -v '^$' > ${debug_file}
 	echo "a dump of the variables for ${module_current} has been written to ${debug_file}"
 }
