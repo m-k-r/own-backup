@@ -88,6 +88,7 @@ function upgrade-elements() {
 }
 
 function upgrade-framework() {
+	get-upgrade-backend
 	bb="0"
 
 	for version_current in ${version_list[@]}
@@ -144,16 +145,18 @@ function upgrade-framework() {
 
 # --------------------------------- Upgrades -----------------------------------
 
-if [ "${backend}" == "backup" ]; then
-	source ${dir_upgrade}/upgrade_backup.list
-	dir_element=${dir_conf}/backup
-	file_extension=".bak";
-elif [[ "${backend}" == "snapshot" ]]; then
-	source ${dir_upgrade}/upgrade_snapshot.list
-	dir_element=${dir_conf}/snapshot
-	file_extension=".snap"
-fi
-dir_element_offset=$(($(echo "${dir_element}" | awk -F '/' '{print NF}') + 1))
+function get-upgrade-backend {
+	if [ "${backend}" == "backup" ]; then
+		source ${dir_upgrade}/upgrade_backup.list
+		dir_element=${dir_conf}/backup
+		file_extension=".bak";
+	elif [[ "${backend}" == "snapshot" ]]; then
+		source ${dir_upgrade}/upgrade_snapshot.list
+		dir_element=${dir_conf}/snapshot
+		file_extension=".snap"
+	fi
+	dir_element_offset=$(($(echo "${dir_element}" | awk -F '/' '{print NF}') + 1))
+}
 
 # ------------------------------ Main Script -----------------------------------
 
