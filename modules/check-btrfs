@@ -10,9 +10,9 @@ if [[ "${probe_snap_root}" == "${current_path_root}/${current_sync_name_source}"
 	snap_root=${current_path_root}/${current_sync_name_source}
 	snap_set=${current_path_snap}/${current_sync_name_target}; else
 
-	if [[ -n "${current_snap_list}" ]] && [[ "${mode_create}" == "lxd" ]]; then
+	if [[ "${current_side}" == "source" ]] && [[ "${mode_create}" == "lxd" ]]; then
 		snap_root=unset
-		snap_set=${current_path_snap}/${current_sync_name_source};
+		snap_set=${current_path_snap}/${current_sync_name_target}/${current_sync_name_target};
 	elif [[ -n "${current_snap_list}" ]] || [[ "${mode_transfer}" == "btrfs" ]]; then
 		snap_root=unset
 		snap_set=${current_path_snap}/${current_sync_name_target};
